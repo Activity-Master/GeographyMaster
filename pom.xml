@@ -3,10 +3,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.jwebmp</groupId>
-        <artifactId>jwebmp-builder</artifactId>
+        <groupId>com.armineasy.activitymaster</groupId>
+        <artifactId>activitymaster-group</artifactId>
         <version>0.0.0_0-SNAPSHOT</version>
     </parent>
+
+
 
     <artifactId>geography-master</artifactId>
     <packaging>jar</packaging>
@@ -14,14 +16,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.jwebmp</groupId>
+            <groupId>com.armineasy.activitymaster</groupId>
             <artifactId>activity-master</artifactId>
             <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-csv</artifactId>
-            <version>1.6</version>
         </dependency>
     </dependencies>
 </project>
