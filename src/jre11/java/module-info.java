@@ -3,7 +3,7 @@ module com.armineasy.activitymaster.geography {
 	exports com.armineasy.activitymaster.geography;
 
 	requires com.armineasy.activitymaster.activitymaster;
-	requires com.jwebmp.guicedinjection;
+	requires com.guicedee.guicedinjection;
 	requires com.google.guice;
 
 	provides com.armineasy.activitymaster.activitymaster.services.IActivityMasterSystem with com.armineasy.activitymaster.geography.GeographyMasterSystem;
