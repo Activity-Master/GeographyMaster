@@ -1,9 +1,9 @@
-package com.armineasy.activitymaster.geography;
+package com.guicedee.activitymaster.geography;
 
-import com.armineasy.activitymaster.activitymaster.services.IActivityMasterProgressMonitor;
-import com.armineasy.activitymaster.activitymaster.services.IActivityMasterSystem;
-import com.armineasy.activitymaster.activitymaster.services.dto.IEnterprise;
-import com.armineasy.activitymaster.activitymaster.services.system.ISystemsService;
+import com.guicedee.activitymaster.core.services.IActivityMasterProgressMonitor;
+import com.guicedee.activitymaster.core.services.IActivityMasterSystem;
+import com.guicedee.activitymaster.core.services.dto.IEnterprise;
+import com.guicedee.activitymaster.core.services.system.ISystemsService;
 import com.google.inject.Singleton;
 import com.guicedee.guicedinjection.GuiceContext;
 

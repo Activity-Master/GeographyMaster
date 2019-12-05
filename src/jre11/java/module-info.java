@@ -1,12 +1,12 @@
-module com.armineasy.activitymaster.geography {
+module com.guicedee.activitymaster.geography {
 
-	exports com.armineasy.activitymaster.geography;
+	exports com.guicedee.activitymaster.geography;
 
-	requires com.armineasy.activitymaster.activitymaster;
+	requires com.guicedee.activitymaster.core;
 	requires com.guicedee.guicedinjection;
 	requires com.google.guice;
 
-	provides com.armineasy.activitymaster.activitymaster.services.IActivityMasterSystem with com.armineasy.activitymaster.geography.GeographyMasterSystem;
+	provides com.guicedee.activitymaster.core.services.IActivityMasterSystem with com.guicedee.activitymaster.geography.GeographyMasterSystem;
 
-	opens com.armineasy.activitymaster.geography to com.google.guice;
+	opens com.guicedee.activitymaster.geography to com.google.guice;
 }

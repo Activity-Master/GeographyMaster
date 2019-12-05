@@ -1,3 +1,3 @@
-module com.armineasy.activitymaster.geography {
+module com.guicedee.activitymaster.geography {
 
 }
