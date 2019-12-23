@@ -9,7 +9,6 @@
     </parent>
 
 
-
     <artifactId>geography-master</artifactId>
     <packaging>jar</packaging>
     <name>Geography Master</name>
@@ -19,6 +18,22 @@
             <groupId>com.armineasy.activitymaster</groupId>
             <artifactId>activity-master</artifactId>
             <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.armineasy.activitymaster</groupId>
+            <artifactId>session-master</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.guicedee.servlets</groupId>
+            <artifactId>guiced-websockets</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.jwebmp.plugins.security</groupId>
+            <artifactId>jwebmp-plugins-ip-geography-security</artifactId>
         </dependency>
     </dependencies>
 </project>
