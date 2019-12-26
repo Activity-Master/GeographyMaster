@@ -5,7 +5,7 @@ import lombok.experimental.Accessors;
 
 @Data
 @Accessors(chain = true)
-public class GeographyProvince<J extends GeographyProvince<J>>
+public class GeographyMunicipalArea<J extends GeographyMunicipalArea<J>>
 		extends GeoNameDefaultData<J>
 {
 

@@ -1,7 +1,12 @@
 package com.guicedee.activitymaster.geography.services;
 
 import com.guicedee.activitymaster.core.services.dto.IInvolvedParty;
+import com.guicedee.activitymaster.geography.services.dto.*;
+import lombok.Data;
+import lombok.experimental.Accessors;
 
+@Data
+@Accessors(chain = true)
 public class GeographyCall
 {
 	private IInvolvedParty<?> involvedParty;
@@ -14,8 +19,7 @@ public class GeographyCall
 	private IInvolvedParty<?> asn;
 	private IInvolvedParty<?> asnOrg;
 
-	private String latitude;
-	private String longitude;
+	private GeographyCoordinates coordinates;
 
 	private String postalCode;
 
@@ -23,13 +27,12 @@ public class GeographyCall
 
 	private GeographyCountry country;
 
-	private GeographyRegion region;
+	private GeographyMunicipalArea region;
 
 	private GeographyContinent continent;
 
-	private GeographyTimeZone timezone;
+	private GeographyTimezone timezone;
 
 	private GeographyCurrency currency;
-
 
 }

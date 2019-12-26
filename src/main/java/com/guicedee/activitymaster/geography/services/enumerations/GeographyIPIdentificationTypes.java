@@ -7,8 +7,6 @@ public enum GeographyIPIdentificationTypes
 		implements IIdentificationType<IdentificationTypes>
 {
 	ISP("Internet Service Provider"),
-
-
 	;
 	private String classificationValue;
 

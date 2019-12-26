@@ -32,6 +32,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.guicedee.services</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>0.0.0_0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
             <groupId>com.jwebmp.plugins.security</groupId>
             <artifactId>jwebmp-plugins-ip-geography-security</artifactId>
         </dependency>

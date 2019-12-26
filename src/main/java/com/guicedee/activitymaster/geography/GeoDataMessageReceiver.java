@@ -7,12 +7,10 @@ import com.guicedee.activitymaster.core.services.system.IInvolvedPartyService;
 import com.guicedee.activitymaster.geography.services.IGeographyService;
 import com.guicedee.activitymaster.sessions.services.ISession;
 import com.guicedee.activitymaster.sessions.services.ISessionMasterService;
-import com.guicedee.guicedservlets.websockets.GuicedWebSocket;
 import com.guicedee.guicedservlets.websockets.options.WebSocketMessageReceiver;
 import com.guicedee.guicedservlets.websockets.services.IWebSocketMessageReceiver;
 import com.jwebmp.plugins.security.ipgeography.GeoData;
 
-import java.util.Map;
 import java.util.Set;
 
 import static com.guicedee.guicedinjection.GuiceContext.*;
@@ -41,6 +39,11 @@ public class GeoDataMessageReceiver
 				{
 					IInvolvedPartyService<?> involvedPartyService = get(IInvolvedPartyService.class);
 					IInvolvedParty<?> involvedParty = involvedPartyService.findByIdentificationType("IdentificationTypeWebClientUUID", data.getLocalStorage());
+					if (involvedParty == null)
+					{
+						return;
+					}
+
 					IAddressService<?> addressService = get(IAddressService.class);
 					IGeographyService<?> geographyService = get(IGeographyService.class);
 
@@ -50,8 +53,8 @@ public class GeoDataMessageReceiver
 					}
 					ISessionMasterService<?> sessionMasterService = get(ISessionMasterService.class);
 					ISession<?> sesion = sessionMasterService.getSession(involvedParty, involvedParty.getEnterprise()
-					                                                                                 .getIEnterprise(), GeographyMasterSystem.getSystemTokens()
-					                                                                                                                         .get(involvedParty.getEnterpriseID()));
+					                                                                                 .getIEnterprise(), GeographySystem.getSystemTokens()
+					                                                                                                                   .get(involvedParty.getEnterpriseID()));
 					sesion.addValue("geo-data", data);
 				}
 			}
