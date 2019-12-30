@@ -7,11 +7,13 @@ import com.guicedee.activitymaster.core.services.system.IInvolvedPartyService;
 import com.guicedee.activitymaster.geography.services.IGeographyService;
 import com.guicedee.activitymaster.sessions.services.ISession;
 import com.guicedee.activitymaster.sessions.services.ISessionMasterService;
+import com.guicedee.guicedinjection.GuiceContext;
 import com.guicedee.guicedservlets.websockets.options.WebSocketMessageReceiver;
 import com.guicedee.guicedservlets.websockets.services.IWebSocketMessageReceiver;
 import com.jwebmp.plugins.security.ipgeography.GeoData;
 
 import java.util.Set;
+import java.util.UUID;
 
 import static com.guicedee.guicedinjection.GuiceContext.*;
 
@@ -46,15 +48,15 @@ public class GeoDataMessageReceiver
 
 					IAddressService<?> addressService = get(IAddressService.class);
 					IGeographyService<?> geographyService = get(IGeographyService.class);
-
 					if (data.getIp() != null)
 					{
 						//addressService.addOrFindIPAddress(data.getIp(),)
 					}
 					ISessionMasterService<?> sessionMasterService = get(ISessionMasterService.class);
+					UUID token = GuiceContext.get(GeographySystem.class)
+					                         .getSystemToken(involvedParty.getEnterprise());
 					ISession<?> sesion = sessionMasterService.getSession(involvedParty, involvedParty.getEnterprise()
-					                                                                                 .getIEnterprise(), GeographySystem.getSystemTokens()
-					                                                                                                                   .get(involvedParty.getEnterpriseID()));
+					                                                                                 .getIEnterprise(), token);
 					sesion.addValue("geo-data", data);
 				}
 			}

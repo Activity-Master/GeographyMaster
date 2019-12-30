@@ -1,15 +1,16 @@
 package com.guicedee.activitymaster.geography.services.dto;
 
+import com.guicedee.activitymaster.geography.services.dto.abstractions.GeographyDefaultDto;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.io.Serializable;
 
 @Data
-@Accessors(chain=true)
-public class GeographyTimezone implements Serializable
+@Accessors(chain = true)
+public class GeographyTimezone
+		extends GeographyDefaultDto
 {
 	private static final long serialVersionUID = 1L;
 

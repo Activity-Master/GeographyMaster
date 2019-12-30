@@ -1,5 +1,6 @@
 package com.guicedee.activitymaster.geography.services.dto;
 
+import com.guicedee.activitymaster.geography.services.dto.abstractions.GeographyDefaultDto;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -13,14 +14,13 @@ import java.util.List;
 @Data
 @Accessors(chain = true)
 public class GeoNameDefaultData<J extends GeoNameDefaultData<J>>
+		extends GeographyDefaultDto
 		implements Serializable
 {
 	private static final long serialVersionUID = 1L;
-
+	private final List<String> alternateNames = new ArrayList<>();
 	private String name;
 	private String asciiname;
-	private final List<String> alternateNames = new ArrayList<>();
-
 	private GeographyCoordinates coordinates;
 
 	private char featureClass;

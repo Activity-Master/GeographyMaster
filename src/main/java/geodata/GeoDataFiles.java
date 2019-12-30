@@ -22,6 +22,7 @@ public enum GeoDataFiles
 	GeoDataFiles(String csvFileName, String... headerNames)
 	{
 		this.csvFileName = csvFileName;
+		this.headerNames = headerNames;
 	}
 
 	public String getCsvFileName()

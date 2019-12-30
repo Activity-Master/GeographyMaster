@@ -7,6 +7,7 @@ module com.guicedee.activitymaster.geography {
 
 	exports com.guicedee.activitymaster.geography.services;
 	exports com.guicedee.activitymaster.geography.services.dto;
+	exports com.guicedee.activitymaster.geography.services.dto.classifications;
 
 	requires com.guicedee.activitymaster.core;
 	requires com.guicedee.guicedinjection;
@@ -24,6 +25,7 @@ module com.guicedee.activitymaster.geography {
 
 	requires com.guicedee.guicedservlets.websockets;
 	requires com.jwebmp.plugins.security.ipgeography;
+	requires com.entityassist;
 
 	provides com.guicedee.activitymaster.core.services.IActivityMasterSystem with GeographySystem;
 	provides IWebSocketMessageReceiver with GeoDataMessageReceiver;

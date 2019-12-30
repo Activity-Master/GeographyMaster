@@ -4,21 +4,21 @@ import com.guicedee.activitymaster.core.services.classifications.geography.IGeog
 import com.guicedee.activitymaster.core.services.enumtypes.IClassificationDataConceptValue;
 import com.guicedee.activitymaster.core.services.enumtypes.IClassificationValue;
 
-import static com.guicedee.activitymaster.core.services.concepts.EnterpriseClassificationDataConcepts.*;
+import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassificationDataConcepts.*;
 
 public enum GeographyFeatureClassesClassifications
 		implements IClassificationValue<GeographyFeatureClassesClassifications>
 				           , IGeographyClassification<GeographyFeatureClassesClassifications>
 {
-	A("A country, state, region, etc", Geography),
-	H("A stream lake, etc", Geography),
-	L("Parks, Areas, etc", Geography),
-	P("Cities Villagers, etc", Geography),
-	R("Roads, Railroad", Geography),
-	S("Spot, Building, Farm", Geography),
-	T("Mountain, Hill,Rock ...", Geography),
-	U("Undersea", Geography),
-	F("Forest, Heath,...", Geography),
+	A("A country, state, region, etc", GeoNameClassificationDataConcept),
+	H("A stream lake, etc", GeoNameClassificationDataConcept),
+	L("Parks, Areas, etc", GeoNameClassificationDataConcept),
+	P("Cities Villagers, etc", GeoNameClassificationDataConcept),
+	R("Roads, Railroad", GeoNameClassificationDataConcept),
+	S("Spot, Building, Farm", GeoNameClassificationDataConcept),
+	T("Mountain, Hill,Rock ...", GeoNameClassificationDataConcept),
+	U("Undersea", GeoNameClassificationDataConcept),
+	F("Forest, Heath,...", GeoNameClassificationDataConcept),
 	;
 
 	private String description;
