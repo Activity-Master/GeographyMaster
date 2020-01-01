@@ -473,6 +473,14 @@ public class GeographyService<J extends GeographyService<J>>
 		logProgress("Geography Service", "Geography Associated Languages queued", 10, progressMonitor);
 	}
 
+	/**
+	 * Created on the language iso 6392 code
+	 *
+	 * @param language
+	 * @param enterpriseName
+	 *
+	 * @return
+	 */
 	@Override
 	public ISO639Language create(ISO639Language language, IEnterpriseName<?> enterpriseName)
 	{
