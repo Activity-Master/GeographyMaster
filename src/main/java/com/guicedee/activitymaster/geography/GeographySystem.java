@@ -114,6 +114,7 @@ public class GeographySystem
 			}
 
 			classificationService.create(GeographyAdmin1AsciiCodes, system, GeographyClassifications);
+			classificationService.create(GeographyAsciiName, system, GeographyAdmin1AsciiCodes);
 
 			//Country Data
 
@@ -170,6 +171,9 @@ public class GeographySystem
 				progressMonitor.progressUpdate("Loading Geography Updates", "Creating Feature Classes");
 			}
 		}
+
+		//next update
+		geonamesClassifications(enterprise);
 	}
 
 	@Override
@@ -182,5 +186,30 @@ public class GeographySystem
 	public String getSystemDescription()
 	{
 		return "The system for maintaining Geography and Locations";
+	}
+
+	private void geonamesClassifications(IEnterprise<?> enterprise)
+	{
+		IClassificationService<?> classificationService = get(IClassificationService.class);
+		ISystems<?> system = getSystem(enterprise);
+		classificationService.create(GeographyAsciiName, system, GeographyAdmin1AsciiCodes);
+		classificationService.create(GeographyAdmin2Codes, system, GeographyClassifications);
+
+		classificationService.create(CountryISO3166, system, Country);
+		classificationService.create(CountryISO3166_3, system, Country);
+		classificationService.create(CountryISO_Numeric, system, Country);
+		classificationService.create(CountryFips, system, Country);
+		classificationService.create(CountryCapital, system, Country);
+		classificationService.create(CountryAreaInSqKm, system, Country);
+		classificationService.create(CountryTld, system, Country);
+		classificationService.create(CurrencyCode, system, Country);
+		classificationService.create(CurrencyName, system, Country);
+		classificationService.create(CountryPhone, system, Country);
+		classificationService.create(CountryPostalCodeFormat, system, Country);
+		classificationService.create(CountryPostalCodeRegex, system, Country);
+		classificationService.create(CountryNeighbours, system, Country);
+		classificationService.create(CountryEquivalentFipsCode, system, Country);
+		classificationService.create(CountryNeighbours, system, Country);
+
 	}
 }

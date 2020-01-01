@@ -1,11 +1,8 @@
 package com.guicedee.activitymaster.geography.services.dto;
 
-import com.guicedee.activitymaster.core.services.dto.IAddress;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Null;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -14,10 +11,12 @@ import java.util.Objects;
 
 @Data
 @Accessors(chain = true)
-public class GeographyCountry implements Serializable
+public class GeographyCountry
+		implements Serializable
 {
 	private static final long serialVersionUID = 1L;
 
+	private final List<String> languages = new ArrayList<>();
 	@Size(max = 2)
 	private String iso;
 	@Size(max = 3)
@@ -25,31 +24,26 @@ public class GeographyCountry implements Serializable
 	@Size(max = 3)
 	private String isoNumeric;
 	@Size(max = 2)
-	@Null
 	private String fps;
-	@NotNull
 	private String countryName;
-	@NotNull
 	private String postalCode;
 	@Size(max = 3)
-	@Null
 	private String webTld;
-
 	private int areaSqlKM;
 	private int population;
-
 	private GeographyCoordinates coordinates;
 	private int accuracy;
-
 	private GeographyCurrency currency;
-
 	private String countryDialCode;
-
 	private String postalCodeDecimalFormat;
 	private String postalCodeRegexFormat;
-
 	private String capital;
-	private final List<String> languages = new ArrayList<>();
+
+	@Override
+	public int hashCode()
+	{
+		return Objects.hash(getIso());
+	}
 
 	@Override
 	public boolean equals(Object o)
@@ -64,11 +58,5 @@ public class GeographyCountry implements Serializable
 		}
 		GeographyCountry that = (GeographyCountry) o;
 		return getIso().equals(that.getIso());
-	}
-
-	@Override
-	public int hashCode()
-	{
-		return Objects.hash(getIso());
 	}
 }

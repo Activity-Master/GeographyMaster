@@ -51,13 +51,27 @@ public enum GeographyClassifications
 
 	//Lookups & Codes
 	GeographyAdmin1AsciiCodes("Names in English for admin divisions", GeoNameClassificationDataConcept),
+	GeographyAdmin2Codes("code for the second administrative division, a county in the US, see file admin2Codes.txt; varchar(80) ", GeoNameClassificationDataConcept),
+	GeographyAsciiName("name of geographical point in plain ascii characters, varchar(200)", GeoNameClassificationDataConcept),
+
 	FeatureCodes("A Feature that pertains to a geo item", GeoNameClassificationDataConcept),
 	FeatureClass("A Feature class that pertains to a geo item", GeoNameClassificationDataConcept),
 	//CountryData
 
-	//#ISO	ISO3	ISO-Numeric	fips	Country	Capital	Area(in sq km)	Population	Continent	tld	CurrencyCode	CurrencyName	Phone	Postal Code Format	Postal Code Regex	Languages	geonameid	neighbours	EquivalentFipsCode
-
-	;
+	CountryISO3166("The two character code for a country", GeoNameClassificationDataConcept),
+	CountryISO3166_3("The 3 character code for a country", GeoNameClassificationDataConcept),
+	CountryISO_Numeric("The numeric number of a country", GeoNameClassificationDataConcept),
+	CountryFips("The fips code for a country", GeoNameClassificationDataConcept),
+	CountryCapital("The capital for a country", GeoNameClassificationDataConcept),
+	CountryAreaInSqKm("The Area known in Square Kilometers", GeoNameClassificationDataConcept),
+	CountryTld("The TLD for a country", GeoNameClassificationDataConcept),
+	CurrencyCode("The currency code for a given country", GeoNameClassificationDataConcept),
+	CurrencyName("The currency name for a given country", GeoNameClassificationDataConcept),
+	CountryPhone("The phone code for a country", GeoNameClassificationDataConcept),
+	CountryPostalCodeFormat("The postal code format for a given country", GeoNameClassificationDataConcept),
+	CountryPostalCodeRegex("The given regex format for a country", GeoNameClassificationDataConcept),
+	CountryNeighbours("The neighbours of a given country", GeoNameClassificationDataConcept),
+	CountryEquivalentFipsCode("The equivalent fips code for a country", GeoNameClassificationDataConcept);
 
 	private String description;
 	private IClassificationDataConceptValue<?> concept;
