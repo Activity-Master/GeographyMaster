@@ -11,6 +11,6 @@ public abstract class GeographyDefaultDto
 		implements Serializable
 {
 	private static final long serialVersionUID = 1L;
-
-	private long geographyId;
+	private Long geographyId;
+	private Long geonameId;
 }

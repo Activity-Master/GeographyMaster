@@ -6,7 +6,10 @@ public enum GeographyClassificationDataConcepts
 		implements IClassificationDataConceptValue<GeographyClassificationDataConcepts>
 {
 	GeoNameClassificationDataConcept,
-
+	GeographyCurrencyConcept,
+	GeographyTimezoneConcept,
+	GeographyCoordinatesConcept,
+	GeographyPostalCodesConcept,
 	;
 
 	private String classificationValue;

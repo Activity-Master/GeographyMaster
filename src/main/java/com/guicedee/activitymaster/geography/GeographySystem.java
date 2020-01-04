@@ -52,6 +52,21 @@ public class GeographySystem
 		                                                                        "Classifications relating to data from the geonames.org gazette",
 		                                                                        system, token);
 
+		IClassificationDataConcept<?> dtCurrency = dataConceptService.createDataConcept(GeographyCurrencyConcept,
+		                                                                                "The known currencies of the world",
+		                                                                                system, token);
+
+		IClassificationDataConcept<?> dtTimeZones = dataConceptService.createDataConcept(GeographyTimezoneConcept,
+		                                                                                 "The known currencies of the world",
+		                                                                                 system, token);
+		IClassificationDataConcept<?> dtPostalCodes = dataConceptService.createDataConcept(GeographyPostalCodesConcept,
+		                                                                                   "Postal codes related to a country",
+		                                                                                   system, token);
+
+		IClassificationDataConcept<?> dtCoordinates = dataConceptService.createDataConcept(GeographyCoordinatesConcept,
+		                                                                                   "Co-ordinates for a planet",
+		                                                                                   system, token);
+
 		try
 		{
 			classificationService.find(Planet, enterprise, token);
@@ -60,6 +75,7 @@ public class GeographySystem
 		{
 
 			if (progressMonitor != null)
+
 			{
 				progressMonitor.progressUpdate("Geography Master", "Creating Regional Areas");
 			}
@@ -117,16 +133,6 @@ public class GeographySystem
 			classificationService.create(GeographyAsciiName, system, GeographyAdmin1AsciiCodes);
 
 			//Country Data
-
-	/*	classificationService.create(Admin1CodeASCII, newSystem.get(enterprise));
-		classificationService.create(Admin1CodeASCII, newSystem.get(enterprise));
-		classificationService.create(Admin1CodeASCII, newSystem.get(enterprise));
-		classificationService.create(Admin1CodeASCII, newSystem.get(enterprise));
-		classificationService.create(Admin1CodeASCII, newSystem.get(enterprise));
-		classificationService.create(Admin1CodeASCII, newSystem.get(enterprise));
-		classificationService.create(Admin1CodeASCII, newSystem.get(enterprise));
-		classificationService.create(Admin1CodeASCII, newSystem.get(enterprise));
-		*/
 			if (progressMonitor != null)
 			{
 				progressMonitor.progressUpdate("Geography Master", "Creating Geography Involved Parties");
@@ -137,8 +143,6 @@ public class GeographySystem
 					                                             .createIdentificationType(enterprise, GeographyIPIdentificationTypes.ISP,
 					                                                                       "An Internet Service Provider",
 					                                                                       token);
-			//	idType.createDefaultSecurity(activityMasterSystem);
-
 			if (progressMonitor != null)
 			{
 				progressMonitor.progressUpdate("Loading Geography Updates", "Creating Planets");
@@ -209,7 +213,12 @@ public class GeographySystem
 		classificationService.create(CountryPostalCodeRegex, system, Country);
 		classificationService.create(CountryNeighbours, system, Country);
 		classificationService.create(CountryEquivalentFipsCode, system, Country);
-		classificationService.create(CountryNeighbours, system, Country);
+		//timezones
+		classificationService.create(TimeZoneOffsetJan2016, system, TimeZone);
+		classificationService.create(TimeZoneOffsetJuly2016, system, TimeZone);
+		classificationService.create(TimeZoneRawOffset, system, TimeZone);
 
+		classificationService.create(PostalNumber, system, PostalCode);
+		classificationService.create(PostalPlaceName, system, PostalCode);
 	}
 }

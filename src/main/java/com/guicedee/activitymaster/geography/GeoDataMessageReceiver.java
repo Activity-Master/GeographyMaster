@@ -3,6 +3,7 @@ package com.guicedee.activitymaster.geography;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.guicedee.activitymaster.core.services.dto.IInvolvedParty;
 import com.guicedee.activitymaster.core.services.system.IAddressService;
+import com.guicedee.activitymaster.core.services.system.IEnterpriseService;
 import com.guicedee.activitymaster.core.services.system.IInvolvedPartyService;
 import com.guicedee.activitymaster.geography.services.IGeographyService;
 import com.guicedee.activitymaster.sessions.services.ISession;
@@ -57,6 +58,8 @@ public class GeoDataMessageReceiver
 					                         .getSystemToken(involvedParty.getEnterprise());
 					ISession<?> sesion = sessionMasterService.getSession(involvedParty, involvedParty.getEnterprise()
 					                                                                                 .getIEnterprise(), token);
+					sesion.setInvolvedParty(involvedParty);
+					sesion.setEnterpriseName(get(IEnterpriseService.class).getIEnterprise(involvedParty.getEnterprise()));
 					sesion.addValue("geo-data", data);
 				}
 			}

@@ -4,12 +4,10 @@ import com.guicedee.activitymaster.core.services.IActivityMasterProgressMonitor;
 import com.guicedee.activitymaster.core.services.classifications.enterprise.IEnterpriseName;
 import com.guicedee.activitymaster.core.services.dto.IGeography;
 import com.guicedee.activitymaster.core.services.dto.ISystems;
-import com.guicedee.activitymaster.geography.services.dto.GeographyContinent;
+import com.guicedee.activitymaster.geography.services.dto.*;
 import com.guicedee.activitymaster.geography.services.dto.classifications.GeographyAsciiCode;
 import com.guicedee.activitymaster.geography.services.dto.classifications.ISO639Language;
 
-import javax.cache.annotation.CacheKey;
-import javax.cache.annotation.CacheResult;
 import java.util.UUID;
 
 public interface IGeographyService<J extends IGeographyService<J>>
@@ -28,8 +26,21 @@ public interface IGeographyService<J extends IGeographyService<J>>
 
 	void loadLanguages(IEnterpriseName<?> enterpriseName, IActivityMasterProgressMonitor progressMonitor);
 
-	@CacheResult(cacheName = "ISO639Languages")
-	ISO639Language create(@CacheKey ISO639Language language, @CacheKey IEnterpriseName<?> enterpriseName);
+	ISO639Language create(ISO639Language language, IEnterpriseName<?> enterpriseName);
 
 	ISO639Language findLanguage(String asciiCode, IEnterpriseName<?> enterpriseName);
+
+	void loadCountryInfo(IEnterpriseName<?> enterpriseName, IActivityMasterProgressMonitor progressMonitor);
+
+	GeographyCurrency findOrCreateCurrency(GeographyCurrency currency, IEnterpriseName<?> enterpriseName, UUID... identifyingToken);
+
+	GeographyCountry findCountry(GeographyCountry country, IEnterpriseName<?> enterpriseName, UUID... identityToken);
+
+	GeographyTimezone findTimezone(GeographyTimezone timezone, IEnterpriseName<?> enterpriseName);
+
+	void loadTimeZones(IEnterpriseName<?> enterpriseName, IActivityMasterProgressMonitor progressMonitor);
+
+	void loadPostalCodes(IEnterpriseName<?> enterpriseName, IActivityMasterProgressMonitor progressMonitor);
+
+	GeographyPostalCode find(GeographyPostalCode postalCode, IEnterpriseName<?> enterpriseName, UUID... identityToken);
 }

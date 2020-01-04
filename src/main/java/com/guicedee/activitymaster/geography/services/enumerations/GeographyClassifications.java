@@ -39,8 +39,8 @@ public enum GeographyClassifications
 	Name("name of geographical point (utf8)", GeographyXClassification),
 	NameAscii("name of geographical point in plain ascii characters", GeoNameClassificationDataConcept),
 	AlternateNames("alternatenames, comma separated, ascii names automatically transliterated, convenience attribute from alternatename table", GeoNameClassificationDataConcept),
-	Latitude("latitude in decimal degrees (wgs84)", GeoNameClassificationDataConcept),
-	Longitude("longitude in decimal degrees (wgs84)", GeoNameClassificationDataConcept),
+	Latitude("latitude in decimal degrees (wgs84)", GeographyCoordinatesConcept),
+	Longitude("longitude in decimal degrees (wgs84)", GeographyCoordinatesConcept),
 	CountryCode("ISO-3166 2-letter country code, 2 characters", GeoNameClassificationDataConcept),
 	CountryCode2("alternate country codes, comma separated, ISO-3166 2-letter country code, 200 characters", GeoNameClassificationDataConcept),
 
@@ -71,7 +71,16 @@ public enum GeographyClassifications
 	CountryPostalCodeFormat("The postal code format for a given country", GeoNameClassificationDataConcept),
 	CountryPostalCodeRegex("The given regex format for a country", GeoNameClassificationDataConcept),
 	CountryNeighbours("The neighbours of a given country", GeoNameClassificationDataConcept),
-	CountryEquivalentFipsCode("The equivalent fips code for a country", GeoNameClassificationDataConcept);
+	CountryEquivalentFipsCode("The equivalent fips code for a country", GeoNameClassificationDataConcept),
+
+	TimeZoneOffsetJan2016("The offset of the timezone from January 2016", GeographyTimezoneConcept),
+	TimeZoneOffsetJuly2016("The offset of the timezone from July 2016", GeographyTimezoneConcept),
+	TimeZoneRawOffset("The raw offset of the timezone", GeographyTimezoneConcept),
+
+	PostalNumber("The actual number for a postal code", GeographyPostalCodesConcept),
+	PostalPlaceName("The name for a postal code", GeographyPostalCodesConcept),
+
+	;
 
 	private String description;
 	private IClassificationDataConceptValue<?> concept;

@@ -17,5 +17,4 @@ public class GeographyAsciiCode
 	private String code;
 	private String name;
 	private String nameAscii;
-	private int geonameId;
 }

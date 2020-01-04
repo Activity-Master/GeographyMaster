@@ -13,10 +13,9 @@ public enum GeoDataFiles
 	TimeZones("timeZones.csv", "CountryCode", "TimeZoneId", "GMT offset 1. Jan 2019", "DST offset 1. Jul 2019", "rawOffset"),
 	ZAGeoData("ZA.csv", "geonameid", "name", "asciiname", "alternatenames", "latitude", "longitude", "feature class", "feature code", "country code", "cc2", "admin1 code",
 	          "admin2 code", "admin3 code", "admin4 code", "population", "elevation", "dem", "timezone", "modification date"),
-	ZAPostalCodes("ZA_PostalCodes.csv", "country code", "postal code", "place name", "admin name1", "admin code1", "admin name2", "admin code2", "admin name3", "admin code3",
+	ZAPostalCodes("ZAPostalCodes.csv", "country code", "postal code", "place name", "admin name1", "admin code1", "admin name2", "admin code2", "admin name3", "admin code3",
 	              "latitude", "longitude", "accuracy"),
-	ISO639Languages("iso639languages.csv","ISO 639-2 Code","ISO 639-1 Code","English name of Language","French name of Language","German name of Language")
-	;
+	ISO639Languages("iso639languages.csv", "ISO 639-2 Code", "ISO 639-1 Code", "English name of Language", "French name of Language", "German name of Language");
 
 	private String csvFileName;
 	private String[] headerNames;
