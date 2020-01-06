@@ -24,7 +24,6 @@ import com.guicedee.activitymaster.geography.services.dto.classifications.Geogra
 import com.guicedee.activitymaster.geography.services.dto.classifications.ISO639Language;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
-import com.guicedee.guicedinjection.interfaces.JobService;
 import com.guicedee.guicedpersistence.db.annotations.Transactional;
 import geodata.GeoDataFinder;
 import org.apache.commons.csv.CSVFormat;
@@ -224,11 +223,7 @@ public class GeographyService<J extends GeographyService<J>>
 				if (countryCode != null && ascii.getCode()
 				                                .startsWith(countryCode.toUpperCase() + "."))
 				{
-					JobService.getInstance()
-					          .addJob("GeographyCreateAsciiCodes", () ->
-					          {
-						          create(ascii, enterpriseName);
-					          });
+					create(ascii, enterpriseName);
 				}
 				if (current % 10 == 0)
 				{
@@ -294,11 +289,7 @@ public class GeographyService<J extends GeographyService<J>>
 				if (countryCode != null && ascii.getCode()
 				                                .startsWith(countryCode.toUpperCase() + "."))
 				{
-					JobService.getInstance()
-					          .addJob("GeographyCreateAdmin2Codes", () ->
-					          {
-						          create(ascii, enterpriseName, true);
-					          });
+					create(ascii, enterpriseName, true);
 				}
 				if (current % 10 == 0)
 				{
@@ -457,20 +448,24 @@ public class GeographyService<J extends GeographyService<J>>
 						        .add(s);
 					}
 				}
-				JobService.getInstance()
-				          .addJob("GeographyCreateLanguages", () ->
-				          {
-					          if (!language.getName()
-					                       .isEmpty())
-					          {
-						          create(language, enterpriseName);
-					          }
-					          logProgress("Geography Service", "Loading Language - " +
-					                                           (language.getName()
-					                                                    .isEmpty() ? "-" : language.getName()
-					                                                                               .toArray()[0])
-							          , 1, progressMonitor);
-				          });
+
+				if (language.getIso6391Code()
+				            .equals("en") ||
+				    language.getIso6391Code()
+				            .equals("af") ||
+				    language.getIso6391Code()
+				            .equals("zu") &&
+				    !language.getName()
+				             .isEmpty())
+				{
+					create(language, enterpriseName);
+				}
+				logProgress("Geography Service", "Loading Language - " +
+				                                 (language.getName()
+				                                          .isEmpty() ? "-" : language.getName()
+				                                                                     .toArray()[0])
+						, 1, progressMonitor);
+
 			}
 		}
 		logProgress("Geography Service", "Geography Associated Languages queued", 1, progressMonitor);
@@ -667,7 +662,6 @@ public class GeographyService<J extends GeographyService<J>>
 			for (CSVRecord record : finder.getRecords())
 			{
 				current++;
-
 				GeographyCountry country = new GeographyCountry();
 				country.setIso(record.get(0));
 				country.setIso3(record.get(1));
@@ -724,7 +718,11 @@ public class GeographyService<J extends GeographyService<J>>
 				{
 					country.setEquivalentFips(record.get(18));
 				}
-				create(country, enterpriseName);
+				if (record.get(0)
+				          .equalsIgnoreCase("za"))
+				{
+					create(country, enterpriseName);
+				}
 				logProgress("Geography Service", "Loaded Country " + country.getCountryName(), 1, progressMonitor);
 			}
 		}
@@ -980,13 +978,8 @@ public class GeographyService<J extends GeographyService<J>>
 				post.setPostalCodePlaceName(record.get(2));
 				GeographyCoordinates coordinates = new GeographyCoordinates(record.get(9), record.get(10));
 				post.setCoordinates(coordinates);
-				JobService.getInstance()
-				          .addJob("GeographyPostalCodeCreation", () ->
-				          {
-					          create(post, enterpriseName);
-					          logProgress("Postal Codes", "Loaded PostalCode - " + post.getPostalCode(), 1, progressMonitor);
-				          });
-
+				create(post, enterpriseName);
+				logProgress("Postal Codes", "Loaded PostalCode - " + post.getPostalCode(), 1, progressMonitor);
 			}
 		}
 	}
