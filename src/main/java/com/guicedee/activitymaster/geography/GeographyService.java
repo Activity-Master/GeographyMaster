@@ -32,7 +32,6 @@ import org.apache.commons.csv.CSVRecord;
 import javax.cache.annotation.CacheKey;
 import javax.cache.annotation.CacheResult;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Null;
 import java.util.*;
 
 import static com.entityassist.querybuilder.EntityAssistStrings.*;
@@ -49,7 +48,7 @@ public class GeographyService<J extends GeographyService<J>>
 {
 	@CacheResult(cacheName = "GeographyPlanets",
 			skipGet = true)
-	public IGeography<?> createPlanet(ISystems<?> originatingSystem, @CacheKey @NotNull String value, @Null String originalUniqueID, UUID... identifyingToken)
+	public IGeography<?> createPlanet(ISystems<?> originatingSystem, @CacheKey @NotNull String value, String originalUniqueID, UUID... identifyingToken)
 	{
 		Geography geo = new Geography();
 		ISystems<?> activityMasterSystem = get(ISystemsService.class)
@@ -94,7 +93,7 @@ public class GeographyService<J extends GeographyService<J>>
 
 	@CacheResult(cacheName = "GeographyContinents")
 	public IGeography<?> createContinent(
-			@CacheKey String planet, @CacheKey GeographyContinent continent, ISystems<?> originatingSystem, @Null String originalUniqueID, UUID... identifyingToken)
+			@CacheKey String planet, @CacheKey GeographyContinent continent, ISystems<?> originatingSystem, String originalUniqueID, UUID... identifyingToken)
 	{
 		Geography geo = new Geography();
 		ISystems<?> activityMasterSystem = get(ISystemsService.class)
@@ -163,7 +162,7 @@ public class GeographyService<J extends GeographyService<J>>
 
 	@Override
 	@CacheResult(cacheName = "GeographyContinents")
-	public GeographyContinent findContinent(@CacheKey GeographyContinent continent, @CacheKey ISystems<?> originatingSystem, UUID... identifyingToken)
+	public GeographyContinent findContinent(@CacheKey GeographyContinent continent, ISystems<?> originatingSystem, UUID... identifyingToken)
 	{
 		Geography geo = new Geography();
 		ISystems<?> activityMasterSystem = get(ISystemsService.class)
@@ -718,11 +717,7 @@ public class GeographyService<J extends GeographyService<J>>
 				{
 					country.setEquivalentFips(record.get(18));
 				}
-				if (record.get(0)
-				          .equalsIgnoreCase("za"))
-				{
-					create(country, enterpriseName);
-				}
+				create(country, enterpriseName);
 				logProgress("Geography Service", "Loaded Country " + country.getCountryName(), 1, progressMonitor);
 			}
 		}
@@ -731,7 +726,7 @@ public class GeographyService<J extends GeographyService<J>>
 
 	@Override
 	@CacheResult(cacheName = "GeographyCurrency")
-	public GeographyCurrency findOrCreateCurrency(@CacheKey GeographyCurrency currency, @CacheKey IEnterpriseName<?> enterpriseName, @CacheKey UUID... identifyingToken)
+	public GeographyCurrency findOrCreateCurrency(@CacheKey GeographyCurrency currency, @CacheKey IEnterpriseName<?> enterpriseName, UUID... identifyingToken)
 	{
 		IEnterprise<?> enterprise = GuiceContext.get(IEnterpriseService.class)
 		                                        .getEnterprise(enterpriseName);
@@ -775,7 +770,7 @@ public class GeographyService<J extends GeographyService<J>>
 	 */
 	@Override
 	@CacheResult(cacheName = "GeographyCountries")
-	public GeographyCountry findCountry(@CacheKey GeographyCountry country, @CacheKey IEnterpriseName<?> enterpriseName, @CacheKey UUID... identityToken)
+	public GeographyCountry findCountry(@CacheKey GeographyCountry country, @CacheKey IEnterpriseName<?> enterpriseName, UUID... identityToken)
 	{
 		IEnterprise<?> enterprise = GuiceContext.get(IEnterpriseService.class)
 		                                        .getEnterprise(enterpriseName);
@@ -952,6 +947,7 @@ public class GeographyService<J extends GeographyService<J>>
 				                       .get()
 				                       .orElseThrow(() -> new GeographyException("Unable to find a country that has loaded?"));
 		countryGeo.addChild(geo, enterprise, identityToken);
+
 		return timezone;
 	}
 
@@ -1043,7 +1039,7 @@ public class GeographyService<J extends GeographyService<J>>
 
 	@Override
 	@CacheResult(cacheName = "GeographyPostalCodes")
-	public GeographyPostalCode find(@CacheKey GeographyPostalCode postalCode, IEnterpriseName<?> enterpriseName, UUID... identityToken)
+	public GeographyPostalCode find(@CacheKey GeographyPostalCode postalCode, @CacheKey IEnterpriseName<?> enterpriseName, UUID... identityToken)
 	{
 		IEnterprise<?> enterprise = GuiceContext.get(IEnterpriseService.class)
 		                                        .getEnterprise(enterpriseName);
