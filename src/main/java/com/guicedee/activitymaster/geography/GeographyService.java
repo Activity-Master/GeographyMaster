@@ -34,12 +34,12 @@ import javax.cache.annotation.CacheResult;
 import javax.validation.constraints.NotNull;
 import java.util.*;
 
-import static com.entityassist.querybuilder.EntityAssistStrings.*;
 import static com.guicedee.activitymaster.core.services.classifications.involvedparty.InvolvedPartyClassifications.Languages;
 import static com.guicedee.activitymaster.core.services.classifications.involvedparty.InvolvedPartyClassifications.*;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassificationDataConcepts.*;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
 import static com.guicedee.guicedinjection.GuiceContext.*;
+import static com.guicedee.guicedinjection.json.StaticStrings.*;
 import static geodata.GeoDataFiles.*;
 
 @Singleton

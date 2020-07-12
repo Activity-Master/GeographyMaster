@@ -27,7 +27,7 @@ module com.guicedee.activitymaster.geography {
 	requires com.jwebmp.plugins.security.ipgeography;
 	requires com.entityassist;
 
-	requires com.guicedee.guicedpersistence.btm;
+	requires com.guicedee.guicedpersistence;
 
 	provides com.guicedee.activitymaster.core.services.IActivityMasterSystem with GeographySystem;
 	provides IWebSocketMessageReceiver with GeoDataMessageReceiver;
