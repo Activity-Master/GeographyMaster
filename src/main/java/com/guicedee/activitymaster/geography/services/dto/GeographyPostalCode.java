@@ -2,6 +2,7 @@ package com.guicedee.activitymaster.geography.services.dto;
 
 import com.guicedee.activitymaster.geography.services.dto.abstractions.GeographyDefaultDto;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import javax.validation.constraints.NotNull;
@@ -10,6 +11,7 @@ import java.util.Objects;
 
 @Data
 @Accessors(chain = true)
+@EqualsAndHashCode(of = "postalCode",callSuper = false)
 public class GeographyPostalCode
 		extends GeographyDefaultDto
 		implements Serializable
@@ -21,30 +23,8 @@ public class GeographyPostalCode
 	private GeographyCountry countryCode;
 	private String postalCodePlaceName;
 
+	private String parentPlaceName;
+	private String provinceName;
+
 	private GeographyCoordinates coordinates;
-
-	@Override
-	public boolean equals(Object o)
-	{
-		if (this == o)
-		{
-			return true;
-		}
-		if (o == null || getClass() != o.getClass())
-		{
-			return false;
-		}
-		if (!super.equals(o))
-		{
-			return false;
-		}
-		GeographyPostalCode that = (GeographyPostalCode) o;
-		return Objects.equals(getPostalCode(), that.getPostalCode());
-	}
-
-	@Override
-	public int hashCode()
-	{
-		return Objects.hash(super.hashCode(), getPostalCode());
-	}
 }

@@ -1,6 +1,7 @@
 package com.guicedee.activitymaster.geography.services.dto.classifications;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 import java.util.HashSet;
@@ -8,6 +9,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @Data
+@EqualsAndHashCode(callSuper = false,of = {"iso6392Code","iso6391Code"})
 public class ISO639Language
 		implements Serializable
 {
@@ -19,26 +21,4 @@ public class ISO639Language
 
 	private String iso6392Code;
 	private String iso6391Code;
-
-	@Override
-	public int hashCode()
-	{
-		return Objects.hash(getIso6392Code(), getIso6391Code());
-	}
-
-	@Override
-	public boolean equals(Object o)
-	{
-		if (this == o)
-		{
-			return true;
-		}
-		if (o == null || getClass() != o.getClass())
-		{
-			return false;
-		}
-		ISO639Language language = (ISO639Language) o;
-		return Objects.equals(getIso6392Code(), language.getIso6392Code()) &&
-		       Objects.equals(getIso6391Code(), language.getIso6391Code());
-	}
 }

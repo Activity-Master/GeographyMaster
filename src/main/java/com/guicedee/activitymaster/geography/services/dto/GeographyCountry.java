@@ -3,6 +3,7 @@ package com.guicedee.activitymaster.geography.services.dto;
 import com.guicedee.activitymaster.geography.services.dto.abstractions.GeographyDefaultDto;
 import com.guicedee.activitymaster.geography.services.dto.classifications.ISO639Language;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import javax.validation.constraints.Size;
@@ -13,6 +14,7 @@ import java.util.Objects;
 
 @Data
 @Accessors(chain = true)
+@EqualsAndHashCode(of = "iso",callSuper = false)
 public class GeographyCountry
 		extends GeographyDefaultDto
 		implements Serializable
@@ -45,25 +47,4 @@ public class GeographyCountry
 	private String capital;
 
 	private GeographyContinent continent;
-
-	@Override
-	public int hashCode()
-	{
-		return Objects.hash(getIso());
-	}
-
-	@Override
-	public boolean equals(Object o)
-	{
-		if (this == o)
-		{
-			return true;
-		}
-		if (o == null || getClass() != o.getClass())
-		{
-			return false;
-		}
-		GeographyCountry that = (GeographyCountry) o;
-		return getIso().equals(that.getIso());
-	}
 }

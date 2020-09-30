@@ -8,7 +8,6 @@
         <version>0.0.0_0-SNAPSHOT</version>
     </parent>
 
-
     <artifactId>geography-master</artifactId>
     <packaging>jar</packaging>
     <name>Geography Master</name>
@@ -34,7 +33,6 @@
         <dependency>
             <groupId>com.guicedee.services</groupId>
             <artifactId>commons-csv</artifactId>
-            <version>0.0.0_0-SNAPSHOT</version>
         </dependency>
 
         <dependency>

@@ -35,6 +35,24 @@ public class GeoDataFinder
 		}
 	}
 
+	public GeoDataFinder(GeoDataFiles file, CSVFormat format)
+	{
+		String fileToRead = file.getCsvFileName();
+		is = GeoDataFiles.class.getResourceAsStream(fileToRead);
+		in = new InputStreamReader(is);
+		try
+		{
+			parser = new CSVParser(in, format.withDelimiter('\t')
+					.withFirstRecordAsHeader());
+			records = parser.getRecords();
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+
+
 	public Iterable<CSVRecord> getRecords()
 	{
 		return records;

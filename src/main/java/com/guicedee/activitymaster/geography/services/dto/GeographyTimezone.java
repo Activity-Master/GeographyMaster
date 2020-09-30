@@ -2,6 +2,7 @@ package com.guicedee.activitymaster.geography.services.dto;
 
 import com.guicedee.activitymaster.geography.services.dto.abstractions.GeographyDefaultDto;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import javax.validation.constraints.NotNull;
@@ -9,14 +10,14 @@ import javax.validation.constraints.Size;
 
 @Data
 @Accessors(chain = true)
+@EqualsAndHashCode(of="timezoneID",callSuper = false)
 public class GeographyTimezone
 		extends GeographyDefaultDto
 {
 	private static final long serialVersionUID = 1L;
 
-	@Size(max = 2,
-			min = 2)
-	private String countryCode;
+	private GeographyCountry countryCode;
+
 	@NotNull
 	private String timezoneID;
 

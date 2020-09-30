@@ -1,5 +1,6 @@
 package com.guicedee.activitymaster.geography.services.enumerations;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.guicedee.activitymaster.core.services.classifications.geography.IGeographyClassification;
 import com.guicedee.activitymaster.core.services.enumtypes.IClassificationDataConceptValue;
 import com.guicedee.activitymaster.core.services.enumtypes.IClassificationValue;
@@ -18,7 +19,8 @@ public enum GeographyFeatureClassesClassifications
 	S("Spot, Building, Farm", GeoNameClassificationDataConcept),
 	T("Mountain, Hill,Rock ...", GeoNameClassificationDataConcept),
 	U("Undersea", GeoNameClassificationDataConcept),
-	F("Forest, Heath,...", GeoNameClassificationDataConcept),
+	V("Forest, Heath,...", GeoNameClassificationDataConcept),
+	Z("Unknown",GeoNameClassificationDataConcept)
 	;
 
 	private String description;
@@ -28,6 +30,20 @@ public enum GeographyFeatureClassesClassifications
 	{
 		this.description = description;
 		this.concept = concept;
+	}
+
+	@JsonCreator
+	public static GeographyFeatureClassesClassifications fromString(String value)
+	{
+		if(value == null)
+			return Z;
+		for (GeographyFeatureClassesClassifications gg : GeographyFeatureClassesClassifications.values()) {
+			if(gg.name().equalsIgnoreCase(value.charAt(0) + ""))
+			{
+				return gg;
+			}
+		}
+		return Z;
 	}
 
 	GeographyFeatureClassesClassifications(String description)
@@ -45,5 +61,10 @@ public enum GeographyFeatureClassesClassifications
 	public IClassificationDataConceptValue<?> concept()
 	{
 		return concept;
+	}
+
+	@Override
+	public String toString() {
+		return name() + " - " + description;
 	}
 }

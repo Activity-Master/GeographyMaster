@@ -1,6 +1,7 @@
 package com.guicedee.activitymaster.geography.services.dto;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
@@ -8,6 +9,7 @@ import java.util.Objects;
 
 @Data
 @Accessors(chain = true)
+@EqualsAndHashCode(of = "currencyCode",callSuper = false)
 public class GeographyCurrency
 		implements Serializable
 {
@@ -15,25 +17,4 @@ public class GeographyCurrency
 
 	private String currencyCode;
 	private String currencyName;
-
-	@Override
-	public int hashCode()
-	{
-		return Objects.hash(getCurrencyCode());
-	}
-
-	@Override
-	public boolean equals(Object o)
-	{
-		if (this == o)
-		{
-			return true;
-		}
-		if (o == null || getClass() != o.getClass())
-		{
-			return false;
-		}
-		GeographyCurrency that = (GeographyCurrency) o;
-		return Objects.equals(getCurrencyCode(), that.getCurrencyCode());
-	}
 }

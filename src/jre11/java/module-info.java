@@ -22,6 +22,8 @@ module com.guicedee.activitymaster.geography {
 
 	requires static lombok;
 	requires org.apache.commons.csv;
+	requires org.apache.commons.text;
+	requires org.apache.commons.lang3;
 
 	requires com.guicedee.guicedservlets.websockets;
 	requires com.jwebmp.plugins.security.ipgeography;

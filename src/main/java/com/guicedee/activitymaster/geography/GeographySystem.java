@@ -57,7 +57,7 @@ public class GeographySystem
 		                                                                                system, token);
 
 		IClassificationDataConcept<?> dtTimeZones = dataConceptService.createDataConcept(GeographyTimezoneConcept,
-		                                                                                 "The known currencies of the world",
+		                                                                                 "The known Time Zones",
 		                                                                                 system, token);
 		IClassificationDataConcept<?> dtPostalCodes = dataConceptService.createDataConcept(GeographyPostalCodesConcept,
 		                                                                                   "Postal codes related to a country",
@@ -81,14 +81,17 @@ public class GeographySystem
 			}
 
 			classificationService.create(Planet, system);
+			classificationService.create(Languages, system,Planet);
 			classificationService.create(Continent, system, Planet);
 			classificationService.create(Country, system, Continent);
 			classificationService.create(Currency, system, Country);
 			classificationService.create(Province, system, Country);
 			classificationService.create(PostalCode, system, Province);
+			classificationService.create(PostalCodeSuburb, system, PostalCode);
 			classificationService.create(Municipalities, system, Province);
 			classificationService.create(City, system, Municipalities);
 			classificationService.create(Town, system, City);
+			classificationService.create(Location, system, Country);
 			classificationService.create(TimeZone, system);
 
 			if (progressMonitor != null)
@@ -149,7 +152,7 @@ public class GeographySystem
 			}
 			//Create Planets and Continents by default
 			GeographyService<?> service = (GeographyService<?>) get(IGeographyService.class);
-			service.createPlanet(system, "Earth", null, token);
+			service.createPlanet("Earth",null, enterprise,token);
 			if (progressMonitor != null)
 			{
 				progressMonitor.progressUpdate("Loading Geography Updates", "Creating Continents");

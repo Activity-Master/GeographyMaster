@@ -7,14 +7,16 @@ public enum GeoDataFiles
 	AdminCode5("adminCode5.csv", "geonameid", "adm5code"),
 	CountryInfo("countryInfo.csv", "ISO", "ISO3", "ISO-Numeric", "fips", "Country", "Capital", "Area(in sq km)", "Population", "Continent", "tld", "CurrencyCode", "CurrencyName",
 	            "Phone", "Postal Code Format", "Postal Code Regex", "Languages", "geonameid", "neighbours", "EquivalentFipsCode"),
-	FeatureCodes_en("featureCodes_en", "code", "description"),
+	FeatureCodes_en("featureCodes_en.csv", "code", "description"),
 	Hierarchy("hierarchy.csv", "parentId", "childId", "type"),
 	ISOLanguageCodes("iso_languagecodes.csv", "ISO 639-3", "ISO 639-2", "ISO 639-1", "Language Name"),
 	TimeZones("timeZones.csv", "CountryCode", "TimeZoneId", "GMT offset 1. Jan 2019", "DST offset 1. Jul 2019", "rawOffset"),
-	ZAGeoData("ZA.csv", "geonameid", "name", "asciiname", "alternatenames", "latitude", "longitude", "feature class", "feature code", "country code", "cc2", "admin1 code",
+	ZAGeoData("ZA.csv", "geonameid", "name", "asciiname", "alternatenames",
+			"latitude", "longitude", "feature class", "feature code", "country code", "cc2", "admin1 code",
 	          "admin2 code", "admin3 code", "admin4 code", "population", "elevation", "dem", "timezone", "modification date"),
 	ZAPostalCodes("ZAPostalCodes.csv", "country code", "postal code", "place name", "admin name1", "admin code1", "admin name2", "admin code2", "admin name3", "admin code3",
 	              "latitude", "longitude", "accuracy"),
+	ZAPostalCodesUpdates("ZAPostalCodesUpdates.txt","id","city","countryCode","createdBy","createdOn","postalCode","stateProvinceCode","suburb","updatedBy","updatedOn","stateProvinceName"),
 	ISO639Languages("iso639languages.csv", "ISO 639-2 Code", "ISO 639-1 Code", "English name of Language", "French name of Language", "German name of Language");
 
 	private String csvFileName;

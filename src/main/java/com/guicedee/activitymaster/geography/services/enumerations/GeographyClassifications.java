@@ -12,15 +12,17 @@ public enum GeographyClassifications
 				           , IGeographyClassification<GeographyClassifications>
 {
 	Planet("A Planet", GeographyXClassification),
-	Languages("A Planets Languages", GlobalClassificationsDataConceptName),
+	Languages("A Planets Languages", GeographyXClassification),
 	Continent("Designates a continent", GeographyXGeography),
 	Country("Designates a Country", GeographyXGeography),
 	Municipalities("Designates a Municipal Area", GeographyXGeography),
 	Currency("A specific currency", GlobalClassificationsDataConceptName),
 	PostalCode("A postal code", GeographyXGeography),
+	PostalCodeSuburb("A postal code suburb identifier", GeographyXGeography),
 	Province("A Province", GeographyXGeography),
 	City("A City", GeographyXGeography),
 	Town("A Town", GeographyXGeography),
+	Location("An identified location", Geography),
 	TimeZone("A TimeZone", GeographyXGeography),
 
 	GeographyClassifications("Parent for multi level classification hierarchies", GeographyXClassification),
