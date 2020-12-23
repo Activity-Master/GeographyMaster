@@ -16,7 +16,7 @@ module com.guicedee.activitymaster.geography {
 
 	requires com.fasterxml.jackson.databind;
 
-	requires java.validation;
+	requires jakarta.validation;
 
 	requires cache.api;
 

@@ -11,9 +11,9 @@ import com.guicedee.activitymaster.core.services.dto.ISystems;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
 
-import javax.cache.annotation.CacheKey;
-import javax.cache.annotation.CacheResult;
-import javax.inject.Singleton;
+import jakarta.cache.annotation.CacheKey;
+import jakarta.cache.annotation.CacheResult;
+import jakarta.inject.Singleton;
 import java.util.UUID;
 
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.Continent;

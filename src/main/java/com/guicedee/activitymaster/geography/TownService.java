@@ -12,10 +12,10 @@ import com.guicedee.activitymaster.core.services.enumtypes.IClassificationValue;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
 
-import javax.cache.annotation.CacheKey;
-import javax.cache.annotation.CacheResult;
-import javax.inject.Singleton;
-import javax.validation.constraints.NotNull;
+import jakarta.cache.annotation.CacheKey;
+import jakarta.cache.annotation.CacheResult;
+import jakarta.inject.Singleton;
+import jakarta.validation.constraints.NotNull;
 import java.util.Set;
 import java.util.UUID;
 

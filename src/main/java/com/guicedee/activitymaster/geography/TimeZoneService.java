@@ -10,9 +10,9 @@ import com.guicedee.activitymaster.core.services.system.IClassificationDataConce
 import com.guicedee.activitymaster.core.services.system.IClassificationService;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 
-import javax.cache.annotation.CacheKey;
-import javax.cache.annotation.CacheResult;
-import javax.inject.Singleton;
+import jakarta.cache.annotation.CacheKey;
+import jakarta.cache.annotation.CacheResult;
+import jakarta.inject.Singleton;
 import java.util.Set;
 import java.util.UUID;
 

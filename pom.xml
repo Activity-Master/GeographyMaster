@@ -38,6 +38,7 @@
         <dependency>
             <groupId>com.jwebmp.plugins.security</groupId>
             <artifactId>jwebmp-plugins-ip-geography-security</artifactId>
+            <version>${jwebmp.version}</version>
         </dependency>
     </dependencies>
 </project>

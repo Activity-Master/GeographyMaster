@@ -31,9 +31,9 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
 
-import javax.cache.annotation.CacheKey;
-import javax.cache.annotation.CacheResult;
-import javax.validation.constraints.NotNull;
+import jakarta.cache.annotation.CacheKey;
+import jakarta.cache.annotation.CacheResult;
+import jakarta.validation.constraints.NotNull;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -766,7 +766,7 @@ public class GeographyService<J extends GeographyService<J>>
 	
 	@Override
 	@CacheResult(cacheName = "GeographyFindGeographyById")
-	public IGeography<?> findGeographyById(@CacheKey Long geographyID, @CacheKey IEnterpriseName<?> enterpriseName, @CacheKey UUID... identityToken)
+	public IGeography<?> findGeographyById(@CacheKey UUID geographyID, @CacheKey IEnterpriseName<?> enterpriseName, @CacheKey UUID... identityToken)
 	{
 		return new Geography().builder()
 		                      .find(geographyID)
@@ -1063,7 +1063,7 @@ public class GeographyService<J extends GeographyService<J>>
 		
 		Long exists = new Geography()
 				.builder()
-				.withGeoNameID(geoData.getGeonameId())
+				.withGeoNameID(geoData.getGeonameId().toString())
 				.getCount();
 		if (exists == 0)
 		{
@@ -1131,7 +1131,7 @@ public class GeographyService<J extends GeographyService<J>>
 	}
 	
 	@CacheResult(cacheName = "GeographyByGeoNameID")
-	public Geography findGeographyByID(@CacheKey Long geographyID)
+	public Geography findGeographyByID(@CacheKey UUID geographyID)
 	{
 		if (geographyID == null)
 		{ return null; }

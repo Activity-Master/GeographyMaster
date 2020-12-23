@@ -9,8 +9,8 @@ import com.guicedee.activitymaster.geography.services.dto.*;
 import com.guicedee.activitymaster.geography.services.dto.classifications.GeographyAsciiCode;
 import com.guicedee.activitymaster.geography.services.dto.classifications.ISO639Language;
 
-import javax.cache.annotation.CacheKey;
-import javax.cache.annotation.CacheResult;
+import jakarta.cache.annotation.CacheKey;
+import jakarta.cache.annotation.CacheResult;
 import java.util.UUID;
 
 public interface IGeographyService<J extends IGeographyService<J>>
@@ -43,7 +43,7 @@ public interface IGeographyService<J extends IGeographyService<J>>
 	@CacheResult(cacheName = "GeographyPostalCodesSuburb")
 	GeographyPostalCode findOrCreatePostalCodeSuburb(@CacheKey String code, @CacheKey String description, @CacheKey IEnterpriseName<?> enterpriseName, UUID... identityToken);
 	
-	IGeography<?> findGeographyById(Long geographyID, @CacheKey IEnterpriseName<?> enterpriseName, UUID... identityToken);
+	IGeography<?> findGeographyById(UUID geographyID, @CacheKey IEnterpriseName<?> enterpriseName, UUID... identityToken);
 	
 	void loadFeatureCodes(IEnterpriseName<?> enterpriseName, IActivityMasterProgressMonitor progressMonitor, UUID... identityToken);
 
