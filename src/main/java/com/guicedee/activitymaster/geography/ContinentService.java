@@ -19,7 +19,6 @@ import java.util.UUID;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.Continent;
 import static com.guicedee.guicedinjection.GuiceContext.get;
 
-@Singleton
 public class ContinentService
 {
 	@CacheResult(cacheName = "GeographyContinents",skipGet = true)

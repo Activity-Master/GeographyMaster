@@ -20,7 +20,6 @@ import static com.guicedee.activitymaster.core.services.classifications.involved
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.Languages;
 import static com.guicedee.guicedinjection.GuiceContext.get;
 
-@Singleton
 public class LanguagesService
 {
 	public static final Set<IClassificationValue<?>> LanguagesClassifications = Set.of(ISO639_1, ISO639_2, ISO6392EnglishName, ISO6392FrenchName, ISO6392GermanName);

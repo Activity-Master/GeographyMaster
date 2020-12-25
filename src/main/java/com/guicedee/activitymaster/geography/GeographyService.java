@@ -44,7 +44,6 @@ import static com.guicedee.guicedinjection.GuiceContext.*;
 import static com.guicedee.guicedinjection.json.StaticStrings.*;
 import static geodata.GeoDataFiles.*;
 
-@Singleton
 public class GeographyService<J extends GeographyService<J>>
 		implements IProgressable,
 		           IGeographyService<J>

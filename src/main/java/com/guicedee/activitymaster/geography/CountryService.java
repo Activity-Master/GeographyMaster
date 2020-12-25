@@ -24,7 +24,6 @@ import static com.guicedee.activitymaster.geography.services.enumerations.Geogra
 import static com.guicedee.guicedinjection.GuiceContext.get;
 import static com.guicedee.guicedinjection.json.StaticStrings.STRING_EMPTY;
 
-@Singleton
 public class CountryService
 {
 	public static final Set<IClassificationValue<?>> CountryClassifications = Set.of(CountryISO3166, CountryISO3166_3, CountryISO_Numeric, CountryFips, CountryCapital, CountryAreaInSqKm, CountryTld, CountryPhone, CountryPostalCodeFormat, CountryPostalCodeRegex);

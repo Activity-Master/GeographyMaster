@@ -25,7 +25,6 @@ import java.util.UUID;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
 import static com.guicedee.guicedinjection.GuiceContext.get;
 
-@Singleton
 public class PostalCodeService
 {
 	public static final Set<IClassificationValue<?>> PostalCodeClassifications = Set.of(Latitude,Longitude);

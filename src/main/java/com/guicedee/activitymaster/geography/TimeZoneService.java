@@ -21,7 +21,6 @@ import static com.guicedee.activitymaster.geography.services.enumerations.Geogra
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
 import static com.guicedee.guicedinjection.GuiceContext.get;
 
-@Singleton
 public class TimeZoneService
 {
 	public static final Set<IClassificationValue<?>> TimeZoneClassifications = Set.of(TimeZone,TimeZoneRawOffset, TimeZoneOffsetJuly2016,TimeZoneOffsetJan2016);

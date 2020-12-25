@@ -24,7 +24,6 @@ import static com.guicedee.activitymaster.geography.services.enumerations.Geogra
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.DEM;
 import static com.guicedee.guicedinjection.GuiceContext.get;
 
-@Singleton
 public class DistrictService
 {
 	public static final Set<IClassificationValue<?>> DistrictClassifications = Set.copyOf(ProvinceService.ProvinceClassifications);

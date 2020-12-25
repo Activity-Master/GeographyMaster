@@ -17,7 +17,7 @@ import java.util.UUID;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassificationDataConcepts.GeographyCurrencyConcept;
 import static com.guicedee.guicedinjection.GuiceContext.get;
 
-@Singleton
+
 public class CurrencyService
 {
 	@CacheResult(cacheName = "GeographyCurrencies",skipGet = true)

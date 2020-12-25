@@ -23,7 +23,6 @@ import static com.guicedee.activitymaster.geography.services.enumerations.Geogra
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.DEM;
 import static com.guicedee.guicedinjection.GuiceContext.get;
 
-@Singleton
 public class TownService
 {
 	public static final Set<IClassificationValue<?>> TownClassifications = Set.copyOf(ProvinceService.ProvinceClassifications);

@@ -20,7 +20,6 @@ import java.util.UUID;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.Planet;
 import static com.guicedee.guicedinjection.GuiceContext.get;
 
-@Singleton
 public class PlanetService
 {
 	@CacheResult(cacheName = "GeographyPlanets",
