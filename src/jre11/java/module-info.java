@@ -1,5 +1,6 @@
 import com.guicedee.activitymaster.geography.GeoDataMessageReceiver;
 import com.guicedee.activitymaster.geography.GeographySystem;
+import com.guicedee.activitymaster.geography.implementations.GeographerMasterModuleInclusion;
 import com.guicedee.activitymaster.geography.implementations.GeographyBinder;
 import com.guicedee.guicedservlets.websockets.services.IWebSocketMessageReceiver;
 
@@ -34,7 +35,8 @@ module com.guicedee.activitymaster.geography {
 	provides com.guicedee.activitymaster.core.services.IActivityMasterSystem with GeographySystem;
 	provides IWebSocketMessageReceiver with GeoDataMessageReceiver;
 	provides com.guicedee.guicedinjection.interfaces.IGuiceModule with GeographyBinder;
-
+	provides com.guicedee.guicedinjection.interfaces.IGuiceScanModuleInclusions with GeographerMasterModuleInclusion;
+	
 	opens com.guicedee.activitymaster.geography to com.google.guice;
 
 	opens geodata;
