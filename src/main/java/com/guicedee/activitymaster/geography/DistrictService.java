@@ -93,7 +93,7 @@ public class DistrictService
 		
 		ProvinceService ps = get(ProvinceService.class);
 		IGeography<?> province = ps.findProvince(provinceCode, enterprise, identityToken);
-		for (Geography child : province.findChildren())
+		for (IGeography<?> child : province.findChildren())
 		{
 			return child;
 		}
