@@ -6,6 +6,8 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import jakarta.validation.constraints.NotNull;
+
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -16,6 +18,7 @@ public class GeographyPostalCode
 		extends GeographyDefaultDto
 		implements Serializable
 {
+	@Serial
 	private static final long serialVersionUID = 1L;
 	@NotNull
 	private String postalCode;

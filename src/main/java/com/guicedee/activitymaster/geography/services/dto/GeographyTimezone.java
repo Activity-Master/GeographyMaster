@@ -8,12 +8,15 @@ import lombok.experimental.Accessors;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.io.Serial;
+
 @Data
 @Accessors(chain = true)
 @EqualsAndHashCode(of="timezoneID",callSuper = false)
 public class GeographyTimezone
 		extends GeographyDefaultDto
 {
+	@Serial
 	private static final long serialVersionUID = 1L;
 
 	private GeographyCountry countryCode;

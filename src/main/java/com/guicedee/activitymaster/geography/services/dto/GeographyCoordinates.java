@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -15,6 +16,7 @@ public class GeographyCoordinates
 		extends GeographyDefaultDto
 		implements Serializable
 {
+	@Serial
 	private static final long serialVersionUID = 1L;
 
 	private String latitude;

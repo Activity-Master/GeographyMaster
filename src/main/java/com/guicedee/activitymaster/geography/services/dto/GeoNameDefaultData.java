@@ -8,6 +8,8 @@ import lombok.experimental.Accessors;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -21,6 +23,7 @@ public class GeoNameDefaultData<J extends GeoNameDefaultData<J>>
 		extends GeographyDefaultDto
 		implements Serializable
 {
+	@Serial
 	private static final long serialVersionUID = 1L;
 	private final List<String> alternateNames = new ArrayList<>();
 	private String name;

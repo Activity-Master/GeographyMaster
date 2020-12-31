@@ -3,6 +3,7 @@ package com.guicedee.activitymaster.geography.services.dto.classifications;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Objects;
@@ -13,6 +14,7 @@ import java.util.Set;
 public class ISO639Language
 		implements Serializable
 {
+	@Serial
 	private static final long serialVersionUID = 1L;
 
 	private final Set<String> name = new HashSet<>();

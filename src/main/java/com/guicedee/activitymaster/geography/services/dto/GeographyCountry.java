@@ -7,6 +7,8 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import jakarta.validation.constraints.Size;
+
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +21,7 @@ public class GeographyCountry
 		extends GeographyDefaultDto
 		implements Serializable
 {
+	@Serial
 	private static final long serialVersionUID = 1L;
 
 	private final List<ISO639Language> languages = new ArrayList<>();
