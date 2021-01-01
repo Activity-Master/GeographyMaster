@@ -111,9 +111,9 @@ public class GeographySystemInstall
 		for (GeographyFeatureClassesClassifications value : GeographyFeatureClassesClassifications.values())
 		{
 			classificationService.create(value.classificationName(), value.classificationDescription(),
-					GeoNameClassificationDataConcept,
+					GeoNameClassificationDataConcept.name(),
 					system,
-					(short) 0,
+					0,
 					FeatureClass, token);
 		}
 		
@@ -128,7 +128,7 @@ public class GeographySystemInstall
 		//Create Identification TYpe
 		IInvolvedPartyService<?> involvedPartyService = get(IInvolvedPartyService.class);
 		IInvolvedPartyIdentificationType<?> idType = involvedPartyService
-				.createIdentificationType(enterprise, GeographyIPIdentificationTypes.ISP,
+				.createIdentificationType(system, GeographyIPIdentificationTypes.ISP,
 						"An Internet Service Provider",
 						token);
 		if (progressMonitor != null)
@@ -137,7 +137,7 @@ public class GeographySystemInstall
 		}
 		//Create Planets and Continents by default
 		GeographyService<?> service = (GeographyService<?>) get(IGeographyService.class);
-		service.createPlanet("Earth", null, enterprise, token);
+		service.createPlanet("Earth", null, system, token);
 		if (progressMonitor != null)
 		{
 			progressMonitor.progressUpdate("Loading Geography Updates", "Creating Continents");

@@ -30,29 +30,28 @@ public class CountryService
 	
 	@CacheResult(cacheName = "GeographyCountry",skipGet = true)
 	public IGeography<?> createCountry(IGeography<?> continent, @CacheKey @NotNull String iso, @NotNull String description, String originalUniqueID,
-	                                   @CacheKey IEnterprise<?> enterprise, @CacheKey UUID... identityToken)
+	                                   @CacheKey ISystems<?> system, @CacheKey UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
-		Classification classification = (Classification) classificationService.find(Country, enterprise, identityToken);
+		Classification classification = (Classification) classificationService.find(Country, system, identityToken);
 		
 		boolean exists = new Geography().builder()
 		                                .withName(iso)
 		                                .withClassification(classification)
-		                                .inActiveRange(enterprise, identityToken)
+		                                .inActiveRange(system, identityToken)
 		                                .inDateRange()
-		                                .withEnterprise(enterprise)
+		                                .withEnterprise(system)
 		                                .getCount() > 0;
 		if (exists)
 		{
-			return findCountry(iso, enterprise, identityToken);
+			return findCountry(iso, system, identityToken);
 		}
 		
 		Geography geo = new Geography();
-		ISystems<?> geoSystem = get(GeographySystem.class).getSystem(enterprise);
 		geo.setEnterpriseID(classification.getEnterpriseID());
 		geo.setClassification(classification);
-		geo.setSystemID((Systems) geoSystem);
-		geo.setOriginalSourceSystemID((Systems) geoSystem);
+		geo.setSystemID((Systems) system);
+		geo.setOriginalSourceSystemID((Systems) system);
 		geo.setName(iso);
 		geo.setDescription(description);
 		if (originalUniqueID != null)
@@ -63,24 +62,24 @@ public class CountryService
 		geo.persist();
 		if (get(ActivityMasterConfiguration.class).isSecurityEnabled())
 		{
-			geo.createDefaultSecurity(geoSystem, identityToken);
+			geo.createDefaultSecurity(system, identityToken);
 		}
-		continent.addChild(geo, enterprise, identityToken);
+		continent.addChild(geo, system, identityToken);
 		
 		return geo;
 	}
 	
 	@CacheResult(cacheName = "GeographyCountry")
-	public IGeography<?> findCountry(@CacheKey @NotNull String iso, @CacheKey IEnterprise<?> enterprise, @CacheKey UUID... identityToken)
+	public IGeography<?> findCountry(@CacheKey @NotNull String iso, @CacheKey ISystems<?> system, @CacheKey UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
-		Classification classification = (Classification) classificationService.find(Country, enterprise, identityToken);
+		Classification classification = (Classification) classificationService.find(Country, system, identityToken);
 		return new Geography().builder()
 		                      .withName(iso)
 		                      .withClassification(classification)
-		                      .inActiveRange(enterprise, identityToken)
+		                      .inActiveRange(system, identityToken)
 		                      .inDateRange()
-		                      .withEnterprise(enterprise)
+		                      .withEnterprise(system)
 		                      .get()
 		                      .orElseThrow(() -> new GeographyException("Cannot find country - " + iso));
 	}
@@ -88,36 +87,34 @@ public class CountryService
 	@CacheResult(cacheName = "GeographyCountry",skipGet = true)
 	public IGeography<?> updateCountry(IClassification<?> currency, @CacheKey @NotNull String iso, @NotNull String description, String iso3, String isoNumeric,
 	                                   String dialCode, String fips, String capital, String areaSqlKM, String postalCodeFormat, String postalCodeRegex, Integer population, String webTld,
-	                                   @CacheKey IEnterprise<?> enterprise, @CacheKey UUID... identityToken)
+	                                   @CacheKey ISystems<?> system, @CacheKey UUID... identityToken)
 	{
-		Geography geo = (Geography) findCountry(iso, enterprise, identityToken);
-		ISystems<?> geoSystem = get(GeographySystem.class).getSystem(enterprise);
-		
+		Geography geo = (Geography) findCountry(iso, system, identityToken);
 		if(iso != null)
-		geo.addOrUpdate(CountryISO3166, iso, geoSystem, identityToken);
+		geo.addOrUpdate(CountryISO3166, iso, system, identityToken);
 		if (iso3 != null)
-		{ geo.addOrUpdate(CountryISO3166_3, iso3, geoSystem, identityToken); }
+		{ geo.addOrUpdate(CountryISO3166_3, iso3, system, identityToken); }
 		if (isoNumeric != null)
-		{ geo.addOrUpdate(CountryISO_Numeric, isoNumeric, geoSystem, identityToken); }
+		{ geo.addOrUpdate(CountryISO_Numeric, isoNumeric, system, identityToken); }
 		if (fips != null)
-		{ geo.addOrUpdate(CountryFips, fips, geoSystem, identityToken); }
+		{ geo.addOrUpdate(CountryFips, fips, system, identityToken); }
 		if (capital != null)
-		{ geo.addOrUpdate(CountryCapital, capital, geoSystem, identityToken); }
+		{ geo.addOrUpdate(CountryCapital, capital, system, identityToken); }
 		if (areaSqlKM != null)
-		{ geo.addOrUpdate(CountryAreaInSqKm, areaSqlKM, geoSystem, identityToken); }
+		{ geo.addOrUpdate(CountryAreaInSqKm, areaSqlKM, system, identityToken); }
 		if (webTld != null)
-		{ geo.addOrUpdate(CountryTld, webTld, geoSystem, identityToken); }
+		{ geo.addOrUpdate(CountryTld, webTld, system, identityToken); }
 		if (population != null)
-		{ geo.addOrUpdate(Population, population.toString(), geoSystem, identityToken); }
+		{ geo.addOrUpdate(Population, population.toString(), system, identityToken); }
 		if (dialCode != null)
-		{ geo.addOrUpdate(CountryPhone, dialCode, geoSystem, identityToken); }
+		{ geo.addOrUpdate(CountryPhone, dialCode, system, identityToken); }
 		if (postalCodeFormat != null)
-		{ geo.addOrUpdate(CountryPostalCodeFormat, postalCodeFormat, geoSystem, identityToken); }
+		{ geo.addOrUpdate(CountryPostalCodeFormat, postalCodeFormat, system, identityToken); }
 		if (postalCodeRegex != null)
-		{ geo.addOrUpdate(CountryPostalCodeRegex, postalCodeRegex, geoSystem, identityToken); }
+		{ geo.addOrUpdate(CountryPostalCodeRegex, postalCodeRegex, system, identityToken); }
 		
 		if (currency != null)
-		{ geo.addOrUpdate(currency, STRING_EMPTY, geoSystem, identityToken); }
+		{ geo.addOrUpdate(currency, STRING_EMPTY, system, identityToken); }
 		
 		return geo;
 	}

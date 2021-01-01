@@ -19,37 +19,35 @@ public interface IGeographyService<J extends IGeographyService<J>>
 
 	GeographyContinent findContinent(GeographyContinent continent, ISystems<?> originatingSystem, UUID... identifyingToken);
 	
-	void loadProvincesASCII1(IEnterpriseName<?> enterpriseName, String countryCode, IActivityMasterProgressMonitor progressMonitor);
+	void loadProvincesASCII1(ISystems<?> system, String countryCode, IActivityMasterProgressMonitor progressMonitor);
 	
-	void loadDistrictsASCII2(IEnterpriseName<?> enterpriseName, String countryCode, IActivityMasterProgressMonitor progressMonitor);
+	void loadDistrictsASCII2(ISystems<?> system, String countryCode, IActivityMasterProgressMonitor progressMonitor);
 	
-	void loadLanguages(IEnterpriseName<?> enterpriseName, IActivityMasterProgressMonitor progressMonitor);
+	void loadLanguages(ISystems<?> system, IActivityMasterProgressMonitor progressMonitor);
 
-	void loadCountryInfo(IEnterpriseName<?> enterpriseName, IActivityMasterProgressMonitor progressMonitor);
+	void loadCountryInfo(ISystems<?> system, IActivityMasterProgressMonitor progressMonitor);
 	
-	GeographyCountry findCountry(GeographyCountry country, IEnterpriseName<?> enterpriseName, UUID... identityToken);
+	GeographyCountry findCountry(GeographyCountry country, ISystems<?> system, UUID... identityToken);
 
-	GeographyTimezone findTimezone(GeographyTimezone timezone, IEnterpriseName<?> enterpriseName);
+	GeographyTimezone findTimezone(GeographyTimezone timezone, ISystems<?> system);
 
-	void loadTimeZones(IEnterpriseName<?> enterpriseName, IActivityMasterProgressMonitor progressMonitor);
+	void loadTimeZones(ISystems<?> system, IActivityMasterProgressMonitor progressMonitor);
 
-	void loadPostalCodes(IEnterpriseName<?> enterpriseName, IActivityMasterProgressMonitor progressMonitor);
+	void loadPostalCodes(ISystems<?> system, IActivityMasterProgressMonitor progressMonitor);
 	
-    GeographyPostalCode findPostalCode(GeographyPostalCode postalCode, IEnterpriseName<?> enterpriseName, UUID... identityToken);
+    GeographyPostalCode findPostalCode(GeographyPostalCode postalCode, ISystems<?> system, UUID... identityToken);
+    
+	GeographyPostalCode findPostalCodeSuburb(String code, String description, ISystems<?> system, UUID... identityToken);
 	
-	@CacheResult(cacheName = "GeographyPostalCodesSuburb")
-	GeographyPostalCode findPostalCodeSuburb(@CacheKey String code, @CacheKey String description, @CacheKey IEnterpriseName<?> enterpriseName, UUID... identityToken);
+	GeographyPostalCode findOrCreatePostalCodeSuburb(String code, String description, ISystems<?> system, UUID... identityToken);
 	
-	@CacheResult(cacheName = "GeographyPostalCodesSuburb")
-	GeographyPostalCode findOrCreatePostalCodeSuburb(@CacheKey String code, @CacheKey String description, @CacheKey IEnterpriseName<?> enterpriseName, UUID... identityToken);
+	IGeography<?> findGeographyById(UUID geographyID, ISystems<?> system, UUID... identityToken);
 	
-	IGeography<?> findGeographyById(UUID geographyID, @CacheKey IEnterpriseName<?> enterpriseName, UUID... identityToken);
-	
-	void loadFeatureCodes(IEnterpriseName<?> enterpriseName, IActivityMasterProgressMonitor progressMonitor, UUID... identityToken);
+	void loadFeatureCodes(ISystems<?> system, IActivityMasterProgressMonitor progressMonitor, UUID... identityToken);
 
-    GeographyFeatureCode findFeatureCode(String featureCode, IEnterpriseName<?> enterpriseName, UUID... identityToken);
+    GeographyFeatureCode findFeatureCode(String featureCode, ISystems<?> system, UUID... identityToken);
 
-	IClassification<?> findFeatureCodeClassification(String featureCode, IEnterpriseName<?> enterpriseName, UUID... identityToken);
+	IClassification<?> findFeatureCodeClassification(String featureCode, ISystems<?> system, UUID... identityToken);
 	
-	void loadTownsAndCities(IEnterpriseName<?> enterpriseName, IActivityMasterProgressMonitor progressMonitor);
+	void loadTownsAndCities(ISystems<?> system, IActivityMasterProgressMonitor progressMonitor);
 }

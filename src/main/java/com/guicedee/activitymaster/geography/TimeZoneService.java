@@ -26,40 +26,38 @@ public class TimeZoneService
 	public static final Set<IClassificationValue<?>> TimeZoneClassifications = Set.of(TimeZone,TimeZoneRawOffset, TimeZoneOffsetJuly2016,TimeZoneOffsetJan2016);
 	
 	@CacheResult(cacheName = "GeographyTimezones", skipGet = true)
-	public IClassification<?> createTimeZone(@CacheKey String code, String description, String originalUniqueID, @CacheKey IEnterprise<?> enterprise, @CacheKey UUID...identityToken)
+	public IClassification<?> createTimeZone(@CacheKey String code, String description, String originalUniqueID, @CacheKey ISystems<?> system, @CacheKey UUID...identityToken)
 	{
 		IClassificationDataConceptService<?> conceptService = get(IClassificationDataConceptService.class);
-		ClassificationDataConcept currencyConcept = (ClassificationDataConcept) conceptService.find(GeographyTimezoneConcept, enterprise, identityToken);
+		ClassificationDataConcept currencyConcept = (ClassificationDataConcept) conceptService.find(GeographyTimezoneConcept, system, identityToken);
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		
 		boolean exists = new Classification().builder()
 		                                     .findByNameAndConcept(code, currencyConcept)
-		                                     .inActiveRange(enterprise, identityToken)
+		                                     .inActiveRange(system, identityToken)
 		                                     .inDateRange()
-		                                     .withEnterprise(enterprise)
+		                                     .withEnterprise(system)
 		                                     .getCount() > 0;
 		if(exists)
 		{
-			return findTimeZone(code, enterprise, identityToken);
+			return findTimeZone(code, system, identityToken);
 		}
-		
-		ISystems<?> geoSystem = get(GeographySystem.class).getSystem(enterprise);
 		return classificationService.create(code, description,
-		                                    GeographyTimezoneConcept,
-		                                    geoSystem, (short) 0,
+		                                    GeographyTimezoneConcept.toString(),
+		                                    system, 0,
 		                                    identityToken);
 	}
 	
 	@CacheResult(cacheName = "GeographyTimezones")
-	public IClassification<?> findTimeZone(@CacheKey String code, @CacheKey IEnterprise<?> enterprise, @CacheKey UUID...identityToken)
+	public IClassification<?> findTimeZone(@CacheKey String code, @CacheKey ISystems<?> system, @CacheKey UUID...identityToken)
 	{
 		IClassificationDataConceptService<?> conceptService = get(IClassificationDataConceptService.class);
-		ClassificationDataConcept timeZoneConcept = (ClassificationDataConcept) conceptService.find(GeographyTimezoneConcept, enterprise, identityToken);
+		ClassificationDataConcept timeZoneConcept = (ClassificationDataConcept) conceptService.find(GeographyTimezoneConcept, system, identityToken);
 		return new Classification().builder()
 		                           .findByNameAndConcept(code, timeZoneConcept)
-		                           .inActiveRange(enterprise, identityToken)
+		                           .inActiveRange(system, identityToken)
 		                           .inDateRange()
-		                           .withEnterprise(enterprise)
+		                           .withEnterprise(system)
 		                           .get()
 		                           .orElseThrow(() -> new GeographyException("Unable to find timezone with code - " + code));
 	}
@@ -67,9 +65,9 @@ public class TimeZoneService
 	@CacheResult(cacheName = "GeographyTimezones", skipGet = true)
 	public IClassification<?> updateTimeZone(@CacheKey String code, String description,
 	                                         String timeZoneRawOffset, String timeZoneOffsetJuly2016, String timeZoneOffsetJan2016,
-	                                         @CacheKey IEnterprise<?> enterprise, @CacheKey UUID...identityToken)
+	                                         @CacheKey ISystems<?> system, @CacheKey UUID...identityToken)
 	{
-		IClassification<?> toUpdate = findTimeZone(code, enterprise, identityToken);
+		IClassification<?> toUpdate = findTimeZone(code, system, identityToken);
 		if (description != null)
 		{
 			Classification update = new Classification();
@@ -77,19 +75,17 @@ public class TimeZoneService
 			update.setDescription(description);
 			update.update();
 		}
-		
-		ISystems<?> geoSystem = get(GeographySystem.class).getSystem(enterprise);
 		if (timeZoneRawOffset != null)
 		{
-			toUpdate.addOrUpdate(TimeZoneRawOffset, timeZoneRawOffset, geoSystem, identityToken);
+			toUpdate.addOrUpdate(TimeZoneRawOffset, timeZoneRawOffset, system, identityToken);
 		}
 		if (timeZoneOffsetJuly2016 != null)
 		{
-			toUpdate.addOrUpdate(TimeZoneOffsetJuly2016, timeZoneOffsetJuly2016, geoSystem, identityToken);
+			toUpdate.addOrUpdate(TimeZoneOffsetJuly2016, timeZoneOffsetJuly2016, system, identityToken);
 		}
 		if (timeZoneOffsetJan2016 != null)
 		{
-			toUpdate.addOrUpdate(TimeZoneOffsetJan2016, timeZoneOffsetJan2016, geoSystem, identityToken);
+			toUpdate.addOrUpdate(TimeZoneOffsetJan2016, timeZoneOffsetJan2016, system, identityToken);
 		}
 		
 		return toUpdate;

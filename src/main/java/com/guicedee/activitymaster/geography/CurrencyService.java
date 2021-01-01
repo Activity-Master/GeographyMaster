@@ -21,49 +21,48 @@ import static com.guicedee.guicedinjection.GuiceContext.get;
 public class CurrencyService
 {
 	@CacheResult(cacheName = "GeographyCurrencies",skipGet = true)
-	public IClassification<?> createCurrency(@CacheKey String code,String description, @CacheKey IEnterprise<?> enterprise, @CacheKey UUID...identityToken)
+	public IClassification<?> createCurrency(@CacheKey String code,String description, @CacheKey ISystems<?> system, @CacheKey UUID...identityToken)
 	{
 		IClassificationDataConceptService<?> conceptService = get(IClassificationDataConceptService.class);
-		ClassificationDataConcept currencyConcept = (ClassificationDataConcept) conceptService.find(GeographyCurrencyConcept, enterprise, identityToken);
+		ClassificationDataConcept currencyConcept = (ClassificationDataConcept) conceptService.find(GeographyCurrencyConcept, system, identityToken);
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		
 		boolean exists = new Classification().builder()
 		                    .findByNameAndConcept(code, currencyConcept)
-		                    .inActiveRange(enterprise, identityToken)
+		                    .inActiveRange(system, identityToken)
 		                    .inDateRange()
-		                    .withEnterprise(enterprise)
+		                    .withEnterprise(system)
 		                    .getCount() > 0;
 		if(exists)
 		{
-			return findCurrency(code, enterprise, identityToken);
+			return findCurrency(code, system, identityToken);
 		}
 		
-		ISystems<?> geoSystem = get(GeographySystem.class).getSystem(enterprise);
 		return classificationService.create(code, description,
-		                                    GeographyCurrencyConcept,
-		                                    geoSystem, (short) 0,
+		                                    GeographyCurrencyConcept.toString(),
+		                                    system, 0,
 		                                    identityToken);
 	}
 	
 	@CacheResult(cacheName = "GeographyCurrencies")
-	public IClassification<?> findCurrency(@CacheKey String code, @CacheKey IEnterprise<?> enterprise, @CacheKey UUID...identityToken)
+	public IClassification<?> findCurrency(@CacheKey String code, @CacheKey ISystems<?> system, @CacheKey UUID...identityToken)
 	{
 		IClassificationDataConceptService<?> conceptService = get(IClassificationDataConceptService.class);
-		ClassificationDataConcept currencyConcept = (ClassificationDataConcept) conceptService.find(GeographyCurrencyConcept, enterprise, identityToken);
+		ClassificationDataConcept currencyConcept = (ClassificationDataConcept) conceptService.find(GeographyCurrencyConcept, system, identityToken);
 		
 		return new Classification().builder()
 		                           .findByNameAndConcept(code, currencyConcept)
-		                           .inActiveRange(enterprise, identityToken)
+		                           .inActiveRange(system, identityToken)
 		                           .inDateRange()
-		                           .withEnterprise(enterprise)
+		                           .withEnterprise(system)
 		                           .get()
 		                           .orElseThrow(() -> new GeographyException("Cannot find currency with code : " + code));
 	}
 	
 	@CacheResult(cacheName = "GeographyCurrencies",skipGet = true)
-	public IClassification<?> updateCurrency(@CacheKey String code,String description, @CacheKey IEnterprise<?> enterprise, @CacheKey UUID...identityToken)
+	public IClassification<?> updateCurrency(@CacheKey String code,String description, @CacheKey ISystems<?> system, @CacheKey UUID...identityToken)
 	{
-		IClassification<?> toUpdate = findCurrency(code, enterprise, identityToken);
+		IClassification<?> toUpdate = findCurrency(code, system, identityToken);
 		if (description != null)
 		{
 			Classification update = new Classification();

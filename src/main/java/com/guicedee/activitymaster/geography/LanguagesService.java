@@ -27,33 +27,32 @@ public class LanguagesService
 	@CacheResult(cacheName = "GeographyLanguages",
 	             skipGet = true)
 	public IClassification<?> createLanguage(@NotNull @CacheKey String code, String description, String originalUniqueID,
-	                                         @CacheKey IEnterprise<?> enterprise, @CacheKey UUID... identityToken)
+	                                         @CacheKey ISystems<?> system, @CacheKey UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
 		boolean exists = new Classification().builder()
 		                                     .withName(code)
-		                                     .inActiveRange(enterprise, identityToken)
+		                                     .inActiveRange(system, identityToken)
 		                                     .inDateRange()
-		                                     .withEnterprise(enterprise)
+		                                     .withEnterprise(system)
 		                                     .getCount() > 0;
 		if (exists)
 		{
-			return findLanguage(code, enterprise, identityToken);
+			return findLanguage(code, system, identityToken);
 		}
-		IClassification<?> classification = classificationService.find(Languages, enterprise, identityToken);
-		ISystems<?> geoSystem = get(GeographySystem.class).getSystem(enterprise);
-		return classificationService.create(code, description, Languages.concept(), geoSystem, (short) 0, classification, identityToken);
+		IClassification<?> classification = classificationService.find(Languages, system, identityToken);
+		return classificationService.create(code, description, Languages.concept().name(), system, 0, classification, identityToken);
 	}
 	
 	@CacheResult(cacheName = "GeographyLanguages")
 	public IClassification<?> findLanguage(@NotNull @CacheKey String code,
-	                                       @CacheKey IEnterprise<?> enterprise, @CacheKey UUID... identityToken)
+	                                       @CacheKey ISystems<?> system, @CacheKey UUID... identityToken)
 	{
 		return new Classification().builder()
 		                           .withName(code)
-		                           .inActiveRange(enterprise, identityToken)
+		                           .inActiveRange(system, identityToken)
 		                           .inDateRange()
-		                           .withEnterprise(enterprise)
+		                           .withEnterprise(system)
 		                           .get()
 		                           .orElseThrow(() -> new GeographyException("Cannot find language - " + code));
 	}
@@ -61,9 +60,9 @@ public class LanguagesService
 	             skipGet = true)
 	public IClassification<?> updateLanguage(@NotNull @CacheKey String code, String description,
 	                                         String iso_2, String englishName, String frenchName, String germanName,
-	                                         @CacheKey IEnterprise<?> enterprise, @CacheKey UUID... identityToken)
+	                                         @CacheKey ISystems<?> system, @CacheKey UUID... identityToken)
 	{
-		IClassification<?> toUpdate = findLanguage(code, enterprise, identityToken);
+		IClassification<?> toUpdate = findLanguage(code, system, identityToken);
 		if (description != null)
 		{
 			Classification update = new Classification();
@@ -71,23 +70,21 @@ public class LanguagesService
 			update.setDescription(description);
 			update.update();
 		}
-		
-		ISystems<?> geoSystem = get(GeographySystem.class).getSystem(enterprise);
 		if(iso_2 != null)
 		{
-			toUpdate.addOrReuse(ISO639_2, iso_2, geoSystem, identityToken);
+			toUpdate.addOrReuse(ISO639_2, iso_2, system, identityToken);
 		}
 		if(englishName != null)
 		{
-			toUpdate.addOrReuse(ISO6392EnglishName, englishName, geoSystem, identityToken);
+			toUpdate.addOrReuse(ISO6392EnglishName, englishName, system, identityToken);
 		}
 		if(frenchName != null)
 		{
-			toUpdate.addOrReuse(ISO6392FrenchName, frenchName, geoSystem, identityToken);
+			toUpdate.addOrReuse(ISO6392FrenchName, frenchName, system, identityToken);
 		}
 		if(germanName != null)
 		{
-			toUpdate.addOrReuse(ISO6392GermanName, germanName, geoSystem, identityToken);
+			toUpdate.addOrReuse(ISO6392GermanName, germanName, system, identityToken);
 		}
 		return toUpdate;
 	}

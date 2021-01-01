@@ -2,6 +2,7 @@ package com.guicedee.activitymaster.geography;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.guicedee.activitymaster.core.services.dto.IInvolvedParty;
+import com.guicedee.activitymaster.core.services.dto.ISystems;
 import com.guicedee.activitymaster.core.services.system.IAddressService;
 import com.guicedee.activitymaster.core.services.system.IEnterpriseService;
 import com.guicedee.activitymaster.core.services.system.IInvolvedPartyService;
@@ -21,13 +22,13 @@ import static com.guicedee.guicedinjection.GuiceContext.*;
 public class GeoDataMessageReceiver
 		implements IWebSocketMessageReceiver
 {
-
+	
 	@Override
 	public Set<String> messageNames()
 	{
 		return Set.of("GeoData");
 	}
-
+	
 	@Override
 	public void receiveMessage(WebSocketMessageReceiver message) throws SecurityException
 	{
@@ -35,7 +36,6 @@ public class GeoDataMessageReceiver
 		{
 			String js = get(ObjectMapper.class).writeValueAsString(message.getData());
 			GeoData data = new GeoData().From(js, GeoData.class);
-
 			if (data.getLocalStorage() != null)
 			{
 				if (data.getSuccess() != null && data.getSuccess())
@@ -46,20 +46,19 @@ public class GeoDataMessageReceiver
 					{
 						return;
 					}
-
-					IAddressService<?> addressService = get(IAddressService.class);
-					IGeographyService<?> geographyService = get(IGeographyService.class);
+					
 					if (data.getIp() != null)
 					{
 						//addressService.addOrFindIPAddress(data.getIp(),)
 					}
 					ISessionMasterService<?> sessionMasterService = get(ISessionMasterService.class);
+					ISystems<?> system = get(GeographySystem.class)
+							.getSystem(involvedParty.getEnterprise());
 					UUID token = GuiceContext.get(GeographySystem.class)
 					                         .getSystemToken(involvedParty.getEnterprise());
-					ISession<?> sesion = sessionMasterService.getSession(involvedParty, involvedParty.getEnterprise()
-					                                                                                 .getIEnterprise(), token);
+					ISession<?> sesion = sessionMasterService.getSession(involvedParty, system, token);
 					sesion.setInvolvedParty(involvedParty);
-					sesion.setEnterpriseName(get(IEnterpriseService.class).getIEnterprise(involvedParty.getEnterprise()));
+					sesion.setSystem(system);
 					sesion.addValue("geo-data", data);
 				}
 			}
@@ -68,6 +67,6 @@ public class GeoDataMessageReceiver
 		{
 			e.printStackTrace();
 		}
-
+		
 	}
 }

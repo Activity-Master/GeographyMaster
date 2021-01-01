@@ -22,28 +22,27 @@ import static com.guicedee.guicedinjection.GuiceContext.get;
 public class ContinentService
 {
 	@CacheResult(cacheName = "GeographyContinents",skipGet = true)
-	public IGeography<?> createContinent(IGeography<?> planet, @CacheKey String code, String description, String originalUniqueID,@CacheKey IEnterprise<?> enterprise,@CacheKey  UUID... identityToken)
+	public IGeography<?> createContinent(IGeography<?> planet, @CacheKey String code, String description, String originalUniqueID,@CacheKey ISystems<?> system,@CacheKey  UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
-		Classification classification = (Classification) classificationService.find(Continent, enterprise, identityToken);
+		Classification classification = (Classification) classificationService.find(Continent, system, identityToken);
 		
 		boolean exists = new Geography().builder()
 		                                .withClassification(classification)
 		                                .withName(code)
 		                                .inDateRange()
-		                                .inActiveRange(enterprise, identityToken)
-		                                .withEnterprise(enterprise)
+		                                .inActiveRange(system, identityToken)
+		                                .withEnterprise(system)
 		                                .getCount() > 0;
 		if(exists)
 		{
-			return findContinent(code, enterprise, identityToken);
+			return findContinent(code, system, identityToken);
 		}
 		Geography geo = new Geography();
-		ISystems<?> geoSystem = get(GeographySystem.class).getSystem(enterprise);
 		geo.setEnterpriseID(classification.getEnterpriseID());
 		geo.setClassification(classification);
-		geo.setSystemID((Systems) geoSystem);
-		geo.setOriginalSourceSystemID((Systems) geoSystem);
+		geo.setSystemID((Systems) system);
+		geo.setOriginalSourceSystemID((Systems) system);
 		geo.setName(code);
 		geo.setDescription(description);
 		if (originalUniqueID != null)
@@ -54,25 +53,25 @@ public class ContinentService
 		geo.persist();
 		if (get(ActivityMasterConfiguration.class).isSecurityEnabled())
 		{
-			geo.createDefaultSecurity(geoSystem, identityToken);
+			geo.createDefaultSecurity(system, identityToken);
 		}
 		
-		planet.addChild(geo, enterprise, identityToken);
+		planet.addChild(geo, system, identityToken);
 		return geo;
 	}
 	
 	@CacheResult(cacheName = "GeographyContinents",skipGet = true)
-	public IGeography<?> findContinent(@CacheKey String code,@CacheKey  IEnterprise<?> enterprise,@CacheKey  UUID... identityToken)
+	public IGeography<?> findContinent(@CacheKey String code,@CacheKey  ISystems<?> system,@CacheKey  UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
-		Classification classification = (Classification) classificationService.find(Continent, enterprise, identityToken);
+		Classification classification = (Classification) classificationService.find(Continent, system, identityToken);
 		
 		return new Geography().builder()
 		                      .withClassification(classification)
 		                      .withName(code)
 		                      .inDateRange()
-		                      .inActiveRange(enterprise, identityToken)
-		                      .withEnterprise(enterprise)
+		                      .inActiveRange(system, identityToken)
+		                      .withEnterprise(system)
 				.get().orElseThrow(()->new GeographyException("Cannot find continent"));
 	}
 }

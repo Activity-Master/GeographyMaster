@@ -33,28 +33,27 @@ public class ProvinceService
 	
 	@CacheResult(cacheName = "GeographyProvinces",
 	             skipGet = true)
-	public IGeography<?> createProvince(IGeography<?> country, @CacheKey String code, String name, String originalUniqueID, @CacheKey IEnterprise<?> enterprise, @CacheKey UUID... identityToken)
+	public IGeography<?> createProvince(IGeography<?> country, @CacheKey String code, String name, String originalUniqueID, @CacheKey ISystems<?> system, @CacheKey UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
-		Classification classification = (Classification) classificationService.find(Province, enterprise, identityToken);
+		Classification classification = (Classification) classificationService.find(Province, system, identityToken);
 		
 		boolean exists = new Geography().builder()
 		                                .withName(code)
 		                                .withClassification(classification)
-		                                .inActiveRange(enterprise, identityToken)
+		                                .inActiveRange(system, identityToken)
 		                                .inDateRange()
-		                                .withEnterprise(enterprise)
+		                                .withEnterprise(system)
 		                                .getCount() > 0;
 		if (exists)
 		{
-			return findProvince(code, enterprise, identityToken);
+			return findProvince(code, system, identityToken);
 		}
 		Geography geo = new Geography();
-		ISystems<?> geoSystem = get(GeographySystem.class).getSystem(enterprise);
 		geo.setEnterpriseID(classification.getEnterpriseID());
 		geo.setClassification(classification);
-		geo.setSystemID((Systems) geoSystem);
-		geo.setOriginalSourceSystemID((Systems) geoSystem);
+		geo.setSystemID((Systems) system);
+		geo.setOriginalSourceSystemID((Systems) system);
 		geo.setName(code);
 		geo.setDescription(name);
 		if (originalUniqueID != null)
@@ -65,23 +64,23 @@ public class ProvinceService
 		geo.persist();
 		if (get(ActivityMasterConfiguration.class).isSecurityEnabled())
 		{
-			geo.createDefaultSecurity(geoSystem, identityToken);
+			geo.createDefaultSecurity(system, identityToken);
 		}
-		country.addChild(geo, enterprise, identityToken);
+		country.addChild(geo, system, identityToken);
 		return geo;
 	}
 	
 	@CacheResult(cacheName = "GeographyProvinces")
-	public IGeography<?> findProvince(@CacheKey String code, @CacheKey IEnterprise<?> enterprise, @CacheKey UUID... identityToken)
+	public IGeography<?> findProvince(@CacheKey String code, @CacheKey ISystems<?> system, @CacheKey UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
-		Classification classification = (Classification) classificationService.find(Province, enterprise, identityToken);
+		Classification classification = (Classification) classificationService.find(Province, system, identityToken);
 		
 		return new Geography().builder()
 		                      .withClassification(classification)
-		                      .inActiveRange(enterprise, identityToken)
+		                      .inActiveRange(system, identityToken)
 		                      .inDateRange()
-		                      .withEnterprise(enterprise)
+		                      .withEnterprise(system)
 		                      .withName(code)
 		                      .or(Geography_.description,Equals,code)
 		                      .get()
@@ -92,9 +91,9 @@ public class ProvinceService
 	@CacheResult(cacheName = "GeographyProvinces", skipGet = true)
 	public IGeography<?> updateProvince(@NotNull @CacheKey String name, String description,
 	                           String latitude, String longitude, String featureCodes, String featureClass, Integer population, Integer elevation, Integer dEM,
-	                           @CacheKey IEnterprise<?> enterprise, @CacheKey UUID... identityToken)
+	                           @CacheKey ISystems<?> system, @CacheKey UUID... identityToken)
 	{
-		IGeography<?> toUpdate = findProvince(name, enterprise, identityToken);
+		IGeography<?> toUpdate = findProvince(name, system, identityToken);
 		if (description != null)
 		{
 			Geography update = new Geography();
@@ -102,34 +101,33 @@ public class ProvinceService
 			update.setDescription(description);
 			update.update();
 		}
-		ISystems<?> geoSystem = get(GeographySystem.class).getSystem(enterprise);
 		if (latitude != null)
 		{
-			toUpdate.addOrUpdate(Latitude, latitude, geoSystem, identityToken);
+			toUpdate.addOrUpdate(Latitude, latitude, system, identityToken);
 		}
 		if (longitude != null)
 		{
-			toUpdate.addOrUpdate(Longitude, longitude, geoSystem, identityToken);
+			toUpdate.addOrUpdate(Longitude, longitude, system, identityToken);
 		}
 		if (featureClass != null)
 		{
-			toUpdate.addOrUpdate(FeatureClass, featureClass, geoSystem, identityToken);
+			toUpdate.addOrUpdate(FeatureClass, featureClass, system, identityToken);
 		}
 		if (featureCodes != null)
 		{
-			toUpdate.addOrUpdate(FeatureCodes, featureCodes, geoSystem, identityToken);
+			toUpdate.addOrUpdate(FeatureCodes, featureCodes, system, identityToken);
 		}
 		if (population != null)
 		{
-			toUpdate.addOrUpdate(Population, Integer.toString(population), geoSystem, identityToken);
+			toUpdate.addOrUpdate(Population, Integer.toString(population), system, identityToken);
 		}
 		if (elevation != null)
 		{
-			toUpdate.addOrUpdate(Elevation, Integer.toString(elevation), geoSystem, identityToken);
+			toUpdate.addOrUpdate(Elevation, Integer.toString(elevation), system, identityToken);
 		}
 		if (dEM != null)
 		{
-			toUpdate.addOrUpdate(DEM, Integer.toString(dEM), geoSystem, identityToken);
+			toUpdate.addOrUpdate(DEM, Integer.toString(dEM), system, identityToken);
 		}
 		
 		return toUpdate;

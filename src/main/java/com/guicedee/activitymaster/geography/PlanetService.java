@@ -24,30 +24,28 @@ public class PlanetService
 {
 	@CacheResult(cacheName = "GeographyPlanets",
 	             skipGet = true)
-	public IGeography<?> createPlanet(@CacheKey String code, String description, String originalUniqueID, @CacheKey IEnterprise<?> enterprise, @CacheKey UUID... identityToken)
+	public IGeography<?> createPlanet(@CacheKey String code, String description, String originalUniqueID, @CacheKey ISystems<?> system, @CacheKey UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
-		Classification classification = (Classification) classificationService.find(Planet, enterprise, identityToken);
+		Classification classification = (Classification) classificationService.find(Planet, system, identityToken);
 		
 		boolean exists = new Geography().builder()
 		                                .withClassification(classification)
 		                                .withName(code)
 		                                .inDateRange()
-		                                .inActiveRange(enterprise, identityToken)
-		                                .withEnterprise(enterprise)
+		                                .inActiveRange(system, identityToken)
+		                                .withEnterprise(system)
 		                                .getCount() > 0;
 		
 		if (exists)
 		{
-			return findPlanet(code, enterprise, identityToken);
+			return findPlanet(code, system, identityToken);
 		}
 		Geography geo = new Geography();
-		ISystems<?> geoSystem = get(GeographySystem.class).getSystem(enterprise);
-		
 		geo.setEnterpriseID(classification.getEnterpriseID());
 		geo.setClassification(classification);
-		geo.setSystemID((Systems) geoSystem);
-		geo.setOriginalSourceSystemID((Systems) geoSystem);
+		geo.setSystemID((Systems) system);
+		geo.setOriginalSourceSystemID((Systems) system);
 		geo.setName(code);
 		geo.setDescription(description);
 		if (originalUniqueID != null)
@@ -58,23 +56,23 @@ public class PlanetService
 		geo.persist();
 		if (get(ActivityMasterConfiguration.class).isSecurityEnabled())
 		{
-			geo.createDefaultSecurity(geoSystem, identityToken);
+			geo.createDefaultSecurity(system, identityToken);
 		}
 		return geo;
 	}
 	
 	@CacheResult(cacheName = "GeographyPlanets")
-	public IGeography<?> findPlanet(@CacheKey String code, @CacheKey IEnterprise<?> enterprise, @CacheKey UUID... identityToken)
+	public IGeography<?> findPlanet(@CacheKey String code, @CacheKey ISystems<?> system, @CacheKey UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
-		Classification classification = (Classification) classificationService.find(Planet, enterprise, identityToken);
+		Classification classification = (Classification) classificationService.find(Planet, system, identityToken);
 		
 		return new Geography().builder()
 		                      .withClassification(classification)
 		                      .withName(code)
 		                      .inDateRange()
-		                      .withEnterprise(enterprise)
-		                      .inActiveRange(enterprise, identityToken)
+		                      .withEnterprise(system)
+		                      .inActiveRange(system, identityToken)
 		                      .get()
 		                      .orElseThrow(() -> new GeographyException("Unable to find planet"));
 	}
