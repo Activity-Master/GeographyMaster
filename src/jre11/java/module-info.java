@@ -38,6 +38,7 @@ module com.guicedee.activitymaster.geography {
 	provides com.guicedee.guicedinjection.interfaces.IGuiceScanModuleInclusions with GeographerMasterModuleInclusion;
 	
 	opens com.guicedee.activitymaster.geography to com.google.guice;
+	opens com.guicedee.activitymaster.geography.implementations.updates to com.google.guice;
 
 	opens geodata;
 }
