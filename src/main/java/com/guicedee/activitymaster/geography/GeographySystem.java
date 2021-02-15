@@ -1,32 +1,30 @@
 package com.guicedee.activitymaster.geography;
 
-import com.google.inject.Singleton;
+import com.google.inject.*;
 import com.guicedee.activitymaster.core.services.IActivityMasterProgressMonitor;
 import com.guicedee.activitymaster.core.services.IActivityMasterSystem;
-import com.guicedee.activitymaster.core.services.dto.IClassificationDataConcept;
 import com.guicedee.activitymaster.core.services.dto.IEnterprise;
-import com.guicedee.activitymaster.core.services.dto.IInvolvedPartyIdentificationType;
-import com.guicedee.activitymaster.core.services.dto.ISystems;
 import com.guicedee.activitymaster.core.services.system.ActivityMasterDefaultSystem;
-import com.guicedee.activitymaster.core.services.system.IClassificationDataConceptService;
-import com.guicedee.activitymaster.core.services.system.IClassificationService;
-import com.guicedee.activitymaster.core.services.system.IInvolvedPartyService;
-import com.guicedee.activitymaster.geography.services.IGeographyService;
-import com.guicedee.activitymaster.geography.services.dto.GeographyContinent;
-import com.guicedee.activitymaster.geography.services.enumerations.GeographyFeatureClassesClassifications;
-import com.guicedee.activitymaster.geography.services.enumerations.GeographyIPIdentificationTypes;
+import com.guicedee.activitymaster.core.services.system.ISystemsService;
 
-import java.util.UUID;
-
-import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassificationDataConcepts.*;
-import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
-import static com.guicedee.guicedinjection.GuiceContext.*;
+import static com.guicedee.activitymaster.geography.services.IGeographyService.*;
 
 @Singleton
 public class GeographySystem
 		extends ActivityMasterDefaultSystem<GeographySystem>
 		implements IActivityMasterSystem<GeographySystem>
 {
+	@Inject
+	private Provider<ISystemsService<?>> systemsService;
+	
+	@Override
+	public void registerSystem(IEnterprise<?> enterprise, IActivityMasterProgressMonitor progressMonitor)
+	{
+		systemsService.get()
+		              .create(enterprise, getSystemName(), getSystemDescription());
+	}
+	
+	
 	@Override
 	public void createDefaults(IEnterprise<?> enterprise, IActivityMasterProgressMonitor progressMonitor)
 	{
@@ -42,7 +40,7 @@ public class GeographySystem
 	@Override
 	public String getSystemName()
 	{
-		return "Geography System";
+		return GeographySystemName;
 	}
 
 	@Override

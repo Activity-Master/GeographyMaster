@@ -1,20 +1,15 @@
 package com.guicedee.activitymaster.geography.services;
 
 import com.guicedee.activitymaster.core.services.IActivityMasterProgressMonitor;
-import com.guicedee.activitymaster.core.services.classifications.enterprise.IEnterpriseName;
-import com.guicedee.activitymaster.core.services.dto.IClassification;
-import com.guicedee.activitymaster.core.services.dto.IGeography;
-import com.guicedee.activitymaster.core.services.dto.ISystems;
+import com.guicedee.activitymaster.core.services.dto.*;
 import com.guicedee.activitymaster.geography.services.dto.*;
-import com.guicedee.activitymaster.geography.services.dto.classifications.GeographyAsciiCode;
-import com.guicedee.activitymaster.geography.services.dto.classifications.ISO639Language;
 
-import jakarta.cache.annotation.CacheKey;
-import jakarta.cache.annotation.CacheResult;
 import java.util.UUID;
 
 public interface IGeographyService<J extends IGeographyService<J>>
 {
+	String GeographySystemName = "Geography System";
+	
 	IGeography<?> findPlanet(String name, ISystems<?> originatingSystem, UUID... identifyingToken);
 
 	GeographyContinent findContinent(GeographyContinent continent, ISystems<?> originatingSystem, UUID... identifyingToken);

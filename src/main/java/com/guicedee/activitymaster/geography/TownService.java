@@ -4,7 +4,7 @@ import com.guicedee.activitymaster.core.ActivityMasterConfiguration;
 import com.guicedee.activitymaster.core.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.core.db.entities.geography.Geography;
 import com.guicedee.activitymaster.core.db.entities.systems.Systems;
-import com.guicedee.activitymaster.core.implementations.ClassificationService;
+import com.guicedee.activitymaster.core.ClassificationService;
 import com.guicedee.activitymaster.core.services.dto.IGeography;
 import com.guicedee.activitymaster.core.services.dto.ISystems;
 import com.guicedee.activitymaster.core.services.enumtypes.IClassificationValue;

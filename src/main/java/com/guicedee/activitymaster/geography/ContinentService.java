@@ -4,8 +4,7 @@ import com.guicedee.activitymaster.core.ActivityMasterConfiguration;
 import com.guicedee.activitymaster.core.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.core.db.entities.geography.Geography;
 import com.guicedee.activitymaster.core.db.entities.systems.Systems;
-import com.guicedee.activitymaster.core.implementations.ClassificationService;
-import com.guicedee.activitymaster.core.services.dto.IEnterprise;
+import com.guicedee.activitymaster.core.ClassificationService;
 import com.guicedee.activitymaster.core.services.dto.IGeography;
 import com.guicedee.activitymaster.core.services.dto.ISystems;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
@@ -13,7 +12,7 @@ import com.guicedee.guicedinjection.GuiceContext;
 
 import jakarta.cache.annotation.CacheKey;
 import jakarta.cache.annotation.CacheResult;
-import jakarta.inject.Singleton;
+
 import java.util.UUID;
 
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.Continent;

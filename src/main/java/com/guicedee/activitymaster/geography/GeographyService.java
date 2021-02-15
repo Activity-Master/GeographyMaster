@@ -1,23 +1,19 @@
 package com.guicedee.activitymaster.geography;
 
 import com.google.common.base.Strings;
-import com.google.inject.Singleton;
 import com.guicedee.activitymaster.core.ActivityMasterConfiguration;
 import com.guicedee.activitymaster.core.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.core.db.entities.enterprise.Enterprise;
 import com.guicedee.activitymaster.core.db.entities.geography.Geography;
 import com.guicedee.activitymaster.core.db.entities.systems.Systems;
-import com.guicedee.activitymaster.core.implementations.ClassificationService;
+import com.guicedee.activitymaster.core.ClassificationService;
 import com.guicedee.activitymaster.core.services.IActivityMasterProgressMonitor;
 import com.guicedee.activitymaster.core.services.IProgressable;
-import com.guicedee.activitymaster.core.services.classifications.enterprise.IEnterpriseName;
 import com.guicedee.activitymaster.core.services.dto.IClassification;
-import com.guicedee.activitymaster.core.services.dto.IEnterprise;
 import com.guicedee.activitymaster.core.services.dto.IGeography;
 import com.guicedee.activitymaster.core.services.dto.ISystems;
 import com.guicedee.activitymaster.core.services.system.IClassificationDataConceptService;
 import com.guicedee.activitymaster.core.services.system.IClassificationService;
-import com.guicedee.activitymaster.core.services.system.IEnterpriseService;
 import com.guicedee.activitymaster.geography.services.IGeographyService;
 import com.guicedee.activitymaster.geography.services.dto.*;
 import com.guicedee.activitymaster.geography.services.dto.classifications.GeographyAsciiCode;

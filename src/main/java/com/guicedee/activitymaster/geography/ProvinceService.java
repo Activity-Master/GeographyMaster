@@ -1,14 +1,11 @@
 package com.guicedee.activitymaster.geography;
 
 import com.guicedee.activitymaster.core.ActivityMasterConfiguration;
-import com.guicedee.activitymaster.core.async.AsyncPersist;
-import com.guicedee.activitymaster.core.async.AsyncUpdate;
 import com.guicedee.activitymaster.core.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.core.db.entities.geography.Geography;
 import com.guicedee.activitymaster.core.db.entities.geography.Geography_;
 import com.guicedee.activitymaster.core.db.entities.systems.Systems;
-import com.guicedee.activitymaster.core.implementations.ClassificationService;
-import com.guicedee.activitymaster.core.services.dto.IEnterprise;
+import com.guicedee.activitymaster.core.ClassificationService;
 import com.guicedee.activitymaster.core.services.dto.IGeography;
 import com.guicedee.activitymaster.core.services.dto.ISystems;
 import com.guicedee.activitymaster.core.services.enumtypes.IClassificationValue;
@@ -17,7 +14,6 @@ import com.guicedee.guicedinjection.GuiceContext;
 
 import jakarta.cache.annotation.CacheKey;
 import jakarta.cache.annotation.CacheResult;
-import jakarta.inject.Singleton;
 import jakarta.validation.constraints.NotNull;
 import java.util.Set;
 import java.util.UUID;
