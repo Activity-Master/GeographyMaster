@@ -1,17 +1,12 @@
 package com.guicedee.activitymaster.geography.implementations.updates;
 
 import com.guicedee.activitymaster.core.services.IActivityMasterProgressMonitor;
-import com.guicedee.activitymaster.core.services.dto.IClassificationDataConcept;
-import com.guicedee.activitymaster.core.services.dto.IEnterprise;
-import com.guicedee.activitymaster.core.services.dto.IInvolvedPartyIdentificationType;
-import com.guicedee.activitymaster.core.services.dto.ISystems;
-import com.guicedee.activitymaster.core.services.system.IClassificationDataConceptService;
-import com.guicedee.activitymaster.core.services.system.IClassificationService;
-import com.guicedee.activitymaster.core.services.system.IInvolvedPartyService;
+import com.guicedee.activitymaster.core.services.dto.*;
+import com.guicedee.activitymaster.core.services.system.*;
 import com.guicedee.activitymaster.core.updates.DatedUpdate;
 import com.guicedee.activitymaster.core.updates.ISystemUpdate;
 import com.guicedee.activitymaster.geography.GeographyService;
-import com.guicedee.activitymaster.geography.GeographySystem;
+import com.guicedee.activitymaster.geography.implementations.GeographySystem;
 import com.guicedee.activitymaster.geography.services.IGeographyService;
 import com.guicedee.activitymaster.geography.services.dto.GeographyContinent;
 import com.guicedee.activitymaster.geography.services.enumerations.GeographyFeatureClassesClassifications;
@@ -20,10 +15,8 @@ import com.guicedee.activitymaster.geography.services.enumerations.GeographyIPId
 import java.util.UUID;
 
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassificationDataConcepts.*;
-import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassificationDataConcepts.GeoNameClassificationDataConcept;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
-import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.PostalCode;
-import static com.guicedee.guicedinjection.GuiceContext.get;
+import static com.guicedee.guicedinjection.GuiceContext.*;
 
 @DatedUpdate(date = "2020/12/10", taskCount = 6)
 public class GeographySystemInstall

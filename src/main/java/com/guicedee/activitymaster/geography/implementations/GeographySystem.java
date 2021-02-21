@@ -1,6 +1,7 @@
-package com.guicedee.activitymaster.geography;
+package com.guicedee.activitymaster.geography.implementations;
 
-import com.google.inject.*;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.guicedee.activitymaster.core.services.IActivityMasterProgressMonitor;
 import com.guicedee.activitymaster.core.services.IActivityMasterSystem;
 import com.guicedee.activitymaster.core.services.dto.IEnterprise;
@@ -9,7 +10,6 @@ import com.guicedee.activitymaster.core.services.system.ISystemsService;
 
 import static com.guicedee.activitymaster.geography.services.IGeographyService.*;
 
-@Singleton
 public class GeographySystem
 		extends ActivityMasterDefaultSystem<GeographySystem>
 		implements IActivityMasterSystem<GeographySystem>
@@ -22,6 +22,8 @@ public class GeographySystem
 	{
 		systemsService.get()
 		              .create(enterprise, getSystemName(), getSystemDescription());
+		systemsService.get()
+		              .registerNewSystem(enterprise, getSystem(enterprise));
 	}
 	
 	
