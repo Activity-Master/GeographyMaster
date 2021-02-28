@@ -1,6 +1,5 @@
 package com.guicedee.activitymaster.geography;
 
-import com.guicedee.activitymaster.core.ActivityMasterConfiguration;
 import com.guicedee.activitymaster.core.ClassificationService;
 import com.guicedee.activitymaster.core.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.core.db.entities.geography.Geography;
@@ -57,10 +56,9 @@ public class DistrictService
 		}
 		geo.setActiveFlagID(classification.getActiveFlagID());
 		geo.persist();
-		if (get(ActivityMasterConfiguration.class).isSecurityEnabled())
-		{
+	
 			geo.createDefaultSecurity(geoSystem, identityToken);
-		}
+		
 		province.addChild(geo, geoSystem, identityToken);
 		return geo;
 	}

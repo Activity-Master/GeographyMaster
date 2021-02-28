@@ -1,10 +1,9 @@
 package com.guicedee.activitymaster.geography;
 
-import com.guicedee.activitymaster.core.ActivityMasterConfiguration;
+import com.guicedee.activitymaster.core.ClassificationService;
 import com.guicedee.activitymaster.core.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.core.db.entities.geography.Geography;
 import com.guicedee.activitymaster.core.db.entities.systems.Systems;
-import com.guicedee.activitymaster.core.ClassificationService;
 import com.guicedee.activitymaster.core.services.dto.IGeography;
 import com.guicedee.activitymaster.core.services.dto.ISystems;
 import com.guicedee.activitymaster.core.services.enumtypes.IClassificationValue;
@@ -18,7 +17,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
-import static com.guicedee.guicedinjection.GuiceContext.*;
 
 public class TownService
 {
@@ -54,10 +52,9 @@ public class TownService
 		}
 		geo.setActiveFlagID(classification.getActiveFlagID());
 		geo.persist();
-		if (get(ActivityMasterConfiguration.class).isSecurityEnabled())
-		{
+	
 			geo.createDefaultSecurity(system, identityToken);
-		}
+		
 		district.addChild(geo, system, identityToken);
 		return geo;
 	}

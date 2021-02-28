@@ -1,7 +1,6 @@
 package com.guicedee.activitymaster.geography;
 
 import com.google.common.base.Strings;
-import com.guicedee.activitymaster.core.ActivityMasterConfiguration;
 import com.guicedee.activitymaster.core.ClassificationService;
 import com.guicedee.activitymaster.core.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.core.db.entities.enterprise.Enterprise;
@@ -1091,10 +1090,9 @@ public class GeographyService<J extends GeographyService<J>>
 			
 			geo.persist();
 			geoData.setGeographyId(geo.getId());
-			if (get(ActivityMasterConfiguration.class).isSecurityEnabled())
-			{
+			
 				geo.createDefaultSecurity(system, identityToken);
-			}
+			
 			if (geoData.getCoordinates() != null)
 			{
 				geo.add(Latitude, geoData.getCoordinates()

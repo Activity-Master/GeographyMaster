@@ -1,26 +1,22 @@
 package com.guicedee.activitymaster.geography;
 
-import com.guicedee.activitymaster.core.ActivityMasterConfiguration;
+import com.guicedee.activitymaster.core.ClassificationService;
 import com.guicedee.activitymaster.core.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.core.db.entities.geography.Geography;
 import com.guicedee.activitymaster.core.db.entities.systems.Systems;
-import com.guicedee.activitymaster.core.ClassificationService;
-import com.guicedee.activitymaster.core.services.dto.IClassification;
-import com.guicedee.activitymaster.core.services.dto.IGeography;
-import com.guicedee.activitymaster.core.services.dto.ISystems;
+import com.guicedee.activitymaster.core.services.dto.*;
 import com.guicedee.activitymaster.core.services.enumtypes.IClassificationValue;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
-
 import jakarta.cache.annotation.CacheKey;
 import jakarta.cache.annotation.CacheResult;
 import jakarta.validation.constraints.NotNull;
+
 import java.util.Set;
 import java.util.UUID;
 
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
-import static com.guicedee.guicedinjection.GuiceContext.get;
-import static com.guicedee.guicedinjection.json.StaticStrings.STRING_EMPTY;
+import static com.guicedee.guicedinjection.json.StaticStrings.*;
 
 public class CountryService
 {
@@ -58,10 +54,9 @@ public class CountryService
 		}
 		geo.setActiveFlagID(classification.getActiveFlagID());
 		geo.persist();
-		if (get(ActivityMasterConfiguration.class).isSecurityEnabled())
-		{
+		
 			geo.createDefaultSecurity(system, identityToken);
-		}
+		
 		continent.addChild(geo, system, identityToken);
 		
 		return geo;
