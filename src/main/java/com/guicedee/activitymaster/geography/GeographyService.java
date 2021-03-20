@@ -1,16 +1,19 @@
 package com.guicedee.activitymaster.geography;
 
 import com.google.common.base.Strings;
+import com.guicedee.activitymaster.client.services.IClassificationDataConceptService;
+import com.guicedee.activitymaster.client.services.IClassificationService;
+import com.guicedee.activitymaster.client.services.administration.IActivityMasterProgressMonitor;
+import com.guicedee.activitymaster.client.services.administration.IProgressable;
+import com.guicedee.activitymaster.client.services.builders.warehouse.classifications.IClassification;
+import com.guicedee.activitymaster.client.services.builders.warehouse.geography.IGeography;
+import com.guicedee.activitymaster.client.services.builders.warehouse.systems.ISystems;
+import com.guicedee.activitymaster.client.services.classifications.EnterpriseClassificationDataConcepts;
 import com.guicedee.activitymaster.core.ClassificationService;
 import com.guicedee.activitymaster.core.db.entities.classifications.Classification;
-import com.guicedee.activitymaster.core.db.entities.enterprise.Enterprise;
 import com.guicedee.activitymaster.core.db.entities.geography.Geography;
+import com.guicedee.activitymaster.core.db.entities.geography.builders.GeographyQueryBuilder;
 import com.guicedee.activitymaster.core.db.entities.systems.Systems;
-import com.guicedee.activitymaster.core.services.IActivityMasterProgressMonitor;
-import com.guicedee.activitymaster.core.services.IProgressable;
-import com.guicedee.activitymaster.core.services.dto.*;
-import com.guicedee.activitymaster.core.services.system.IClassificationDataConceptService;
-import com.guicedee.activitymaster.core.services.system.IClassificationService;
 import com.guicedee.activitymaster.geography.implementations.GeographySystem;
 import com.guicedee.activitymaster.geography.services.IGeographyService;
 import com.guicedee.activitymaster.geography.services.dto.*;
@@ -32,26 +35,28 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
-import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassificationDataConcepts.*;
+import static com.guicedee.activitymaster.client.services.classifications.DefaultClassifications.*;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
 import static com.guicedee.guicedinjection.GuiceContext.*;
 import static com.guicedee.guicedinjection.json.StaticStrings.*;
 import static geodata.GeoDataFiles.*;
 
-public class GeographyService<J extends GeographyService<J>>
+public class GeographyService
 		implements IProgressable,
-		           IGeographyService<J>
+		           IGeographyService<GeographyService>
 {
-	public IGeography<?> createPlanet(@CacheKey @NotNull String value, String originalUniqueID, ISystems<?> system, UUID... identityToken)
+	@Override
+	public IGeography<?,?> createPlanet(@CacheKey @NotNull String value, String originalUniqueID, ISystems<?,?> system, UUID... identityToken)
 	{
 		PlanetService service = get(PlanetService.class);
 		return service.createPlanet(value, "The planet " + value, originalUniqueID, system, identityToken);
 	}
 	
-	public IGeography<?> createContinent(String planetName, GeographyContinent continent, ISystems<?> originatingSystem, String originalUniqueID, UUID... identityToken)
+	@Override
+	public IGeography<?,?> createContinent(String planetName, GeographyContinent continent, ISystems<?,?> originatingSystem, String originalUniqueID, UUID... identityToken)
 	{
 		PlanetService planetService = get(PlanetService.class);
-		IGeography<?> planet = planetService.findPlanet(planetName, originatingSystem, identityToken);
+		IGeography<Geography,GeographyQueryBuilder> planet = planetService.findPlanet(planetName, originatingSystem, identityToken);
 		ContinentService service = get(ContinentService.class);
 		return service.createContinent(planet, continent.getContinentCode(), continent.getContinentName(), originalUniqueID, originatingSystem, identityToken);
 	}
@@ -59,7 +64,7 @@ public class GeographyService<J extends GeographyService<J>>
 	
 	@Override
 	@CacheResult
-	public IGeography<?> findPlanet(@CacheKey String name, @CacheKey ISystems<?> originatingSystem, @CacheKey UUID... identityToken)
+	public IGeography<?,?> findPlanet(@CacheKey String name, @CacheKey ISystems<?,?> originatingSystem, @CacheKey UUID... identityToken)
 	{
 		PlanetService service = get(PlanetService.class);
 		return service.findPlanet(name, originatingSystem, identityToken);
@@ -68,10 +73,10 @@ public class GeographyService<J extends GeographyService<J>>
 	
 	@Override
 	@CacheResult
-	public GeographyContinent findContinent(@CacheKey GeographyContinent continent, @CacheKey ISystems<?> system, @CacheKey UUID... identityToken)
+	public GeographyContinent findContinent(@CacheKey GeographyContinent continent, @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
 	{
 		ContinentService service = get(ContinentService.class);
-		IGeography<?> continentGeo = service.findContinent(continent.getContinentCode(), system, identityToken);
+		IGeography<?,?> continentGeo = service.findContinent(continent.getContinentCode(), system, identityToken);
 		GeographyContinent gc = new GeographyContinent();
 		gc.setContinentCode(continentGeo.getName());
 		gc.setContinentName(continentGeo.getDescription());
@@ -81,14 +86,22 @@ public class GeographyService<J extends GeographyService<J>>
 	
 	@Override
 	@CacheResult
-	public GeographyCountry findCountry(@CacheKey GeographyCountry country, @CacheKey ISystems<?> system, @CacheKey UUID... identityToken)
+	public GeographyCountry findCountry(@CacheKey GeographyCountry country, @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
 	{
 		CountryService cs = get(CountryService.class);
-		IGeography<?> geo = cs.findCountry(country.getIso(), system, identityToken);
+		IGeography<?,?> geo = cs.findCountry(country.getIso(), system, identityToken);
 		GeographyCountry gc = new GeographyCountry();
 		
-		List<Object[]> values = geo.getValues(CountryISO3166, null, system, identityToken, CountryISO3166_3, CountryISO_Numeric,
-				CountryFips, CountryCapital, CountryAreaInSqKm, CountryTld, CountryPhone, CountryPostalCodeFormat, CountryPostalCodeRegex);
+		List<Object[]> values = geo.builder().getClassificationsValuePivot(CountryISO3166.toString(), (String)null, system, identityToken,
+				CountryISO3166_3.toString(),
+				CountryISO_Numeric.toString(),
+				CountryFips.toString(),
+				CountryCapital.toString(),
+				CountryAreaInSqKm.toString(),
+				CountryTld.toString(),
+				CountryPhone.toString(),
+				CountryPostalCodeFormat.toString(),
+				CountryPostalCodeRegex.toString());
 		if (!values.isEmpty())
 		{
 			Object[] vals = values.stream()
@@ -106,13 +119,13 @@ public class GeographyService<J extends GeographyService<J>>
 			gc.setPostalCodeRegexFormat(vals[9].toString());
 		}
 		
-		if (geo.hasClassifications(Currency, system, identityToken))
+		if (geo.hasClassifications(Currency,null, system, identityToken))
 		{
-			String currency = geo.findClassifications(Currency, system, identityToken)
+			String currency = geo.findClassification(Currency, system, identityToken)
 			                     .orElseThrow()
 			                     .getValue();
 			CurrencyService currencyService = get(CurrencyService.class);
-			IClassification<?> geoCurrency = currencyService.findCurrency(currency, system, identityToken);
+			IClassification<?,?> geoCurrency = currencyService.findCurrency(currency, system, identityToken);
 			GeographyCurrency geographyCurrency = new GeographyCurrency();
 			geographyCurrency.setCurrencyCode(geoCurrency.getName());
 			geographyCurrency.setCurrencyName(geoCurrency.getDescription());
@@ -129,17 +142,19 @@ public class GeographyService<J extends GeographyService<J>>
 		return gc;
 	}
 	
-	public GeographyCountry createCountry(GeographyCountry country, ISystems<?> system, UUID... identityToken)
+	public GeographyCountry createCountry(GeographyCountry country, ISystems<?,?> system, UUID... identityToken)
 	{
 		CountryService countryService = get(CountryService.class);
-		IGeography<?> geoContinent = get(ContinentService.class).findContinent(country.getContinent()
-		                                                                              .getContinentCode(), system, identityToken);
-		IGeography<?> geoCountry = countryService.createCountry(geoContinent, country.getIso(), country.getCountryName(), country.getGeonameId() + "", system, identityToken);
+		IGeography<Geography,GeographyQueryBuilder> geoContinent = get(ContinentService.class).findContinent(country.getContinent()
+		                                                                                                                                                           .getContinentCode(), system, identityToken);
+		var geoCountry =
+				countryService.createCountry(geoContinent, country.getIso(), country.getCountryName(), country.getGeonameId() + "", system, identityToken);
 		
 		
-		IClassification<?> currency = get(ClassificationService.class).find(country.getCurrency()
-		                                                                           .getCurrencyCode(), GeographyCurrencyConcept.toString(), system, identityToken);
-		geoCountry.addOrUpdate(Currency, currency.getName(), system, identityToken);
+		IClassification<?,?> currency = get(ClassificationService.class).find(country.getCurrency()
+		                                                                           .getCurrencyCode(), EnterpriseClassificationDataConcepts.Classification, system, identityToken);
+		geoCountry.addOrUpdateClassification(Currency, currency.getName(), system, identityToken);
+		
 		
 		countryService.updateCountry(currency, country.getIso(), country.getCountryName(), country.getIso3(), country.getIsoNumeric(), country.getCountryDialCode(),
 				country.getFips(), country.getCapital(), country.getAreaSqlKM(), country.getPostalCodeDecimalFormat(), country.getPostalCodeRegexFormat(),
@@ -150,7 +165,7 @@ public class GeographyService<J extends GeographyService<J>>
 	}
 	
 	@Override
-	public void loadProvincesASCII1(ISystems<?> system, String countryCode, IActivityMasterProgressMonitor progressMonitor)
+	public void loadProvincesASCII1(ISystems<?,?> system, String countryCode, IActivityMasterProgressMonitor progressMonitor)
 	{
 		progressMonitor.setTotalTasks(4100);
 		try (GeoDataFinder finder = new GeoDataFinder(Admin1CodesASCII, CSVFormat.TDF, Admin1CodesASCII.getHeaderNames()))
@@ -170,8 +185,8 @@ public class GeographyService<J extends GeographyService<J>>
 				{
 					ProvinceService provinceService = get(ProvinceService.class);
 					CountryService countryService = get(CountryService.class);
-					IGeography<?> country = countryService.findCountry(countryCode, system);
-					IGeography<?> province = provinceService.createProvince(country, ascii.getCode(), ascii.getName(), ascii.getGeonameId() + "", system);
+					IGeography<Geography,GeographyQueryBuilder> country = countryService.findCountry(countryCode, system);
+					IGeography<?,?> province = provinceService.createProvince(country, ascii.getCode(), ascii.getName(), ascii.getGeonameId() + "", system);
 				}
 				if (current % 10 == 0)
 				{
@@ -183,7 +198,7 @@ public class GeographyService<J extends GeographyService<J>>
 	}
 	
 	@Override
-	public void loadDistrictsASCII2(ISystems<?> system, String countryCode, IActivityMasterProgressMonitor progressMonitor)
+	public void loadDistrictsASCII2(ISystems<?,?> system, String countryCode, IActivityMasterProgressMonitor progressMonitor)
 	{
 		progressMonitor.setTotalTasks(4500);
 		try (GeoDataFinder finder = new GeoDataFinder(Admin2Codes, CSVFormat.TDF, Admin2Codes.getHeaderNames()))
@@ -205,7 +220,7 @@ public class GeographyService<J extends GeographyService<J>>
 					                           .substring(0, 5);
 					
 					ProvinceService provinceService = get(ProvinceService.class);
-					IGeography<?> province = provinceService.findProvince(provinceCode, system);
+					IGeography<Geography, GeographyQueryBuilder> province = provinceService.findProvince(provinceCode, system);
 					DistrictService districtService = get(DistrictService.class);
 					districtService.createDistrict(province, ascii.getCode(), ascii.getName(), ascii.getGeonameId() + "", system);
 				}
@@ -219,7 +234,7 @@ public class GeographyService<J extends GeographyService<J>>
 	}
 	
 	@Override
-	public void loadLanguages(ISystems<?> system, IActivityMasterProgressMonitor progressMonitor)
+	public void loadLanguages(ISystems<?,?> system, IActivityMasterProgressMonitor progressMonitor)
 	{
 		progressMonitor.setTotalTasks(547);
 		try (GeoDataFinder finder = new GeoDataFinder(ISO639Languages, CSVFormat.TDF, ISO639Languages.getHeaderNames()))
@@ -270,7 +285,7 @@ public class GeographyService<J extends GeographyService<J>>
 				}
 				
 				LanguagesService languagesService = get(LanguagesService.class);
-				IClassification<?> lang = languagesService.createLanguage(language.getIso6391Code(), english, language.getIso6391Code(), system);
+				IClassification<?,?> lang = languagesService.createLanguage(language.getIso6391Code(), english, language.getIso6391Code(), system);
 				languagesService.updateLanguage(lang.getName(), null, language.getIso6392Code(), null, null, null, system);
 				
 				for (String s : language.getName())
@@ -301,7 +316,7 @@ public class GeographyService<J extends GeographyService<J>>
 	
 	
 	@Override
-	public void loadCountryInfo(ISystems<?> system, IActivityMasterProgressMonitor progressMonitor)
+	public void loadCountryInfo(ISystems<?,?> system, IActivityMasterProgressMonitor progressMonitor)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		IClassificationDataConceptService<?> conceptService = get(IClassificationDataConceptService.class);
@@ -337,7 +352,7 @@ public class GeographyService<J extends GeographyService<J>>
 				
 				country.setWebTld(record.get(9));
 				
-				IClassification<?> currencyClassification = get(CurrencyService.class).createCurrency(record.get(10), record.get(11), system, identityToken);
+				IClassification<?,?> currencyClassification = get(CurrencyService.class).createCurrency(record.get(10), record.get(11), system, identityToken);
 				GeographyCurrency gcc = new GeographyCurrency().setCurrencyCode(currencyClassification.getName())
 				                                               .setCurrencyName(currencyClassification.getDescription());
 				country.setCurrency(gcc);
@@ -391,15 +406,17 @@ public class GeographyService<J extends GeographyService<J>>
 	 */
 	@Override
 	@CacheResult(cacheName = "GeographyTimezones")
-	public GeographyTimezone findTimezone(@CacheKey GeographyTimezone timezone, @CacheKey ISystems<?> system)
+	public GeographyTimezone findTimezone(@CacheKey GeographyTimezone timezone, @CacheKey ISystems<?,?> system)
 	{
 		UUID identityToken = get(GeographySystem.class).getSystemToken(system.getEnterprise());
 		TimeZoneService timeZoneService = get(TimeZoneService.class);
 		
-		IClassification<?> timeZoneClassification = timeZoneService.findTimeZone(timezone.getTimezoneID(), system, identityToken);
+		IClassification<?,?> timeZoneClassification = timeZoneService.findTimeZone(timezone.getTimezoneID(), system, identityToken);
 		GeographyTimezone tz = new GeographyTimezone();
 		tz.setTimezoneID(timeZoneClassification.getName());
-		List<Object[]> values = timeZoneClassification.getValues(TimeZoneRawOffset, null, system, new UUID[]{identityToken}, TimeZoneOffsetJuly2016, TimeZoneOffsetJan2016);
+		List<Object[]> values = timeZoneClassification.builder().getClassificationsValuePivot(TimeZoneRawOffset.toString(),(String) null, system, new UUID[]{identityToken},
+				TimeZoneOffsetJuly2016.toString(),
+				TimeZoneOffsetJan2016.toString());
 		if (!values.isEmpty())
 		{
 			if (values.get(0)[0] != null)
@@ -420,7 +437,7 @@ public class GeographyService<J extends GeographyService<J>>
 	}
 	
 	@Override
-	public void loadTimeZones(ISystems<?> system, IActivityMasterProgressMonitor progressMonitor)
+	public void loadTimeZones(ISystems<?,?> system, IActivityMasterProgressMonitor progressMonitor)
 	{
 		progressMonitor.setTotalTasks(425);
 		try (GeoDataFinder finder = new GeoDataFinder(TimeZones, CSVFormat.TDF, TimeZones.getHeaderNames()))
@@ -436,14 +453,14 @@ public class GeographyService<J extends GeographyService<J>>
 				timezone.setRawOffset(Double.parseDouble(record.get(4)));
 				create(timezone, system);
 				
-				ISystems<?> geoSystem = get(GeographySystem.class).getSystem(system.getEnterprise());
+				ISystems<?,?> geoSystem = get(GeographySystem.class).getSystem(system.getEnterprise());
 				UUID identityToken = get(GeographySystem.class).getSystemToken(system.getEnterprise());
 				CountryService cs = get(CountryService.class);
-				IGeography<?> country = cs.findCountry(record.get(0), system);
+				IGeography<?,?> country = cs.findCountry(record.get(0), system);
 				
 				TimeZoneService timeZoneService = get(TimeZoneService.class);
-				IClassification<?> timeZone = timeZoneService.findTimeZone(timezone.getTimezoneID(), system, identityToken);
-				country.addOrUpdate(TimeZone, timeZone.getName(), geoSystem, identityToken);
+				IClassification<?,?> timeZone = timeZoneService.findTimeZone(timezone.getTimezoneID(), system, identityToken);
+				country.addOrUpdateClassification(TimeZone, timeZone.getName(), geoSystem, identityToken);
 				
 				if (current % 5 == 0)
 				{
@@ -453,7 +470,7 @@ public class GeographyService<J extends GeographyService<J>>
 		}
 	}
 	
-	public GeographyTimezone create(GeographyTimezone timezone, ISystems<?> system)
+	public GeographyTimezone create(GeographyTimezone timezone, ISystems<?,?> system)
 	{
 		UUID identityToken = get(GeographySystem.class).getSystemToken(system.getEnterprise());
 		TimeZoneService timeZoneService = get(TimeZoneService.class);
@@ -466,7 +483,7 @@ public class GeographyService<J extends GeographyService<J>>
 	}
 	
 	@Override
-	public void loadPostalCodes(ISystems<?> system, IActivityMasterProgressMonitor progressMonitor)
+	public void loadPostalCodes(ISystems<?,?> system, IActivityMasterProgressMonitor progressMonitor)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		IClassificationDataConceptService<?> conceptService = get(IClassificationDataConceptService.class);
@@ -591,7 +608,7 @@ public class GeographyService<J extends GeographyService<J>>
 				gp.setProvinceName(value.get(1)
 				                        .getProvinceName());
 			}
-			IGeography<?> town = null;
+			IGeography<?,?> town = null;
 			try
 			{
 				town = townService.findTown(gp.getParentPlaceName(), system, identityToken);
@@ -602,8 +619,8 @@ public class GeographyService<J extends GeographyService<J>>
 				{
 					try
 					{
-						IGeography<?> firstDistrictInProvince = districtService.findFirstDistrictInProvince(gp.getProvinceName(), system, identityToken);
-						town = townService.createTown(firstDistrictInProvince,
+						IGeography<?,?> firstDistrictInProvince = districtService.findFirstDistrictInProvince(gp.getProvinceName(), system, identityToken);
+						town = townService.createTown((IGeography<Geography, GeographyQueryBuilder>) firstDistrictInProvince,
 								gp.getParentPlaceName(), gp.getParentPlaceName(),
 								gp.getGeonameId() == null ? "" : Long.toString(gp.getGeonameId()),
 								system, identityToken);
@@ -639,13 +656,14 @@ public class GeographyService<J extends GeographyService<J>>
 			
 			if (town != null)
 			{
-				IGeography<?> postalCode = postalCodeService.createPostalCode(town,
+				IGeography<?,?> postalCode = postalCodeService.createPostalCode((IGeography<Geography, GeographyQueryBuilder>) town,
 						gp.getPostalCode(), gp.getPostalCodePlaceName(),
 						gp.getGeonameId() == null ? "" : Long.toString(gp.getGeonameId()),
 						system, identityToken);
 				for (GeographyPostalCode geographyPostalCode : value)
 				{
-					IGeography<?> postalCodeSuburb = postalCodeService.createPostalCodeSuburb(postalCode, geographyPostalCode.getPostalCode(),
+					IGeography<?,?> postalCodeSuburb = postalCodeService.createPostalCodeSuburb((IGeography<Geography, GeographyQueryBuilder>)
+									postalCode, geographyPostalCode.getPostalCode(),
 							geographyPostalCode.getPostalCodePlaceName(),
 							geographyPostalCode.getPostalCode(), system, identityToken
 					                                                                         );
@@ -686,19 +704,19 @@ public class GeographyService<J extends GeographyService<J>>
 	
 	@Override
 	@CacheResult(cacheName = "GeographyPostalCodes")
-	public GeographyPostalCode findPostalCode(@CacheKey GeographyPostalCode postalCode, @CacheKey ISystems<?> system, UUID... identityToken)
+	public GeographyPostalCode findPostalCode(@CacheKey GeographyPostalCode postalCode, @CacheKey ISystems<?,?> system, UUID... identityToken)
 	{
 		PostalCodeService postalCodeService = get(PostalCodeService.class);
-		IGeography<?> geo = postalCodeService.findPostalCode(null, postalCode.getPostalCode(), system, identityToken);
+		IGeography<?,?> geo = postalCodeService.findPostalCode(null, postalCode.getPostalCode(), system, identityToken);
 		GeographyPostalCode result = new GeographyPostalCode();
 		result.setGeographyId(geo.getId());
 		result.setPostalCodePlaceName(geo.getDescription());
-		if (geo.hasClassifications(Latitude, system, identityToken))
+		if (geo.hasClassifications(Latitude,null, system, identityToken))
 		{
-			String latitude = geo.findClassifications(Latitude, system, identityToken)
+			String latitude = geo.findClassification(Latitude, system, identityToken)
 			                     .orElseThrow(() -> new GeographyException("Postal Code loaded without latitude"))
 			                     .getValue();
-			String longitude = geo.findClassifications(Longitude, system, identityToken)
+			String longitude = geo.findClassification(Longitude, system, identityToken)
 			                      .orElseThrow(() -> new GeographyException("Postal Code loaded without latitude"))
 			                      .getValue();
 			result.setCoordinates(new GeographyCoordinates(latitude, longitude));
@@ -709,20 +727,20 @@ public class GeographyService<J extends GeographyService<J>>
 	
 	@Override
 	@CacheResult(cacheName = "GeographyPostalCodesSuburb")
-	public GeographyPostalCode findPostalCodeSuburb(@CacheKey String code, @CacheKey String description, @CacheKey ISystems<?> system, UUID... identityToken)
+	public GeographyPostalCode findPostalCodeSuburb(@CacheKey String code, @CacheKey String description, @CacheKey ISystems<?,?> system, UUID... identityToken)
 	{
 		PostalCodeService postalCodeService = get(PostalCodeService.class);
-		IGeography<?> geo = postalCodeService.findPostalCodeSuburb(code, description, system, identityToken);
+		IGeography<?,?> geo = postalCodeService.findPostalCodeSuburb(code, description, system, identityToken);
 
 		GeographyPostalCode result = new GeographyPostalCode();
 		result.setGeographyId(geo.getId());
 		result.setPostalCodePlaceName(geo.getDescription());
-		if (geo.hasClassifications(Latitude, system, identityToken))
+		if (geo.hasClassifications(Latitude, null,system, identityToken))
 		{
-			String latitude = geo.findClassifications(Latitude, system, identityToken)
+			String latitude = geo.findClassification(Latitude, system, identityToken)
 			                     .orElseThrow(() -> new GeographyException("Postal Code loaded without latitude"))
 			                     .getValue();
-			String longitude = geo.findClassifications(Longitude, system, identityToken)
+			String longitude = geo.findClassification(Longitude, system, identityToken)
 			                      .orElseThrow(() -> new GeographyException("Postal Code loaded without latitude"))
 			                      .getValue();
 			result.setCoordinates(new GeographyCoordinates(latitude, longitude));
@@ -732,19 +750,19 @@ public class GeographyService<J extends GeographyService<J>>
 	
 	@Override
 	@CacheResult(cacheName = "GeographyPostalCodesSuburb")
-	public GeographyPostalCode findOrCreatePostalCodeSuburb(@CacheKey String code, @CacheKey String description, @CacheKey ISystems<?> system, UUID... identityToken)
+	public GeographyPostalCode findOrCreatePostalCodeSuburb(@CacheKey String code, @CacheKey String description, @CacheKey ISystems<?,?> system, UUID... identityToken)
 	{
 		PostalCodeService postalCodeService = get(PostalCodeService.class);
-		IGeography<?> geo = postalCodeService.findOrCreatePostalCodeSuburb(code, description, system, identityToken);
+		IGeography<?,?> geo = postalCodeService.findOrCreatePostalCodeSuburb(code, description, system, identityToken);
 		GeographyPostalCode result = new GeographyPostalCode();
 		result.setGeographyId(geo.getId());
 		result.setPostalCodePlaceName(geo.getDescription());
-		if (geo.hasClassifications(Latitude, system, identityToken))
+		if (geo.hasClassifications(Latitude,null, system, identityToken))
 		{
-			String latitude = geo.findClassifications(Latitude, system, identityToken)
+			String latitude = geo.findClassification(Latitude, system, identityToken)
 			                     .orElseThrow(() -> new GeographyException("Postal Code loaded without latitude"))
 			                     .getValue();
-			String longitude = geo.findClassifications(Longitude, system, identityToken)
+			String longitude = geo.findClassification(Longitude, system, identityToken)
 			                      .orElseThrow(() -> new GeographyException("Postal Code loaded without latitude"))
 			                      .getValue();
 			result.setCoordinates(new GeographyCoordinates(latitude, longitude));
@@ -754,7 +772,7 @@ public class GeographyService<J extends GeographyService<J>>
 	
 	@Override
 	@CacheResult(cacheName = "GeographyFindGeographyById")
-	public IGeography<?> findGeographyById(@CacheKey UUID geographyID, @CacheKey ISystems<?> system, @CacheKey UUID... identityToken)
+	public IGeography<?,?> findGeographyById(@CacheKey UUID geographyID, @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
 	{
 		return new Geography().builder()
 		                      .find(geographyID)
@@ -767,10 +785,10 @@ public class GeographyService<J extends GeographyService<J>>
 	
 	
 	@CacheResult(cacheName = "GeographyFindFeatureClass")
-	public IClassification<?> findFeatureClass(@CacheKey GeographyFeatureClassesClassifications key, @CacheKey ISystems<?> system, UUID... identityToken)
+	public IClassification<?,?> findFeatureClass(@CacheKey GeographyFeatureClassesClassifications key, @CacheKey ISystems<?,?> system, UUID... identityToken)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
-		return classificationService.find(key.classificationName(), system, identityToken);
+		return classificationService.find(key.toString(), system, identityToken);
 	}
 	
 	/**
@@ -780,17 +798,17 @@ public class GeographyService<J extends GeographyService<J>>
 	 * @param system
 	 * @param identityToken
 	 */
-	public GeographyFeatureCode create(GeographyFeatureCode featureCode, ISystems<?> system, UUID... identityToken)
+	public GeographyFeatureCode create(GeographyFeatureCode featureCode, ISystems<?,?> system, UUID... identityToken)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
-		IClassification<?> classification = classificationService.find(FeatureCodes, system, identityToken);
-		classificationService.create(featureCode.getCode(), featureCode.getDescription(), FeatureCodes.concept().name(), system,  0, classification, identityToken);
+		IClassification<?,?> classification = classificationService.find(FeatureCodes, system, identityToken);
+		classificationService.create(featureCode.getCode(), featureCode.getDescription(), FeatureCodes.concept(), system,  0, classification, identityToken);
 		return featureCode;
 	}
 	
 	
 	@Override
-	public void loadFeatureCodes(ISystems<?> system, IActivityMasterProgressMonitor progressMonitor, UUID... identityToken)
+	public void loadFeatureCodes(ISystems<?,?> system, IActivityMasterProgressMonitor progressMonitor, UUID... identityToken)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		progressMonitor.setTotalTasks(681);
@@ -803,10 +821,11 @@ public class GeographyService<J extends GeographyService<J>>
 				featureCode.setDescription(record.get("description"));
 				create(featureCode, system, identityToken);
 				
-				IClassification<?> featureClass = classificationService.find(featureCode.getClassClassification()
-				                                                                        .classificationName(), system, identityToken);
-				IClassification<?> featureCodeClassification = classificationService.find(featureCode.getCode(), FeatureCodes.concept().name(), system, identityToken);
-				featureClass.addChild(featureCodeClassification, system, identityToken);
+				Classification clazz
+						= (Classification) classificationService.find(featureCode.getClassClassification()
+						                                                         .toString(), system, identityToken);
+				Classification featureCodeClassification = (Classification) classificationService.find(featureCode.getCode(), FeatureCodes.concept(), system, identityToken);
+				clazz.addChild(featureCodeClassification,NoClassification.toString(),null, system, identityToken);
 				
 				logProgress("Geography Feature Codes", "Loaded Feature Code - " + featureCode.toString(), 1, progressMonitor);
 			}
@@ -815,9 +834,9 @@ public class GeographyService<J extends GeographyService<J>>
 	
 	@Override
 	@CacheResult(cacheName = "GeographyfindFeatureCode")
-	public GeographyFeatureCode findFeatureCode(@CacheKey String featureCode, @CacheKey ISystems<?> system, UUID... identityToken)
+	public GeographyFeatureCode findFeatureCode(@CacheKey String featureCode, @CacheKey ISystems<?,?> system, UUID... identityToken)
 	{
-		IClassification<?> fClass = findFeatureCodeClassification(featureCode, system, identityToken);
+		IClassification<?,?> fClass = findFeatureCodeClassification(featureCode, system, identityToken);
 		GeographyFeatureCode fCode = new GeographyFeatureCode().setCode(fClass.getName())
 		                                                       .setDescription(fClass.getDescription());
 		return fCode;
@@ -825,14 +844,14 @@ public class GeographyService<J extends GeographyService<J>>
 	
 	@Override
 	@CacheResult(cacheName = "GeographyfindFeatureCodeClassification")
-	public IClassification<?> findFeatureCodeClassification(@CacheKey String featureCode, @CacheKey ISystems<?> system, UUID... identityToken)
+	public IClassification<?,?> findFeatureCodeClassification(@CacheKey String featureCode, @CacheKey ISystems<?,?> system, UUID... identityToken)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		return classificationService.find(featureCode, system, identityToken);
 	}
 	
 	@Override
-	public void loadTownsAndCities(ISystems<?> system, IActivityMasterProgressMonitor progressMonitor)
+	public void loadTownsAndCities(ISystems<?,?> system, IActivityMasterProgressMonitor progressMonitor)
 	{
 		UUID identityToken = get(GeographySystem.class).getSystemToken(system.getEnterprise());
 		
@@ -956,7 +975,7 @@ public class GeographyService<J extends GeographyService<J>>
 			if (value.getAdmin2Code() != null)
 			{
 				DistrictService districtService = get(DistrictService.class);
-				IGeography<?> district = districtService.findDistrict(
+				IGeography<?,?> district = districtService.findDistrict(
 						value.getCountryCode()
 						     .getIso() + "." +
 								value.getAdmin1Code()
@@ -988,13 +1007,13 @@ public class GeographyService<J extends GeographyService<J>>
 	}
 	
 	private void loadHierarchyLevel(Map<Long, List<Long>> hierarchyMap, Map<Long, GeoNameDefaultData<?>> dataMap,
-	                                List<Geography> geoList, ISystems<?> system,
+	                                List<Geography> geoList, ISystems<?,?> system,
 	                                IActivityMasterProgressMonitor progressMonitor,
 	                                UUID... identityToken)
 	{
 		for (int i = 0; i < geoList.size(); i++)
 		{
-			IGeography<?> iGeography = geoList.get(i);
+			IGeography<Geography, GeographyQueryBuilder> iGeography = geoList.get(i);
 			if (!Strings.isNullOrEmpty(iGeography.getOriginalSourceSystemUniqueID()))
 			{
 				if (hierarchyMap.get(Long.valueOf(iGeography.getOriginalSourceSystemUniqueID())) != null)
@@ -1008,12 +1027,12 @@ public class GeographyService<J extends GeographyService<J>>
 						GeoNameDefaultData<?> geoNameDefaultData = create(dataMap.get(aLong), get(ClassificationService.class).find(Town, system, identityToken),
 								system,
 								identityToken);
-						IGeography<?> newChild = findGeographyByID(geoNameDefaultData.getGeographyId());
+						Geography newChild = findGeographyByID(geoNameDefaultData.getGeographyId());
 						if (newChild == null)
 						{
 							continue;
 						}
-						iGeography.addChild(newChild, STRING_EMPTY, system, identityToken);
+						iGeography.addChild(newChild,NoClassification.toString(), STRING_EMPTY, system, identityToken);
 						if (hierarchyMap.get(geoNameDefaultData.getGeonameId()) != null)
 						{
 							for (Long againLong : hierarchyMap.get(geoNameDefaultData.getGeonameId()))
@@ -1025,12 +1044,12 @@ public class GeographyService<J extends GeographyService<J>>
 								GeoNameDefaultData<?> againNameDefaultData = create(dataMap.get(againLong), get(ClassificationService.class).find(Town, system, identityToken),
 										system,
 										identityToken);
-								IGeography<?> againChild = findGeographyByID(againNameDefaultData.getGeographyId());
+								Geography againChild = findGeographyByID(againNameDefaultData.getGeographyId());
 								if (againChild == null)
 								{
 									continue;
 								}
-								iGeography.addChild(againChild, STRING_EMPTY, system, identityToken);
+								iGeography.addChild(againChild,NoClassification.toString(), STRING_EMPTY, system, identityToken);
 							}
 						}
 					}
@@ -1058,7 +1077,7 @@ public class GeographyService<J extends GeographyService<J>>
 	 * @param system
 	 * @param identityToken
 	 */
-	public GeoNameDefaultData<?> create(GeoNameDefaultData<?> geoData, IClassification<?> classification, ISystems<?> system, UUID... identityToken)
+	public GeoNameDefaultData<?> create(GeoNameDefaultData<?> geoData, IClassification<?,?> classification, ISystems<?,?> system, UUID... identityToken)
 	{
 		if (geoData.getGeonameId() == null)
 		{
@@ -1080,11 +1099,11 @@ public class GeographyService<J extends GeographyService<J>>
 				geo.setOriginalSourceSystemUniqueID(Long.toString(geoData.getGeonameId()));
 			}
 			
-			geo.setEnterpriseID((Enterprise) system.getEnterprise());
+			geo.setEnterpriseID(system.getEnterprise());
 			geo.setClassification((Classification) classification);
-			geo.setSystemID((Systems) system);
+			geo.setSystemID(system);
 			geo.setActiveFlagID(((Systems) system).getActiveFlagID());
-			geo.setOriginalSourceSystemID((Systems) system);
+			geo.setOriginalSourceSystemID(system);
 			
 			geo.setClassification((Classification) classification);
 			
@@ -1095,18 +1114,18 @@ public class GeographyService<J extends GeographyService<J>>
 			
 			if (geoData.getCoordinates() != null)
 			{
-				geo.add(Latitude, geoData.getCoordinates()
+				geo.addClassification(Latitude.toString(), geoData.getCoordinates()
 				                         .getLatitude(), system, identityToken);
-				geo.add(Longitude, geoData.getCoordinates()
+				geo.addClassification(Longitude.toString(), geoData.getCoordinates()
 				                          .getLongitude(), system, identityToken);
 			}
 			if (geoData.getFeatureCode() != null)
 			{
 				try
 				{
-					IClassification<?> featureCode = findFeatureCodeClassification(geoData.getFeatureCode()
+					IClassification<?,?> featureCode = findFeatureCodeClassification(geoData.getFeatureCode()
 					                                                                      .getCode(), system, identityToken);
-					geo.add(featureCode, "", system, identityToken);
+					geo.addClassification(featureCode.getName(), "", system, identityToken);
 				}
 				catch (NoSuchElementException e)
 				{
@@ -1117,8 +1136,8 @@ public class GeographyService<J extends GeographyService<J>>
 			{
 				try
 				{
-					IClassification<?> featureClass = findFeatureClass(geoData.getFeatureClass(), system, identityToken);
-					geo.add(featureClass, "", system, identityToken);
+					IClassification<?,?> featureClass = findFeatureClass(geoData.getFeatureClass(), system, identityToken);
+					geo.addClassification(featureClass.getName(), "", system, identityToken);
 				}
 				catch (NoSuchElementException e)
 				{
@@ -1128,15 +1147,15 @@ public class GeographyService<J extends GeographyService<J>>
 			
 			if (geoData.getPopulation() != 0)
 			{
-				geo.add(Population, Integer.toString(geoData.getPopulation()), system, identityToken);
+				geo.addClassification(Population.toString(), Integer.toString(geoData.getPopulation()), system, identityToken);
 			}
 			if (geoData.getElevation() != 0)
 			{
-				geo.add(Elevation, Integer.toString(geoData.getElevation()), system, identityToken);
+				geo.addClassification(Elevation.toString(), Integer.toString(geoData.getElevation()), system, identityToken);
 			}
 			if (geoData.getDem() != 0)
 			{
-				geo.add(DEM, Integer.toString(geoData.getDem()), system, identityToken);
+				geo.addClassification(DEM.toString(), Integer.toString(geoData.getDem()), system, identityToken);
 			}
 		}
 		return geoData;

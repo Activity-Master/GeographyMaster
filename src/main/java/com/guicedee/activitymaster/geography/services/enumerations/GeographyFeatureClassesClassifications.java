@@ -1,32 +1,28 @@
 package com.guicedee.activitymaster.geography.services.enumerations;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.guicedee.activitymaster.core.services.classifications.geography.IGeographyClassification;
-import com.guicedee.activitymaster.core.services.enumtypes.IClassificationDataConceptValue;
-import com.guicedee.activitymaster.core.services.enumtypes.IClassificationValue;
 
-import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassificationDataConcepts.*;
+import static com.guicedee.activitymaster.client.services.classifications.EnterpriseClassificationDataConcepts.*;
+
 
 public enum GeographyFeatureClassesClassifications
-		implements IClassificationValue<GeographyFeatureClassesClassifications>
-				           , IGeographyClassification<GeographyFeatureClassesClassifications>
 {
-	A("A country, state, region, etc", GeoNameClassificationDataConcept),
-	H("A stream lake, etc", GeoNameClassificationDataConcept),
-	L("Parks, Areas, etc", GeoNameClassificationDataConcept),
-	P("Cities Villagers, etc", GeoNameClassificationDataConcept),
-	R("Roads, Railroad", GeoNameClassificationDataConcept),
-	S("Spot, Building, Farm", GeoNameClassificationDataConcept),
-	T("Mountain, Hill,Rock ...", GeoNameClassificationDataConcept),
-	U("Undersea", GeoNameClassificationDataConcept),
-	V("Forest, Heath,...", GeoNameClassificationDataConcept),
-	Z("Unknown",GeoNameClassificationDataConcept)
+	A("A country, state, region, etc", GeographyXClassification),
+	H("A stream lake, etc", GeographyXClassification),
+	L("Parks, Areas, etc", GeographyXClassification),
+	P("Cities Villagers, etc", GeographyXClassification),
+	R("Roads, Railroad", GeographyXClassification),
+	S("Spot, Building, Farm", GeographyXClassification),
+	T("Mountain, Hill,Rock ...", GeographyXClassification),
+	U("Undersea", GeographyXClassification),
+	V("Forest, Heath,...", GeographyXClassification),
+	Z("Unknown",GeographyXClassification)
 	;
 
 	private String description;
-	private IClassificationDataConceptValue<?> concept;
+	private com.guicedee.activitymaster.client.services.classifications.EnterpriseClassificationDataConcepts concept;
 
-	GeographyFeatureClassesClassifications(String description, IClassificationDataConceptValue<?> concept)
+	GeographyFeatureClassesClassifications(String description, com.guicedee.activitymaster.client.services.classifications.EnterpriseClassificationDataConcepts concept)
 	{
 		this.description = description;
 		this.concept = concept;
@@ -50,21 +46,18 @@ public enum GeographyFeatureClassesClassifications
 	{
 		this.description = description;
 	}
-
-	@Override
+	
 	public String classificationDescription()
 	{
 		return this.description;
 	}
-
-	@Override
-	public IClassificationDataConceptValue<?> concept()
+	
+	public com.guicedee.activitymaster.client.services.classifications.EnterpriseClassificationDataConcepts concept()
 	{
 		return concept;
 	}
-
-	@Override
+	
 	public String toString() {
-		return name() + " - " + description;
+		return name();
 	}
 }

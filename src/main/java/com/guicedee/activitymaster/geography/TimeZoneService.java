@@ -1,35 +1,34 @@
 package com.guicedee.activitymaster.geography;
 
+import com.guicedee.activitymaster.client.services.IClassificationDataConceptService;
+import com.guicedee.activitymaster.client.services.IClassificationService;
+import com.guicedee.activitymaster.client.services.builders.warehouse.classifications.IClassification;
+import com.guicedee.activitymaster.client.services.builders.warehouse.systems.ISystems;
+import com.guicedee.activitymaster.client.services.classifications.EnterpriseClassificationDataConcepts;
 import com.guicedee.activitymaster.core.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.core.db.entities.classifications.ClassificationDataConcept;
-import com.guicedee.activitymaster.core.services.dto.IClassification;
-import com.guicedee.activitymaster.core.services.dto.IEnterprise;
-import com.guicedee.activitymaster.core.services.dto.ISystems;
-import com.guicedee.activitymaster.core.services.enumtypes.IClassificationValue;
-import com.guicedee.activitymaster.core.services.system.IClassificationDataConceptService;
-import com.guicedee.activitymaster.core.services.system.IClassificationService;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
-
 import jakarta.cache.annotation.CacheKey;
 import jakarta.cache.annotation.CacheResult;
-import jakarta.inject.Singleton;
+
 import java.util.Set;
 import java.util.UUID;
 
-import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassificationDataConcepts.GeographyCurrencyConcept;
-import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassificationDataConcepts.GeographyTimezoneConcept;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
-import static com.guicedee.guicedinjection.GuiceContext.get;
+import static com.guicedee.guicedinjection.GuiceContext.*;
 
 public class TimeZoneService
 {
-	public static final Set<IClassificationValue<?>> TimeZoneClassifications = Set.of(TimeZone,TimeZoneRawOffset, TimeZoneOffsetJuly2016,TimeZoneOffsetJan2016);
+	public static final Set<String> TimeZoneClassifications = Set.of(TimeZone.toString(),
+			TimeZoneRawOffset.toString(),
+			TimeZoneOffsetJuly2016.toString(),
+			TimeZoneOffsetJan2016.toString());
 	
 	@CacheResult(cacheName = "GeographyTimezones", skipGet = true)
-	public IClassification<?> createTimeZone(@CacheKey String code, String description, String originalUniqueID, @CacheKey ISystems<?> system, @CacheKey UUID...identityToken)
+	public IClassification<?,?> createTimeZone(@CacheKey String code, String description, String originalUniqueID, @CacheKey ISystems<?,?> system, @CacheKey UUID...identityToken)
 	{
 		IClassificationDataConceptService<?> conceptService = get(IClassificationDataConceptService.class);
-		ClassificationDataConcept currencyConcept = (ClassificationDataConcept) conceptService.find(GeographyTimezoneConcept, system, identityToken);
+		ClassificationDataConcept currencyConcept = (ClassificationDataConcept) conceptService.find(EnterpriseClassificationDataConcepts.Classification, system, identityToken);
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		
 		boolean exists = new Classification().builder()
@@ -43,16 +42,16 @@ public class TimeZoneService
 			return findTimeZone(code, system, identityToken);
 		}
 		return classificationService.create(code, description,
-		                                    GeographyTimezoneConcept.toString(),
+				EnterpriseClassificationDataConcepts.Classification,
 		                                    system, 0,
 		                                    identityToken);
 	}
 	
 	@CacheResult(cacheName = "GeographyTimezones")
-	public IClassification<?> findTimeZone(@CacheKey String code, @CacheKey ISystems<?> system, @CacheKey UUID...identityToken)
+	public IClassification<?,?> findTimeZone(@CacheKey String code, @CacheKey ISystems<?,?> system, @CacheKey UUID...identityToken)
 	{
 		IClassificationDataConceptService<?> conceptService = get(IClassificationDataConceptService.class);
-		ClassificationDataConcept timeZoneConcept = (ClassificationDataConcept) conceptService.find(GeographyTimezoneConcept, system, identityToken);
+		ClassificationDataConcept timeZoneConcept = (ClassificationDataConcept) conceptService.find(EnterpriseClassificationDataConcepts.Classification, system, identityToken);
 		return new Classification().builder()
 		                           .findByNameAndConcept(code, timeZoneConcept)
 		                           .inActiveRange(system, identityToken)
@@ -63,11 +62,11 @@ public class TimeZoneService
 	}
 	
 	@CacheResult(cacheName = "GeographyTimezones", skipGet = true)
-	public IClassification<?> updateTimeZone(@CacheKey String code, String description,
+	public IClassification<?,?> updateTimeZone(@CacheKey String code, String description,
 	                                         String timeZoneRawOffset, String timeZoneOffsetJuly2016, String timeZoneOffsetJan2016,
-	                                         @CacheKey ISystems<?> system, @CacheKey UUID...identityToken)
+	                                         @CacheKey ISystems<?,?> system, @CacheKey UUID...identityToken)
 	{
-		IClassification<?> toUpdate = findTimeZone(code, system, identityToken);
+		IClassification<?,?> toUpdate = findTimeZone(code, system, identityToken);
 		if (description != null)
 		{
 			Classification update = new Classification();
@@ -77,15 +76,15 @@ public class TimeZoneService
 		}
 		if (timeZoneRawOffset != null)
 		{
-			toUpdate.addOrUpdate(TimeZoneRawOffset, timeZoneRawOffset, system, identityToken);
+			toUpdate.addOrUpdateClassification(TimeZoneRawOffset, timeZoneRawOffset, system, identityToken);
 		}
 		if (timeZoneOffsetJuly2016 != null)
 		{
-			toUpdate.addOrUpdate(TimeZoneOffsetJuly2016, timeZoneOffsetJuly2016, system, identityToken);
+			toUpdate.addOrUpdateClassification(TimeZoneOffsetJuly2016, timeZoneOffsetJuly2016, system, identityToken);
 		}
 		if (timeZoneOffsetJan2016 != null)
 		{
-			toUpdate.addOrUpdate(TimeZoneOffsetJan2016, timeZoneOffsetJan2016, system, identityToken);
+			toUpdate.addOrUpdateClassification(TimeZoneOffsetJan2016, timeZoneOffsetJan2016, system, identityToken);
 		}
 		
 		return toUpdate;

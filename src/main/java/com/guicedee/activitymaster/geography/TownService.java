@@ -1,12 +1,12 @@
 package com.guicedee.activitymaster.geography;
 
+import com.guicedee.activitymaster.client.services.builders.warehouse.geography.IGeography;
+import com.guicedee.activitymaster.client.services.builders.warehouse.systems.ISystems;
 import com.guicedee.activitymaster.core.ClassificationService;
 import com.guicedee.activitymaster.core.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.core.db.entities.geography.Geography;
+import com.guicedee.activitymaster.core.db.entities.geography.builders.GeographyQueryBuilder;
 import com.guicedee.activitymaster.core.db.entities.systems.Systems;
-import com.guicedee.activitymaster.core.services.dto.IGeography;
-import com.guicedee.activitymaster.core.services.dto.ISystems;
-import com.guicedee.activitymaster.core.services.enumtypes.IClassificationValue;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
 import jakarta.cache.annotation.CacheKey;
@@ -16,13 +16,19 @@ import jakarta.validation.constraints.NotNull;
 import java.util.Set;
 import java.util.UUID;
 
+import static com.guicedee.activitymaster.client.services.classifications.DefaultClassifications.*;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
 
 public class TownService
 {
-	public static final Set<IClassificationValue<?>> TownClassifications = Set.copyOf(ProvinceService.ProvinceClassifications);
+	public static final Set<String> TownClassifications = Set.copyOf(ProvinceService.ProvinceClassifications);
 	
-	public IGeography<?> createTown(@CacheKey IGeography<?> district,@CacheKey String name, String description, String originalUniqueID, @CacheKey ISystems<?> system, @CacheKey UUID... identityToken)
+	public IGeography<?,?> createTown(@CacheKey IGeography<Geography, GeographyQueryBuilder> district,
+	                                  @CacheKey String name,
+	                                  String description,
+	                                  String originalUniqueID,
+	                                  @CacheKey ISystems<?,?> system,
+	                                  @CacheKey UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Town, system, identityToken);
@@ -55,12 +61,12 @@ public class TownService
 	
 			geo.createDefaultSecurity(system, identityToken);
 		
-		district.addChild(geo, system, identityToken);
+		district.addChild(geo,NoClassification.toString(),null, system, identityToken);
 		return geo;
 	}
 	
 	@CacheResult(cacheName = "GeographyTowns")
-	public IGeography<?> findTown(@CacheKey IGeography<?> district, @CacheKey String name, @CacheKey ISystems<?> system, @CacheKey UUID... identityToken)
+	public IGeography<?,?> findTown(@CacheKey IGeography<?,?> district, @CacheKey String name, @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Town, system, identityToken);
@@ -76,7 +82,7 @@ public class TownService
 	}
 	
 	@CacheResult(cacheName = "GeographyTownNames")
-	public IGeography<?> findTown( @CacheKey String name, @CacheKey ISystems<?> system, @CacheKey UUID... identityToken)
+	public IGeography<?,?> findTown( @CacheKey String name, @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Town, system, identityToken);
@@ -94,14 +100,14 @@ public class TownService
 	
 	@SuppressWarnings("DuplicatedCode")
 	@CacheResult(cacheName = "GeographyTowns", skipGet = true)
-	public IGeography<?> updateTown(String districtCode, @NotNull @CacheKey String name, String description,
+	public IGeography<?,?> updateTown(String districtCode, @NotNull @CacheKey String name, String description,
 	                                    String latitude, String longitude, String featureCodes, String featureClass, Integer population, Integer elevation, Integer dEM,
-	                                    @CacheKey ISystems<?> system, @CacheKey UUID... identityToken)
+	                                    @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
 	{
-		IGeography<?> district = GuiceContext.get(DistrictService.class)
+		IGeography<?,?> district = GuiceContext.get(DistrictService.class)
 		                                     .findDistrict(districtCode, system, identityToken);
 		
-		IGeography<?> toUpdate = findTown(district, name, system, identityToken);
+		IGeography<?,?> toUpdate = findTown(district, name, system, identityToken);
 		if (description != null)
 		{
 			Geography update = new Geography();
@@ -111,31 +117,31 @@ public class TownService
 		}
 		if (latitude != null)
 		{
-			toUpdate.addOrUpdate(Latitude, latitude, system, identityToken);
+			toUpdate.addOrUpdateClassification(Latitude, latitude, system, identityToken);
 		}
 		if (longitude != null)
 		{
-			toUpdate.addOrUpdate(Longitude, longitude, system, identityToken);
+			toUpdate.addOrUpdateClassification(Longitude, longitude, system, identityToken);
 		}
 		if (featureClass != null)
 		{
-			toUpdate.addOrUpdate(FeatureClass, featureClass, system, identityToken);
+			toUpdate.addOrUpdateClassification(FeatureClass, featureClass, system, identityToken);
 		}
 		if (featureCodes != null)
 		{
-			toUpdate.addOrUpdate(FeatureCodes, featureCodes, system, identityToken);
+			toUpdate.addOrUpdateClassification(FeatureCodes, featureCodes, system, identityToken);
 		}
 		if (population != null)
 		{
-			toUpdate.addOrUpdate(Population, Integer.toString(population), system, identityToken);
+			toUpdate.addOrUpdateClassification(Population, Integer.toString(population), system, identityToken);
 		}
 		if (elevation != null)
 		{
-			toUpdate.addOrUpdate(Elevation, Integer.toString(elevation), system, identityToken);
+			toUpdate.addOrUpdateClassification(Elevation, Integer.toString(elevation), system, identityToken);
 		}
 		if (dEM != null)
 		{
-			toUpdate.addOrUpdate(DEM, Integer.toString(dEM), system, identityToken);
+			toUpdate.addOrUpdateClassification(DEM, Integer.toString(dEM), system, identityToken);
 		}
 		
 		return toUpdate;

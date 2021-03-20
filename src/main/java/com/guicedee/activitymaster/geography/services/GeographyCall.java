@@ -1,6 +1,6 @@
 package com.guicedee.activitymaster.geography.services;
 
-import com.guicedee.activitymaster.core.services.dto.IInvolvedParty;
+import com.guicedee.activitymaster.client.services.builders.warehouse.party.IInvolvedParty;
 import com.guicedee.activitymaster.geography.services.dto.*;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -9,15 +9,15 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class GeographyCall
 {
-	private IInvolvedParty<?> involvedParty;
+	private IInvolvedParty<?,?> involvedParty;
 
 	private String ipAddress;
 	private String hostname;
 
-	private IInvolvedParty<?> isp;
-	private IInvolvedParty<?> ispOrganization;
-	private IInvolvedParty<?> asn;
-	private IInvolvedParty<?> asnOrg;
+	private IInvolvedParty<?,?> isp;
+	private IInvolvedParty<?,?> ispOrganization;
+	private IInvolvedParty<?,?> asn;
+	private IInvolvedParty<?,?> asnOrg;
 
 	private GeographyCoordinates coordinates;
 

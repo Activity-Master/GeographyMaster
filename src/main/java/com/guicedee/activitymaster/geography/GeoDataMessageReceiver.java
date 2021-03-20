@@ -1,9 +1,9 @@
 package com.guicedee.activitymaster.geography;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.guicedee.activitymaster.core.services.dto.IInvolvedParty;
-import com.guicedee.activitymaster.core.services.dto.ISystems;
-import com.guicedee.activitymaster.core.services.system.IInvolvedPartyService;
+import com.guicedee.activitymaster.client.services.IInvolvedPartyService;
+import com.guicedee.activitymaster.client.services.builders.warehouse.party.IInvolvedParty;
+import com.guicedee.activitymaster.client.services.builders.warehouse.systems.ISystems;
 import com.guicedee.activitymaster.geography.implementations.GeographySystem;
 import com.guicedee.activitymaster.sessions.services.ISession;
 import com.guicedee.activitymaster.sessions.services.ISessionMasterService;
@@ -39,7 +39,7 @@ public class GeoDataMessageReceiver
 				if (data.getSuccess() != null && data.getSuccess())
 				{
 					IInvolvedPartyService<?> involvedPartyService = get(IInvolvedPartyService.class);
-					IInvolvedParty<?> involvedParty = involvedPartyService.findByIdentificationType("IdentificationTypeWebClientUUID", data.getLocalStorage());
+					IInvolvedParty<?,?> involvedParty = involvedPartyService.findByIdentificationType("IdentificationTypeWebClientUUID", data.getLocalStorage());
 					if (involvedParty == null)
 					{
 						return;
@@ -50,7 +50,7 @@ public class GeoDataMessageReceiver
 						//addressService.addOrFindIPAddress(data.getIp(),)
 					}
 					ISessionMasterService<?> sessionMasterService = get(ISessionMasterService.class);
-					ISystems<?> system = get(GeographySystem.class)
+					ISystems<?,?> system = get(GeographySystem.class)
 							.getSystem(involvedParty.getEnterprise());
 					UUID token = GuiceContext.get(GeographySystem.class)
 					                         .getSystemToken(involvedParty.getEnterprise());

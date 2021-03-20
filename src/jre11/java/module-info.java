@@ -29,7 +29,8 @@ module com.guicedee.activitymaster.geography {
 	requires com.entityassist;
 
 	requires com.guicedee.guicedpersistence;
-
+	requires com.guicedee.activitymaster.client;
+	
 	provides com.guicedee.activitymaster.core.services.IActivityMasterSystem with GeographySystem;
 	provides IWebSocketMessageReceiver with GeoDataMessageReceiver;
 	provides com.guicedee.guicedinjection.interfaces.IGuiceModule with GeographyBinder;

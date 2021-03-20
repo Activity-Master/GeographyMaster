@@ -1,11 +1,11 @@
 package com.guicedee.activitymaster.geography;
 
+import com.guicedee.activitymaster.client.services.builders.warehouse.geography.IGeography;
+import com.guicedee.activitymaster.client.services.builders.warehouse.systems.ISystems;
 import com.guicedee.activitymaster.core.ClassificationService;
 import com.guicedee.activitymaster.core.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.core.db.entities.geography.Geography;
-import com.guicedee.activitymaster.core.db.entities.systems.Systems;
-import com.guicedee.activitymaster.core.services.dto.IGeography;
-import com.guicedee.activitymaster.core.services.dto.ISystems;
+import com.guicedee.activitymaster.core.db.entities.geography.builders.GeographyQueryBuilder;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
 import jakarta.cache.annotation.CacheKey;
@@ -19,7 +19,7 @@ public class PlanetService
 {
 	@CacheResult(cacheName = "GeographyPlanets",
 	             skipGet = true)
-	public IGeography<?> createPlanet(@CacheKey String code, String description, String originalUniqueID, @CacheKey ISystems<?> system, @CacheKey UUID... identityToken)
+	public IGeography<Geography, GeographyQueryBuilder> createPlanet(@CacheKey String code, String description, String originalUniqueID, @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Planet, system, identityToken);
@@ -39,8 +39,8 @@ public class PlanetService
 		Geography geo = new Geography();
 		geo.setEnterpriseID(classification.getEnterpriseID());
 		geo.setClassification(classification);
-		geo.setSystemID((Systems) system);
-		geo.setOriginalSourceSystemID((Systems) system);
+		geo.setSystemID(system);
+		geo.setOriginalSourceSystemID(system);
 		geo.setName(code);
 		geo.setDescription(description);
 		if (originalUniqueID != null)
@@ -56,7 +56,7 @@ public class PlanetService
 	}
 	
 	@CacheResult(cacheName = "GeographyPlanets")
-	public IGeography<?> findPlanet(@CacheKey String code, @CacheKey ISystems<?> system, @CacheKey UUID... identityToken)
+	public IGeography<Geography, GeographyQueryBuilder> findPlanet(@CacheKey String code, @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Planet, system, identityToken);

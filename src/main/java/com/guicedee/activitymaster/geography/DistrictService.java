@@ -1,11 +1,13 @@
 package com.guicedee.activitymaster.geography;
 
+import com.guicedee.activitymaster.client.services.builders.warehouse.enterprise.IEnterprise;
+import com.guicedee.activitymaster.client.services.builders.warehouse.geography.IGeography;
+import com.guicedee.activitymaster.client.services.builders.warehouse.systems.ISystems;
 import com.guicedee.activitymaster.core.ClassificationService;
 import com.guicedee.activitymaster.core.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.core.db.entities.geography.Geography;
+import com.guicedee.activitymaster.core.db.entities.geography.builders.GeographyQueryBuilder;
 import com.guicedee.activitymaster.core.db.entities.systems.Systems;
-import com.guicedee.activitymaster.core.services.dto.*;
-import com.guicedee.activitymaster.core.services.enumtypes.IClassificationValue;
 import com.guicedee.activitymaster.geography.implementations.GeographySystem;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
@@ -15,19 +17,20 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.*;
 
+import static com.guicedee.activitymaster.client.services.classifications.DefaultClassifications.*;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
 import static com.guicedee.guicedinjection.GuiceContext.*;
 
 public class DistrictService
 {
-	public static final Set<IClassificationValue<?>> DistrictClassifications = Set.copyOf(ProvinceService.ProvinceClassifications);
+	public static final Set<String> DistrictClassifications = Set.copyOf(ProvinceService.ProvinceClassifications);
 	
 	@CacheResult(cacheName = "GeographyDistricts", skipGet = true)
-	public IGeography<?> createDistrict(IGeography<?> province, @CacheKey String code, String name, String originalUniqueID, @CacheKey ISystems<?> system, @CacheKey UUID... identityToken)
+	public IGeography<?, ?> createDistrict(IGeography<Geography, GeographyQueryBuilder> province, @CacheKey String code, String name, String originalUniqueID, @CacheKey ISystems<?, ?> system, @CacheKey UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
 		
-		IEnterprise<?> enterprise = system.getEnterprise();
+		IEnterprise<?, ?> enterprise = system.getEnterprise();
 		Classification classification = (Classification) classificationService.find(City, system, identityToken);
 		
 		boolean exists = new Geography().builder()
@@ -43,7 +46,7 @@ public class DistrictService
 		}
 		
 		Geography geo = new Geography();
-		ISystems<?> geoSystem = get(GeographySystem.class).getSystem(enterprise);
+		ISystems<?, ?> geoSystem = get(GeographySystem.class).getSystem(enterprise);
 		geo.setEnterpriseID(classification.getEnterpriseID());
 		geo.setClassification(classification);
 		geo.setSystemID((Systems) geoSystem);
@@ -56,18 +59,18 @@ public class DistrictService
 		}
 		geo.setActiveFlagID(classification.getActiveFlagID());
 		geo.persist();
-	
-			geo.createDefaultSecurity(geoSystem, identityToken);
 		
-		province.addChild(geo, geoSystem, identityToken);
+		geo.createDefaultSecurity(geoSystem, identityToken);
+		
+		province.addChild(geo, NoClassification.toString(), null, geoSystem, identityToken);
 		return geo;
 	}
 	
 	@CacheResult(cacheName = "GeographyDistricts")
-	public IGeography<?> findDistrict(@CacheKey String name, @CacheKey ISystems<?> system, @CacheKey UUID... identityToken)
+	public IGeography<?, ?> findDistrict(@CacheKey String name, @CacheKey ISystems<?, ?> system, @CacheKey UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
-		IEnterprise<?> enterprise = system.getEnterprise();
+		IEnterprise<?, ?> enterprise = system.getEnterprise();
 		Classification classification = (Classification) classificationService.find(City, system, identityToken);
 		
 		return new Geography().builder()
@@ -82,18 +85,19 @@ public class DistrictService
 	
 	
 	@CacheResult(cacheName = "GeographyDistrictInProvince")
-	public IGeography<?> findFirstDistrictInProvince(@CacheKey String provinceCode, @CacheKey ISystems<?> system, @CacheKey UUID... identityToken)
+	public IGeography<?, ?> findFirstDistrictInProvince(@CacheKey String provinceCode, @CacheKey ISystems<?, ?> system, @CacheKey UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
-		IEnterprise<?> enterprise = system.getEnterprise();
+		IEnterprise<?, ?> enterprise = system.getEnterprise();
 		Classification classification = (Classification) classificationService.find(City, system, identityToken);
 		
 		ProvinceService ps = get(ProvinceService.class);
-		IGeography<?> province = ps.findProvince(provinceCode, system, identityToken);
-		IRelationshipValue<IGeography<?>, IGeography<?>, ?> geoLink = province.findChildren((String) null, null, system, identityToken)
-		                                                                      .stream()
-		                                                                      .findFirst()
-		                                                                      .orElse(null);
+		IGeography<?, ?> province = ps.findProvince(provinceCode, system, identityToken);
+		var geoLink
+				= province.findChildren((String) null, null, system, identityToken)
+				          .stream()
+				          .findFirst()
+				          .orElse(null);
 		if (geoLink == null)
 		{
 			return null;
@@ -102,10 +106,10 @@ public class DistrictService
 	}
 	
 	@CacheResult(cacheName = "GeographyDistricts")
-	public List<Geography> findAllDistricts(@CacheKey ISystems<?> system, @CacheKey UUID... identityToken)
+	public List<Geography> findAllDistricts(@CacheKey ISystems<?, ?> system, @CacheKey UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
-		IEnterprise<?> enterprise = system.getEnterprise();
+		IEnterprise<?, ?> enterprise = system.getEnterprise();
 		Classification classification = (Classification) classificationService.find(City, system, identityToken);
 		return new Geography().builder()
 		                      .withClassification(classification)
@@ -116,12 +120,12 @@ public class DistrictService
 	}
 	
 	@CacheResult(cacheName = "GeographyDistricts", skipGet = true)
-	public IGeography<?> updateDistrict(@NotNull @CacheKey String name, String description,
-	                                    String latitude, String longitude, String featureCodes, String featureClass, Integer population, Integer elevation, Integer dEM,
-	                                    @CacheKey ISystems<?> system, @CacheKey UUID... identityToken)
+	public IGeography<?, ?> updateDistrict(@NotNull @CacheKey String name, String description,
+	                                       String latitude, String longitude, String featureCodes, String featureClass, Integer population, Integer elevation, Integer dEM,
+	                                       @CacheKey ISystems<?, ?> system, @CacheKey UUID... identityToken)
 	{
-		IEnterprise<?> enterprise = system.getEnterprise();
-		IGeography<?> toUpdate = findDistrict(name, system, identityToken);
+		IEnterprise<?, ?> enterprise = system.getEnterprise();
+		IGeography<?, ?> toUpdate = findDistrict(name, system, identityToken);
 		if (description != null)
 		{
 			Geography update = new Geography();
@@ -131,31 +135,31 @@ public class DistrictService
 		}
 		if (latitude != null)
 		{
-			toUpdate.addOrUpdate(Latitude, latitude, system, identityToken);
+			toUpdate.addOrUpdateClassification(Latitude, latitude, latitude, system, identityToken);
 		}
 		if (longitude != null)
 		{
-			toUpdate.addOrUpdate(Longitude, longitude, system, identityToken);
+			toUpdate.addOrUpdateClassification(Longitude, longitude, longitude, system, identityToken);
 		}
 		if (featureClass != null)
 		{
-			toUpdate.addOrUpdate(FeatureClass, featureClass, system, identityToken);
+			toUpdate.addOrUpdateClassification(FeatureClass, featureClass, featureClass, system, identityToken);
 		}
 		if (featureCodes != null)
 		{
-			toUpdate.addOrUpdate(FeatureCodes, featureCodes, system, identityToken);
+			toUpdate.addOrUpdateClassification(FeatureCodes, featureCodes, featureCodes, system, identityToken);
 		}
 		if (population != null)
 		{
-			toUpdate.addOrUpdate(Population, Integer.toString(population), system, identityToken);
+			toUpdate.addOrUpdateClassification(Population, Integer.toString(population), Integer.toString(population), system, identityToken);
 		}
 		if (elevation != null)
 		{
-			toUpdate.addOrUpdate(Elevation, Integer.toString(elevation), system, identityToken);
+			toUpdate.addOrUpdateClassification(Elevation, Integer.toString(elevation), Integer.toString(elevation), system, identityToken);
 		}
 		if (dEM != null)
 		{
-			toUpdate.addOrUpdate(DEM, Integer.toString(dEM), system, identityToken);
+			toUpdate.addOrUpdateClassification(DEM, Integer.toString(dEM), Integer.toString(dEM), system, identityToken);
 		}
 		
 		return toUpdate;

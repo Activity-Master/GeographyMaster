@@ -1,11 +1,14 @@
 package com.guicedee.activitymaster.geography.implementations.updates;
 
-import com.guicedee.activitymaster.core.services.IActivityMasterProgressMonitor;
-import com.guicedee.activitymaster.core.services.dto.*;
-import com.guicedee.activitymaster.core.services.system.*;
+import com.guicedee.activitymaster.client.services.*;
+import com.guicedee.activitymaster.client.services.administration.IActivityMasterProgressMonitor;
+import com.guicedee.activitymaster.client.services.administration.ISystemUpdate;
+import com.guicedee.activitymaster.client.services.builders.warehouse.classifications.IClassification;
+import com.guicedee.activitymaster.client.services.builders.warehouse.enterprise.IEnterprise;
+import com.guicedee.activitymaster.client.services.builders.warehouse.party.IInvolvedPartyIdentificationType;
+import com.guicedee.activitymaster.client.services.builders.warehouse.systems.ISystems;
+import com.guicedee.activitymaster.client.services.classifications.EnterpriseClassificationDataConcepts;
 import com.guicedee.activitymaster.core.updates.DatedUpdate;
-import com.guicedee.activitymaster.core.updates.ISystemUpdate;
-import com.guicedee.activitymaster.geography.GeographyService;
 import com.guicedee.activitymaster.geography.implementations.GeographySystem;
 import com.guicedee.activitymaster.geography.services.IGeographyService;
 import com.guicedee.activitymaster.geography.services.dto.GeographyContinent;
@@ -14,43 +17,23 @@ import com.guicedee.activitymaster.geography.services.enumerations.GeographyIPId
 
 import java.util.UUID;
 
-import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassificationDataConcepts.*;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
 import static com.guicedee.guicedinjection.GuiceContext.*;
 
-@DatedUpdate(date = "2020/12/10", taskCount = 6)
+@DatedUpdate(date = "2020/12/10", taskCount = 12)
 public class GeographySystemInstall
 		implements ISystemUpdate
 {
 	
 	@Override
-	public void update(IEnterprise<?> enterprise, IActivityMasterProgressMonitor progressMonitor)
+	public void update(IEnterprise<?,?> enterprise, IActivityMasterProgressMonitor progressMonitor)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		IClassificationDataConceptService<?> dataConceptService = get(IClassificationDataConceptService.class);
 		
 		GeographySystem gs = get(GeographySystem.class);
-		ISystems<?> system = gs.getSystem(enterprise);
+		ISystems<?,?> system = gs.getSystem(enterprise);
 		UUID token = gs.getSystemToken(enterprise);
-		
-		IClassificationDataConcept<?> dt = dataConceptService.createDataConcept(GeoNameClassificationDataConcept,
-				"Classifications relating to data from the geonames.org gazette",
-				system, token);
-		
-		IClassificationDataConcept<?> dtCurrency = dataConceptService.createDataConcept(GeographyCurrencyConcept,
-				"The known currencies of the world",
-				system, token);
-		
-		IClassificationDataConcept<?> dtTimeZones = dataConceptService.createDataConcept(GeographyTimezoneConcept,
-				"The known Time Zones",
-				system, token);
-		IClassificationDataConcept<?> dtPostalCodes = dataConceptService.createDataConcept(GeographyPostalCodesConcept,
-				"Postal codes related to a country",
-				system, token);
-		
-		IClassificationDataConcept<?> dtCoordinates = dataConceptService.createDataConcept(GeographyCoordinatesConcept,
-				"Co-ordinates for a planet",
-				system, token);
 		
 		if (progressMonitor != null)
 		
@@ -61,16 +44,21 @@ public class GeographySystemInstall
 		classificationService.create(Planet, system);
 		classificationService.create(Languages, system, Planet);
 		classificationService.create(Continent, system, Planet);
+		classificationService.create(Currency, system, Planet);
+		classificationService.create(TimeZone, system,Planet);
+		
+		
 		classificationService.create(Country, system, Continent);
-		classificationService.create(Currency, system, Country);
 		classificationService.create(Province, system, Country);
+		classificationService.create(Location, system, Country);
+		
 		classificationService.create(PostalCode, system, Province);
 		classificationService.create(PostalCodeSuburb, system, PostalCode);
 		classificationService.create(Municipalities, system, Province);
 		classificationService.create(City, system, Municipalities);
 		classificationService.create(Town, system, City);
-		classificationService.create(Location, system, Country);
-		classificationService.create(TimeZone, system);
+		
+		
 		
 		if (progressMonitor != null)
 		{
@@ -100,14 +88,14 @@ public class GeographySystemInstall
 		
 		//Lookups for geography data
 		//Static features classes
-		classificationService.create(FeatureClass, system, GeographyClassifications);
+		IClassification<?, ?> classification = classificationService.create(FeatureClass, system, GeographyClassifications);
 		for (GeographyFeatureClassesClassifications value : GeographyFeatureClassesClassifications.values())
 		{
-			classificationService.create(value.classificationName(), value.classificationDescription(),
-					GeoNameClassificationDataConcept.name(),
+			classificationService.create(value.toString(), value.classificationDescription(),
+					EnterpriseClassificationDataConcepts.GeographyXClassification,
 					system,
 					0,
-					FeatureClass, token);
+					classification, token);
 		}
 		
 		classificationService.create(GeographyAdmin1AsciiCodes, system, GeographyClassifications);
@@ -120,7 +108,7 @@ public class GeographySystemInstall
 		}
 		//Create Identification TYpe
 		IInvolvedPartyService<?> involvedPartyService = get(IInvolvedPartyService.class);
-		IInvolvedPartyIdentificationType<?> idType = involvedPartyService
+		IInvolvedPartyIdentificationType<?,?> idType = involvedPartyService
 				.createIdentificationType(system, GeographyIPIdentificationTypes.ISP,
 						"An Internet Service Provider",
 						token);
@@ -129,7 +117,7 @@ public class GeographySystemInstall
 			progressMonitor.progressUpdate("Loading Geography Updates", "Creating Planets");
 		}
 		//Create Planets and Continents by default
-		GeographyService<?> service = (GeographyService<?>) get(IGeographyService.class);
+		IGeographyService<?> service = get(IGeographyService.class);
 		service.createPlanet("Earth", null, system, token);
 		if (progressMonitor != null)
 		{
@@ -160,14 +148,14 @@ public class GeographySystemInstall
 		geonamesClassifications(enterprise);
 	}
 	
-	private void geonamesClassifications(IEnterprise<?> enterprise)
+	private void geonamesClassifications(IEnterprise<?,?> enterprise)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		GeographySystem gs = get(GeographySystem.class);
-		ISystems<?> system = gs.getSystem(enterprise);
+		ISystems<?,?> system = gs.getSystem(enterprise);
 		
 		classificationService.create(GeographyAsciiName, system, GeographyAdmin1AsciiCodes);
-		classificationService.create(GeographyAdmin2Codes, system, GeographyClassifications);
+		classificationService.create(GeographyAdmin2Codes, system, GeographyAdmin2Codes);
 		
 		classificationService.create(CountryISO3166, system, Country);
 		classificationService.create(CountryISO3166_3, system, Country);
