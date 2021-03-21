@@ -32,6 +32,7 @@ public class LanguagesService
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
 		boolean exists = new Classification().builder()
 		                                     .withName(code)
+		                                     .withConcept(Languages.concept(),system,identityToken)
 		                                     .inActiveRange(system, identityToken)
 		                                     .inDateRange()
 		                                     .withEnterprise(system)
@@ -50,6 +51,7 @@ public class LanguagesService
 	{
 		return new Classification().builder()
 		                           .withName(code)
+		                           .withConcept(Languages.concept(),system,identityToken)
 		                           .inActiveRange(system, identityToken)
 		                           .inDateRange()
 		                           .withEnterprise(system)

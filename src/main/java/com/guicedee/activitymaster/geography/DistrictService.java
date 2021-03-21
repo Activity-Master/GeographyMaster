@@ -7,7 +7,6 @@ import com.guicedee.activitymaster.core.ClassificationService;
 import com.guicedee.activitymaster.core.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.core.db.entities.geography.Geography;
 import com.guicedee.activitymaster.core.db.entities.geography.builders.GeographyQueryBuilder;
-import com.guicedee.activitymaster.core.db.entities.systems.Systems;
 import com.guicedee.activitymaster.geography.implementations.GeographySystem;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
@@ -49,8 +48,8 @@ public class DistrictService
 		ISystems<?, ?> geoSystem = get(GeographySystem.class).getSystem(enterprise);
 		geo.setEnterpriseID(classification.getEnterpriseID());
 		geo.setClassification(classification);
-		geo.setSystemID((Systems) geoSystem);
-		geo.setOriginalSourceSystemID((Systems) geoSystem);
+		geo.setSystemID(geoSystem);
+		geo.setOriginalSourceSystemID(geoSystem);
 		geo.setName(code);
 		geo.setDescription(name);
 		if (originalUniqueID != null)

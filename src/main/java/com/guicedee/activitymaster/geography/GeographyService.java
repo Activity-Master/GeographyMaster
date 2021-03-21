@@ -152,7 +152,7 @@ public class GeographyService
 		
 		
 		IClassification<?,?> currency = get(ClassificationService.class).find(country.getCurrency()
-		                                                                           .getCurrencyCode(), EnterpriseClassificationDataConcepts.Classification, system, identityToken);
+		                                                                           .getCurrencyCode(), EnterpriseClassificationDataConcepts.ClassificationXClassification, system, identityToken);
 		geoCountry.addOrUpdateClassification(Currency, currency.getName(), system, identityToken);
 		
 		

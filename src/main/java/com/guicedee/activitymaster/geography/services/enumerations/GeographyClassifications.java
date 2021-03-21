@@ -95,4 +95,9 @@ public enum GeographyClassifications
 	{
 		return concept;
 	}
+	
+	public String toString()
+	{
+		return name();
+	}
 }

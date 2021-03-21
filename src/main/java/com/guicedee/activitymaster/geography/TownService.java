@@ -6,7 +6,6 @@ import com.guicedee.activitymaster.core.ClassificationService;
 import com.guicedee.activitymaster.core.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.core.db.entities.geography.Geography;
 import com.guicedee.activitymaster.core.db.entities.geography.builders.GeographyQueryBuilder;
-import com.guicedee.activitymaster.core.db.entities.systems.Systems;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
 import jakarta.cache.annotation.CacheKey;
@@ -48,8 +47,8 @@ public class TownService
 		Geography geo = new Geography();
 		geo.setEnterpriseID(classification.getEnterpriseID());
 		geo.setClassification(classification);
-		geo.setSystemID((Systems) system);
-		geo.setOriginalSourceSystemID((Systems) system);
+		geo.setSystemID(system);
+		geo.setOriginalSourceSystemID(system);
 		geo.setName(name);
 		geo.setDescription(description);
 		if (originalUniqueID != null)

@@ -12,7 +12,7 @@ import java.io.Serializable;
 @Accessors(chain = true)
 @EqualsAndHashCode(callSuper = false,of = "name")
 public class GeographyAsciiCode
-		extends GeographyDefaultDto
+		extends GeographyDefaultDto<GeographyAsciiCode>
 		implements Serializable
 {
 	@Serial

@@ -1,11 +1,9 @@
 package com.guicedee.activitymaster.geography;
 
-import com.guicedee.activitymaster.client.services.IClassificationDataConceptService;
 import com.guicedee.activitymaster.client.services.IClassificationService;
 import com.guicedee.activitymaster.client.services.builders.warehouse.classifications.IClassification;
 import com.guicedee.activitymaster.client.services.builders.warehouse.systems.ISystems;
 import com.guicedee.activitymaster.core.db.entities.classifications.Classification;
-import com.guicedee.activitymaster.core.db.entities.classifications.ClassificationDataConcept;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import jakarta.cache.annotation.CacheKey;
 import jakarta.cache.annotation.CacheResult;
@@ -22,12 +20,11 @@ public class CurrencyService
 	@CacheResult(cacheName = "GeographyCurrencies", skipGet = true)
 	public IClassification<?,?> createCurrency(@CacheKey String code, String description, @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
 	{
-		IClassificationDataConceptService<?> conceptService = get(IClassificationDataConceptService.class);
-		ClassificationDataConcept currencyConcept = (ClassificationDataConcept) conceptService.find(ClassificationXClassification, system, identityToken);
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		
 		boolean exists = new Classification().builder()
-		                                     .findByNameAndConcept(code, currencyConcept)
+		                                     .withName(code)
+		                                     .withConcept(Currency.concept(),system,identityToken)
 		                                     .inActiveRange(system, identityToken)
 		                                     .inDateRange()
 		                                     .withEnterprise(system)
@@ -47,11 +44,9 @@ public class CurrencyService
 	@CacheResult(cacheName = "GeographyCurrencies")
 	public IClassification<?,?> findCurrency(@CacheKey String code, @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
 	{
-		IClassificationDataConceptService<?> conceptService = get(IClassificationDataConceptService.class);
-		ClassificationDataConcept currencyConcept = (ClassificationDataConcept) conceptService.find(ClassificationXClassification, system, identityToken);
-		
 		return new Classification().builder()
-		                           .findByNameAndConcept(code, currencyConcept)
+		                           .withName(code)
+		                           .withConcept(Currency.concept(),system,identityToken)
 		                           .inActiveRange(system, identityToken)
 		                           .inDateRange()
 		                           .withEnterprise(system)

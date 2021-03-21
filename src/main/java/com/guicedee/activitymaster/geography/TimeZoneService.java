@@ -1,12 +1,10 @@
 package com.guicedee.activitymaster.geography;
 
-import com.guicedee.activitymaster.client.services.IClassificationDataConceptService;
 import com.guicedee.activitymaster.client.services.IClassificationService;
 import com.guicedee.activitymaster.client.services.builders.warehouse.classifications.IClassification;
 import com.guicedee.activitymaster.client.services.builders.warehouse.systems.ISystems;
 import com.guicedee.activitymaster.client.services.classifications.EnterpriseClassificationDataConcepts;
 import com.guicedee.activitymaster.core.db.entities.classifications.Classification;
-import com.guicedee.activitymaster.core.db.entities.classifications.ClassificationDataConcept;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import jakarta.cache.annotation.CacheKey;
 import jakarta.cache.annotation.CacheResult;
@@ -27,12 +25,10 @@ public class TimeZoneService
 	@CacheResult(cacheName = "GeographyTimezones", skipGet = true)
 	public IClassification<?,?> createTimeZone(@CacheKey String code, String description, String originalUniqueID, @CacheKey ISystems<?,?> system, @CacheKey UUID...identityToken)
 	{
-		IClassificationDataConceptService<?> conceptService = get(IClassificationDataConceptService.class);
-		ClassificationDataConcept currencyConcept = (ClassificationDataConcept) conceptService.find(EnterpriseClassificationDataConcepts.Classification, system, identityToken);
 		IClassificationService<?> classificationService = get(IClassificationService.class);
-		
 		boolean exists = new Classification().builder()
-		                                     .findByNameAndConcept(code, currencyConcept)
+		                                     .withName(code)
+		                                     .withConcept(TimeZone.concept(),system,identityToken)
 		                                     .inActiveRange(system, identityToken)
 		                                     .inDateRange()
 		                                     .withEnterprise(system)
@@ -50,10 +46,9 @@ public class TimeZoneService
 	@CacheResult(cacheName = "GeographyTimezones")
 	public IClassification<?,?> findTimeZone(@CacheKey String code, @CacheKey ISystems<?,?> system, @CacheKey UUID...identityToken)
 	{
-		IClassificationDataConceptService<?> conceptService = get(IClassificationDataConceptService.class);
-		ClassificationDataConcept timeZoneConcept = (ClassificationDataConcept) conceptService.find(EnterpriseClassificationDataConcepts.Classification, system, identityToken);
 		return new Classification().builder()
-		                           .findByNameAndConcept(code, timeZoneConcept)
+		                           .withName(code)
+		                           .withConcept(TimeZone.concept(),system,identityToken)
 		                           .inActiveRange(system, identityToken)
 		                           .inDateRange()
 		                           .withEnterprise(system)
