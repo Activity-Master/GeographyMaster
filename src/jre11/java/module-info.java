@@ -1,3 +1,4 @@
+import com.guicedee.activitymaster.client.services.systems.IActivityMasterSystem;
 import com.guicedee.activitymaster.geography.GeoDataMessageReceiver;
 import com.guicedee.activitymaster.geography.implementations.*;
 import com.guicedee.guicedservlets.websockets.services.IWebSocketMessageReceiver;
@@ -31,7 +32,11 @@ module com.guicedee.activitymaster.geography {
 	requires com.guicedee.guicedpersistence;
 	requires com.guicedee.activitymaster.client;
 	
-	provides com.guicedee.activitymaster.core.services.IActivityMasterSystem with GeographySystem;
+	
+	provides IActivityMasterSystem with GeographySystem;
+	
+	
+	
 	provides IWebSocketMessageReceiver with GeoDataMessageReceiver;
 	provides com.guicedee.guicedinjection.interfaces.IGuiceModule with GeographyBinder;
 	provides com.guicedee.guicedinjection.interfaces.IGuiceScanModuleInclusions with GeographerMasterModuleInclusion;

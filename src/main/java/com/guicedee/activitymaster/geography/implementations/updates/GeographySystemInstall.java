@@ -1,14 +1,12 @@
 package com.guicedee.activitymaster.geography.implementations.updates;
 
 import com.guicedee.activitymaster.client.services.*;
-import com.guicedee.activitymaster.client.services.administration.IActivityMasterProgressMonitor;
-import com.guicedee.activitymaster.client.services.administration.ISystemUpdate;
 import com.guicedee.activitymaster.client.services.builders.warehouse.classifications.IClassification;
 import com.guicedee.activitymaster.client.services.builders.warehouse.enterprise.IEnterprise;
 import com.guicedee.activitymaster.client.services.builders.warehouse.party.IInvolvedPartyIdentificationType;
 import com.guicedee.activitymaster.client.services.builders.warehouse.systems.ISystems;
 import com.guicedee.activitymaster.client.services.classifications.EnterpriseClassificationDataConcepts;
-import com.guicedee.activitymaster.core.updates.DatedUpdate;
+import com.guicedee.activitymaster.client.services.systems.*;
 import com.guicedee.activitymaster.geography.implementations.GeographySystem;
 import com.guicedee.activitymaster.geography.services.IGeographyService;
 import com.guicedee.activitymaster.geography.services.dto.GeographyContinent;
@@ -154,8 +152,8 @@ public class GeographySystemInstall
 		GeographySystem gs = get(GeographySystem.class);
 		ISystems<?,?> system = gs.getSystem(enterprise);
 		
-		classificationService.create(GeographyAsciiName, system, GeographyAdmin1AsciiCodes);
-		classificationService.create(GeographyAdmin2Codes, system, GeographyAdmin2Codes);
+		classificationService.create(GeographyAsciiName, system, Country);
+		classificationService.create(GeographyAdmin2Codes, system, City);
 		
 		classificationService.create(CountryISO3166, system, Country);
 		classificationService.create(CountryISO3166_3, system, Country);

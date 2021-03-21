@@ -1,9 +1,9 @@
 package com.guicedee.activitymaster.geography.services;
 
-import com.guicedee.activitymaster.client.services.administration.IActivityMasterProgressMonitor;
 import com.guicedee.activitymaster.client.services.builders.warehouse.classifications.IClassification;
 import com.guicedee.activitymaster.client.services.builders.warehouse.geography.IGeography;
 import com.guicedee.activitymaster.client.services.builders.warehouse.systems.ISystems;
+import com.guicedee.activitymaster.client.services.systems.IActivityMasterProgressMonitor;
 import com.guicedee.activitymaster.geography.services.dto.*;
 import jakarta.cache.annotation.CacheKey;
 import jakarta.validation.constraints.NotNull;
