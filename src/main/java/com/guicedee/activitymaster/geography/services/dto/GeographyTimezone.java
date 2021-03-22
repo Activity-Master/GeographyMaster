@@ -1,12 +1,10 @@
 package com.guicedee.activitymaster.geography.services.dto;
 
 import com.guicedee.activitymaster.geography.services.dto.abstractions.GeographyDefaultDto;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 
 import java.io.Serial;
 
@@ -14,7 +12,7 @@ import java.io.Serial;
 @Accessors(chain = true)
 @EqualsAndHashCode(of="timezoneID",callSuper = false)
 public class GeographyTimezone
-		extends GeographyDefaultDto
+		extends GeographyDefaultDto<GeographyTimezone>
 {
 	@Serial
 	private static final long serialVersionUID = 1L;

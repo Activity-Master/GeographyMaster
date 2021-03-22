@@ -11,8 +11,8 @@ import jakarta.inject.Named;
 import static com.guicedee.activitymaster.core.services.ActivityMasterSystemsManager.*;
 import static com.guicedee.activitymaster.geography.services.IGeographyService.*;
 
-@SortedUpdate(sortOrder = 1600, taskCount = 1)
-public class GeographyInstallTimeZones implements ISystemUpdate
+@SortedUpdate(sortOrder = 1300, taskCount = 1)
+public class GeographyInstallFeatureCodes implements ISystemUpdate
 {
 	@Inject
 	@Named(GeographySystemName)
@@ -24,7 +24,7 @@ public class GeographyInstallTimeZones implements ISystemUpdate
 	@Override
 	public void update(IEnterprise<?,?> enterprise, IActivityMasterProgressMonitor progressMonitor)
 	{
-		geographyService.loadTimeZones(system.get(), progressMonitor);
+		geographyService.loadFeatureCodes(system.get(),progressMonitor);
 		wipeCaches();
 	}
 	

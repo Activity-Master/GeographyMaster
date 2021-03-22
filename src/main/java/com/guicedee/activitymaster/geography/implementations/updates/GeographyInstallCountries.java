@@ -11,7 +11,7 @@ import jakarta.inject.Named;
 import static com.guicedee.activitymaster.core.services.ActivityMasterSystemsManager.*;
 import static com.guicedee.activitymaster.geography.services.IGeographyService.*;
 
-@DatedUpdate(date = "2021/01/02", taskCount = 210)
+@SortedUpdate(sortOrder = 1200, taskCount = 1)
 public class GeographyInstallCountries implements ISystemUpdate
 {
 	@Inject

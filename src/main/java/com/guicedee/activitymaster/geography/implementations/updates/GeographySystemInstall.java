@@ -18,7 +18,7 @@ import java.util.UUID;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
 import static com.guicedee.guicedinjection.GuiceContext.*;
 
-@DatedUpdate(date = "2020/12/10", taskCount = 12)
+@SortedUpdate(sortOrder = 1000, taskCount = 12)
 public class GeographySystemInstall
 		implements ISystemUpdate
 {
@@ -144,6 +144,12 @@ public class GeographySystemInstall
 		
 		//next update
 		geonamesClassifications(enterprise);
+		
+		if (progressMonitor != null)
+		{
+			progressMonitor.setCurrentTask(0);
+		}
+		
 	}
 	
 	private void geonamesClassifications(IEnterprise<?,?> enterprise)

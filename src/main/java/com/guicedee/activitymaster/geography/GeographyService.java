@@ -28,8 +28,6 @@ import jakarta.cache.annotation.CacheResult;
 import jakarta.validation.constraints.NotNull;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.WordUtils;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -167,7 +165,8 @@ public class GeographyService
 	@Override
 	public void loadProvincesASCII1(ISystems<?,?> system, String countryCode, IActivityMasterProgressMonitor progressMonitor)
 	{
-		progressMonitor.setTotalTasks(4100);
+		progressMonitor.setCurrentTask(0);
+		progressMonitor.setTotalTasks(4470);
 		try (GeoDataFinder finder = new GeoDataFinder(Admin1CodesASCII, CSVFormat.TDF, Admin1CodesASCII.getHeaderNames()))
 		{
 			int current = 0;
@@ -179,18 +178,16 @@ public class GeographyService
 				     .setName(record.get(1))
 				     .setNameAscii(record.get(2))
 				     .setGeonameId(Long.parseLong(record.get(3)));
-				
-				if (countryCode != null && ascii.getCode()
-				                                .startsWith(countryCode.toUpperCase() + "."))
+				if(ascii.getCode().startsWith(countryCode))
 				{
 					ProvinceService provinceService = get(ProvinceService.class);
 					CountryService countryService = get(CountryService.class);
 					IGeography<Geography,GeographyQueryBuilder> country = countryService.findCountry(countryCode, system);
 					IGeography<?,?> province = provinceService.createProvince(country, ascii.getCode(), ascii.getName(), ascii.getGeonameId() + "", system);
 				}
-				if (current % 10 == 0)
+				if (current % 50 == 0)
 				{
-					logProgress("Geography Service", "Loading Province Codes", 10, progressMonitor);
+					logProgress("Geography Service", "Loaded Province Codes - " + ascii.getName(), 50, progressMonitor);
 				}
 			}
 			logProgress("Geography Service", "Finished Province Codes", 0, progressMonitor);
@@ -200,7 +197,8 @@ public class GeographyService
 	@Override
 	public void loadDistrictsASCII2(ISystems<?,?> system, String countryCode, IActivityMasterProgressMonitor progressMonitor)
 	{
-		progressMonitor.setTotalTasks(4500);
+		progressMonitor.setCurrentTask(0);
+		progressMonitor.setTotalTasks(47850);
 		try (GeoDataFinder finder = new GeoDataFinder(Admin2Codes, CSVFormat.TDF, Admin2Codes.getHeaderNames()))
 		{
 			int current = 0;
@@ -213,20 +211,22 @@ public class GeographyService
 				     .setNameAscii(record.get(2))
 				     .setGeonameId(Long.parseLong(record.get(3)));
 				
-				if (countryCode != null && ascii.getCode()
-				                                .startsWith(countryCode.toUpperCase() + "."))
-				{
+					int proviceCodeDecimalLocation = ascii.getCode()
+				                                      .indexOf('.', 4);
+				
 					String provinceCode = ascii.getCode()
-					                           .substring(0, 5);
+					                           .substring(0, proviceCodeDecimalLocation);
 					
-					ProvinceService provinceService = get(ProvinceService.class);
-					IGeography<Geography, GeographyQueryBuilder> province = provinceService.findProvince(provinceCode, system);
-					DistrictService districtService = get(DistrictService.class);
-					districtService.createDistrict(province, ascii.getCode(), ascii.getName(), ascii.getGeonameId() + "", system);
-				}
-				if (current % 10 == 0)
+					if(provinceCode.startsWith(countryCode))
+					{
+						ProvinceService provinceService = get(ProvinceService.class);
+						IGeography<Geography, GeographyQueryBuilder> province = provinceService.findProvince(provinceCode, system);
+						DistrictService districtService = get(DistrictService.class);
+						districtService.createDistrict(province, ascii.getCode(), ascii.getName(), ascii.getGeonameId() + "", system);
+					}
+				if (current % 50 == 0)
 				{
-					logProgress("Geography Service", "Loading Districts/Cities", 10, progressMonitor);
+					logProgress("Geography Service", "Loaded 50 Districts/Cities - " + ascii.getName(), 50, progressMonitor);
 				}
 			}
 		}
@@ -236,6 +236,7 @@ public class GeographyService
 	@Override
 	public void loadLanguages(ISystems<?,?> system, IActivityMasterProgressMonitor progressMonitor)
 	{
+		progressMonitor.setCurrentTask(0);
 		progressMonitor.setTotalTasks(547);
 		try (GeoDataFinder finder = new GeoDataFinder(ISO639Languages, CSVFormat.TDF, ISO639Languages.getHeaderNames()))
 		{
@@ -322,6 +323,7 @@ public class GeographyService
 		IClassificationDataConceptService<?> conceptService = get(IClassificationDataConceptService.class);
 		UUID identityToken = get(GeographySystem.class).getSystemToken(system.getEnterprise());
 		
+		progressMonitor.setCurrentTask(0);
 		progressMonitor.setTotalTasks(252);
 		try (GeoDataFinder finder = new GeoDataFinder(CountryInfo, CSVFormat.TDF, CountryInfo.getHeaderNames()))
 		{
@@ -439,6 +441,7 @@ public class GeographyService
 	@Override
 	public void loadTimeZones(ISystems<?,?> system, IActivityMasterProgressMonitor progressMonitor)
 	{
+		progressMonitor.setCurrentTask(0);
 		progressMonitor.setTotalTasks(425);
 		try (GeoDataFinder finder = new GeoDataFinder(TimeZones, CSVFormat.TDF, TimeZones.getHeaderNames()))
 		{
@@ -530,7 +533,7 @@ public class GeographyService
 			}
 		}
 		
-		progressMonitor.setCurrentTask(0);
+		/*progressMonitor.setCurrentTask(0);
 		progressMonitor.setTotalTasks(19888);
 		try (GeoDataFinder finder = new GeoDataFinder(ZAPostalCodesUpdates, CSVFormat.TDF))
 		{
@@ -588,7 +591,7 @@ public class GeographyService
 					logProgress("Postal Codes", "Loaded PostalCode Updates - " + post.getPostalCode(), 3, progressMonitor);
 				}
 			}
-		}
+		}*/
 		
 		DistrictService districtService = get(DistrictService.class);
 		PostalCodeService postalCodeService = get(PostalCodeService.class);
@@ -602,6 +605,11 @@ public class GeographyService
 			current++;
 			//Find the town, or the city/district
 			TownService townService = get(TownService.class);
+			if(value.isEmpty())
+			{
+				LogFactory.getLog("Geography Service").log(Level.WARNING,"Unknown Postal Code for district? - " + key);
+				continue;
+			}
 			GeographyPostalCode gp = value.get(0);
 			if (value.size() > 1)
 			{
@@ -811,6 +819,7 @@ public class GeographyService
 	public void loadFeatureCodes(ISystems<?,?> system, IActivityMasterProgressMonitor progressMonitor, UUID... identityToken)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
+		progressMonitor.setCurrentTask(0);
 		progressMonitor.setTotalTasks(681);
 		try (GeoDataFinder finder = new GeoDataFinder(FeatureCodes_en, CSVFormat.TDF, FeatureCodes_en.getHeaderNames()))
 		{
@@ -975,22 +984,28 @@ public class GeographyService
 			if (value.getAdmin2Code() != null)
 			{
 				DistrictService districtService = get(DistrictService.class);
-				IGeography<?,?> district = districtService.findDistrict(
-						value.getCountryCode()
-						     .getIso() + "." +
-								value.getAdmin1Code()
-								     .getCode() + "." +
-								value.getAdmin2Code()
-								     .getCode(), system, identityToken);
-				if (!hierarchyMap.containsKey(Long.valueOf(district.getOriginalSourceSystemUniqueID())))
+				String dName = value.getCountryCode()
+				                    .getIso() + "." +
+				               value.getAdmin1Code()
+				                    .getCode() + "." +
+				               value.getAdmin2Code()
+				                    .getCode();
+				try
 				{
-					hierarchyMap.put(Long.valueOf(district.getOriginalSourceSystemUniqueID()), new ArrayList<>());
-				}
-				if (!hierarchyMap.get(Long.valueOf(district.getOriginalSourceSystemUniqueID()))
-				                 .contains(value.getGeonameId()))
+					IGeography<?, ?> district = districtService.findDistrict(dName, system, identityToken);
+					if (!hierarchyMap.containsKey(Long.valueOf(district.getOriginalSourceSystemUniqueID())))
+					{
+						hierarchyMap.put(Long.valueOf(district.getOriginalSourceSystemUniqueID()), new ArrayList<>());
+					}
+					if (!hierarchyMap.get(Long.valueOf(district.getOriginalSourceSystemUniqueID()))
+					                 .contains(value.getGeonameId()))
+					{
+						hierarchyMap.get(Long.valueOf(district.getOriginalSourceSystemUniqueID()))
+						            .add(value.getGeonameId());
+					}
+				}catch (Throwable T)
 				{
-					hierarchyMap.get(Long.valueOf(district.getOriginalSourceSystemUniqueID()))
-					            .add(value.getGeonameId());
+					LogFactory.getLog("Geography Service").log(Level.WARNING,"Cannot find district with code - " + dName);
 				}
 			}
 		});

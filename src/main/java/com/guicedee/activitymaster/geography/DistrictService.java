@@ -86,10 +86,6 @@ public class DistrictService
 	@CacheResult(cacheName = "GeographyDistrictInProvince")
 	public IGeography<?, ?> findFirstDistrictInProvince(@CacheKey String provinceCode, @CacheKey ISystems<?, ?> system, @CacheKey UUID... identityToken)
 	{
-		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
-		IEnterprise<?, ?> enterprise = system.getEnterprise();
-		Classification classification = (Classification) classificationService.find(City, system, identityToken);
-		
 		ProvinceService ps = get(ProvinceService.class);
 		IGeography<?, ?> province = ps.findProvince(provinceCode, system, identityToken);
 		var geoLink
