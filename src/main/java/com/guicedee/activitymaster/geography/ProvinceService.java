@@ -1,13 +1,13 @@
 package com.guicedee.activitymaster.geography;
 
-import com.guicedee.activitymaster.client.services.builders.warehouse.geography.IGeography;
-import com.guicedee.activitymaster.client.services.builders.warehouse.systems.ISystems;
-import com.guicedee.activitymaster.core.ClassificationService;
-import com.guicedee.activitymaster.core.db.entities.classifications.Classification;
-import com.guicedee.activitymaster.core.db.entities.geography.Geography;
-import com.guicedee.activitymaster.core.db.entities.geography.Geography_;
-import com.guicedee.activitymaster.core.db.entities.geography.builders.GeographyQueryBuilder;
-import com.guicedee.activitymaster.core.db.entities.systems.Systems;
+
+import com.guicedee.activitymaster.fsdm.ClassificationService;
+import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.geography.IGeography;
+import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.systems.ISystems;
+import com.guicedee.activitymaster.fsdm.db.entities.classifications.Classification;
+import com.guicedee.activitymaster.fsdm.db.entities.geography.*;
+import com.guicedee.activitymaster.fsdm.db.entities.geography.builders.*;
+import com.guicedee.activitymaster.fsdm.db.entities.systems.Systems;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
 import jakarta.cache.annotation.CacheKey;
@@ -18,7 +18,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static com.entityassist.enumerations.Operand.*;
-import static com.guicedee.activitymaster.client.services.classifications.DefaultClassifications.*;
+import static com.guicedee.activitymaster.fsdm.client.services.classifications.DefaultClassifications.*;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
 
 public class ProvinceService
@@ -41,7 +41,7 @@ public class ProvinceService
 		boolean exists = new Geography().builder()
 		                                .withName(code)
 		                                .withClassification(classification)
-		                                .inActiveRange(system, identityToken)
+		                                .inActiveRange()
 		                                .inDateRange()
 		                                .withEnterprise(system)
 		                                .getCount() > 0;
@@ -52,8 +52,8 @@ public class ProvinceService
 		Geography geo = new Geography();
 		geo.setEnterpriseID(classification.getEnterpriseID());
 		geo.setClassification(classification);
-		geo.setSystemID((Systems) system);
-		geo.setOriginalSourceSystemID((Systems) system);
+		geo.setSystemID(system);
+		geo.setOriginalSourceSystemID(system);
 		geo.setName(code);
 		geo.setDescription(name);
 		if (originalUniqueID != null)
@@ -75,7 +75,7 @@ public class ProvinceService
 		
 		return new Geography().builder()
 		                      .withClassification(classification)
-		                      .inActiveRange(system, identityToken)
+		                      .inActiveRange()
 		                      .inDateRange()
 		                      .withEnterprise(system)
 		                      .withName(code)

@@ -1,4 +1,4 @@
-import com.guicedee.activitymaster.client.services.systems.IActivityMasterSystem;
+import com.guicedee.activitymaster.fsdm.client.services.systems.IActivityMasterSystem;
 import com.guicedee.activitymaster.geography.GeoDataMessageReceiver;
 import com.guicedee.activitymaster.geography.implementations.*;
 import com.guicedee.guicedservlets.websockets.services.IWebSocketMessageReceiver;
@@ -9,7 +9,7 @@ module com.guicedee.activitymaster.geography {
 	exports com.guicedee.activitymaster.geography.services.dto;
 	exports com.guicedee.activitymaster.geography.services.dto.classifications;
 
-	requires com.guicedee.activitymaster.core;
+	requires com.guicedee.activitymaster.fsdm;
 	requires com.guicedee.guicedinjection;
 	requires com.google.guice;
 	requires com.guicedee.activitymaster.sessions;
@@ -30,7 +30,7 @@ module com.guicedee.activitymaster.geography {
 	requires com.entityassist;
 
 	requires com.guicedee.guicedpersistence;
-	requires com.guicedee.activitymaster.client;
+	requires com.guicedee.activitymaster.fsdm.client;
 	
 	
 	provides IActivityMasterSystem with GeographySystem;

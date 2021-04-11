@@ -2,13 +2,13 @@ package com.guicedee.activitymaster.geography.implementations.updates;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import com.guicedee.activitymaster.client.services.builders.warehouse.enterprise.IEnterprise;
-import com.guicedee.activitymaster.client.services.builders.warehouse.systems.ISystems;
-import com.guicedee.activitymaster.client.services.systems.*;
+import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.enterprise.IEnterprise;
+import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.systems.ISystems;
+import com.guicedee.activitymaster.fsdm.client.services.systems.*;
 import com.guicedee.activitymaster.geography.services.IGeographyService;
 import jakarta.inject.Named;
 
-import static com.guicedee.activitymaster.core.services.ActivityMasterSystemsManager.*;
+import static com.guicedee.activitymaster.fsdm.services.ActivityMasterSystemsManager.*;
 import static com.guicedee.activitymaster.geography.services.IGeographyService.*;
 
 @SortedUpdate(sortOrder = 1300, taskCount = 1)
@@ -22,9 +22,9 @@ public class GeographyInstallFeatureCodes implements ISystemUpdate
 	private IGeographyService<?> geographyService;
 	
 	@Override
-	public void update(IEnterprise<?,?> enterprise, IActivityMasterProgressMonitor progressMonitor)
+	public void update(IEnterprise<?,?> enterprise)
 	{
-		geographyService.loadFeatureCodes(system.get(),progressMonitor);
+		geographyService.loadFeatureCodes(system.get());
 		wipeCaches();
 	}
 	

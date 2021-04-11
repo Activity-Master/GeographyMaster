@@ -2,7 +2,7 @@ package com.guicedee.activitymaster.geography.services.enumerations;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
-import static com.guicedee.activitymaster.client.services.classifications.EnterpriseClassificationDataConcepts.*;
+import static com.guicedee.activitymaster.fsdm.client.services.classifications.EnterpriseClassificationDataConcepts.*;
 
 
 public enum GeographyFeatureClassesClassifications
@@ -20,9 +20,9 @@ public enum GeographyFeatureClassesClassifications
 	;
 
 	private String description;
-	private com.guicedee.activitymaster.client.services.classifications.EnterpriseClassificationDataConcepts concept;
+	private com.guicedee.activitymaster.fsdm.client.services.classifications.EnterpriseClassificationDataConcepts concept;
 
-	GeographyFeatureClassesClassifications(String description, com.guicedee.activitymaster.client.services.classifications.EnterpriseClassificationDataConcepts concept)
+	GeographyFeatureClassesClassifications(String description, com.guicedee.activitymaster.fsdm.client.services.classifications.EnterpriseClassificationDataConcepts concept)
 	{
 		this.description = description;
 		this.concept = concept;
@@ -52,7 +52,7 @@ public enum GeographyFeatureClassesClassifications
 		return this.description;
 	}
 	
-	public com.guicedee.activitymaster.client.services.classifications.EnterpriseClassificationDataConcepts concept()
+	public com.guicedee.activitymaster.fsdm.client.services.classifications.EnterpriseClassificationDataConcepts concept()
 	{
 		return concept;
 	}

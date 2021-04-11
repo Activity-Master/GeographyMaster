@@ -1,10 +1,10 @@
 package com.guicedee.activitymaster.geography;
 
-import com.guicedee.activitymaster.client.services.IClassificationService;
-import com.guicedee.activitymaster.client.services.builders.warehouse.classifications.IClassification;
-import com.guicedee.activitymaster.client.services.builders.warehouse.systems.ISystems;
-import com.guicedee.activitymaster.client.services.classifications.EnterpriseClassificationDataConcepts;
-import com.guicedee.activitymaster.core.db.entities.classifications.Classification;
+import com.guicedee.activitymaster.fsdm.client.services.IClassificationService;
+import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.classifications.IClassification;
+import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.systems.ISystems;
+import com.guicedee.activitymaster.fsdm.client.services.classifications.EnterpriseClassificationDataConcepts;
+import com.guicedee.activitymaster.fsdm.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import jakarta.cache.annotation.CacheKey;
 import jakarta.cache.annotation.CacheResult;
@@ -12,8 +12,11 @@ import jakarta.cache.annotation.CacheResult;
 import java.util.Set;
 import java.util.UUID;
 
-import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
+import com.guicedee.activitymaster.fsdm.db.entities.geography.*;
+import com.guicedee.activitymaster.fsdm.db.entities.geography.builders.*;
+
 import static com.guicedee.guicedinjection.GuiceContext.*;
+import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
 
 public class TimeZoneService
 {
@@ -29,7 +32,7 @@ public class TimeZoneService
 		boolean exists = new Classification().builder()
 		                                     .withName(code)
 		                                     .withConcept(TimeZone.concept(),system,identityToken)
-		                                     .inActiveRange(system, identityToken)
+		                                     .inActiveRange()
 		                                     .inDateRange()
 		                                     .withEnterprise(system)
 		                                     .getCount() > 0;
@@ -49,7 +52,7 @@ public class TimeZoneService
 		return new Classification().builder()
 		                           .withName(code)
 		                           .withConcept(TimeZone.concept(),system,identityToken)
-		                           .inActiveRange(system, identityToken)
+		                           .inActiveRange()
 		                           .inDateRange()
 		                           .withEnterprise(system)
 		                           .get()

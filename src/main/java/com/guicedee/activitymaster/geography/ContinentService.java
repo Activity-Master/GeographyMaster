@@ -1,11 +1,11 @@
 package com.guicedee.activitymaster.geography;
 
-import com.guicedee.activitymaster.client.services.builders.warehouse.geography.IGeography;
-import com.guicedee.activitymaster.client.services.builders.warehouse.systems.ISystems;
-import com.guicedee.activitymaster.core.ClassificationService;
-import com.guicedee.activitymaster.core.db.entities.classifications.Classification;
-import com.guicedee.activitymaster.core.db.entities.geography.Geography;
-import com.guicedee.activitymaster.core.db.entities.geography.builders.GeographyQueryBuilder;
+import com.guicedee.activitymaster.fsdm.ClassificationService;
+import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.geography.IGeography;
+import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.systems.ISystems;
+import com.guicedee.activitymaster.fsdm.db.entities.classifications.Classification;
+import com.guicedee.activitymaster.fsdm.db.entities.geography.*;
+import com.guicedee.activitymaster.fsdm.db.entities.geography.builders.*;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
 import jakarta.cache.annotation.CacheKey;
@@ -13,7 +13,7 @@ import jakarta.cache.annotation.CacheResult;
 
 import java.util.UUID;
 
-import static com.guicedee.activitymaster.client.services.classifications.DefaultClassifications.*;
+import static com.guicedee.activitymaster.fsdm.client.services.classifications.DefaultClassifications.*;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
 
 public class ContinentService
@@ -28,7 +28,7 @@ public class ContinentService
 		                                .withClassification(classification)
 		                                .withName(code)
 		                                .inDateRange()
-		                                .inActiveRange(system, identityToken)
+		                                .inActiveRange()
 		                                .withEnterprise(system)
 		                                .getCount() > 0;
 		if(exists)
@@ -66,7 +66,7 @@ public class ContinentService
 		                      .withClassification(classification)
 		                      .withName(code)
 		                      .inDateRange()
-		                      .inActiveRange(system, identityToken)
+		                      .inActiveRange()
 		                      .withEnterprise(system)
 				.get().orElseThrow(()->new GeographyException("Cannot find continent"));
 	}

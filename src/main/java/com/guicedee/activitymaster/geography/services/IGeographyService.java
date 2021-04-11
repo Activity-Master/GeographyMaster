@@ -1,9 +1,9 @@
 package com.guicedee.activitymaster.geography.services;
 
-import com.guicedee.activitymaster.client.services.builders.warehouse.classifications.IClassification;
-import com.guicedee.activitymaster.client.services.builders.warehouse.geography.IGeography;
-import com.guicedee.activitymaster.client.services.builders.warehouse.systems.ISystems;
-import com.guicedee.activitymaster.client.services.systems.IActivityMasterProgressMonitor;
+import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.classifications.IClassification;
+import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.geography.IGeography;
+import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.systems.ISystems;
+import com.guicedee.activitymaster.fsdm.client.services.systems.IActivityMasterProgressMonitor;
 import com.guicedee.activitymaster.geography.services.dto.*;
 import jakarta.cache.annotation.CacheKey;
 import jakarta.validation.constraints.NotNull;
@@ -22,21 +22,21 @@ public interface IGeographyService<J extends IGeographyService<J>>
 
 	GeographyContinent findContinent(GeographyContinent continent, ISystems<?,?> originatingSystem, UUID... identifyingToken);
 	
-	void loadProvincesASCII1(ISystems<?,?> system, String countryCode, IActivityMasterProgressMonitor progressMonitor);
+	void loadProvincesASCII1(ISystems<?,?> system, String countryCode);
 	
-	void loadDistrictsASCII2(ISystems<?,?> system, String countryCode, IActivityMasterProgressMonitor progressMonitor);
+	void loadDistrictsASCII2(ISystems<?,?> system, String countryCode);
 	
-	void loadLanguages(ISystems<?,?> system, IActivityMasterProgressMonitor progressMonitor);
+	void loadLanguages(ISystems<?,?> system);
 
-	void loadCountryInfo(ISystems<?,?> system, IActivityMasterProgressMonitor progressMonitor);
+	void loadCountryInfo(ISystems<?,?> system);
 	
 	GeographyCountry findCountry(GeographyCountry country, ISystems<?,?> system, UUID... identityToken);
 
 	GeographyTimezone findTimezone(GeographyTimezone timezone, ISystems<?,?> system);
 
-	void loadTimeZones(ISystems<?,?> system, IActivityMasterProgressMonitor progressMonitor);
+	void loadTimeZones(ISystems<?,?> system);
 
-	void loadPostalCodes(ISystems<?,?> system, IActivityMasterProgressMonitor progressMonitor);
+	void loadPostalCodes(ISystems<?,?> system);
 	
     GeographyPostalCode findPostalCode(GeographyPostalCode postalCode, ISystems<?,?> system, UUID... identityToken);
     
@@ -46,11 +46,11 @@ public interface IGeographyService<J extends IGeographyService<J>>
 	
 	IGeography<?,?> findGeographyById(UUID geographyID, ISystems<?,?> system, UUID... identityToken);
 	
-	void loadFeatureCodes(ISystems<?,?> system, IActivityMasterProgressMonitor progressMonitor, UUID... identityToken);
+	void loadFeatureCodes(ISystems<?,?> system, UUID... identityToken);
 
     GeographyFeatureCode findFeatureCode(String featureCode, ISystems<?,?> system, UUID... identityToken);
 
 	IClassification<?,?> findFeatureCodeClassification(String featureCode, ISystems<?,?> system, UUID... identityToken);
 	
-	void loadTownsAndCities(ISystems<?,?> system, IActivityMasterProgressMonitor progressMonitor);
+	void loadTownsAndCities(ISystems<?,?> system);
 }

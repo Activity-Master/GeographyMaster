@@ -1,13 +1,16 @@
 package com.guicedee.activitymaster.geography;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.guicedee.activitymaster.client.services.IInvolvedPartyService;
-import com.guicedee.activitymaster.client.services.builders.warehouse.party.IInvolvedParty;
-import com.guicedee.activitymaster.client.services.builders.warehouse.systems.ISystems;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+import com.guicedee.activitymaster.fsdm.client.services.IInvolvedPartyService;
+import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.party.IInvolvedParty;
+import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.systems.ISystems;
 import com.guicedee.activitymaster.geography.implementations.GeographySystem;
 import com.guicedee.activitymaster.sessions.services.ISession;
 import com.guicedee.activitymaster.sessions.services.ISessionMasterService;
 import com.guicedee.guicedinjection.GuiceContext;
+import com.guicedee.guicedinjection.representations.IJsonRepresentation;
 import com.guicedee.guicedservlets.websockets.options.WebSocketMessageReceiver;
 import com.guicedee.guicedservlets.websockets.services.IWebSocketMessageReceiver;
 import com.jwebmp.plugins.security.ipgeography.GeoData;
@@ -15,12 +18,18 @@ import com.jwebmp.plugins.security.ipgeography.GeoData;
 import java.util.Set;
 import java.util.UUID;
 
+import static com.guicedee.activitymaster.geography.services.IGeographyService.*;
 import static com.guicedee.guicedinjection.GuiceContext.*;
 
 public class GeoDataMessageReceiver
 		implements IWebSocketMessageReceiver
 {
-	
+	@Inject
+	@Named(GeographySystemName)
+	private ISystems<?,?> system;
+	@Inject
+	@Named(GeographySystemName)
+	private UUID identityToken;
 	@Override
 	public Set<String> messageNames()
 	{
@@ -30,16 +39,22 @@ public class GeoDataMessageReceiver
 	@Override
 	public void receiveMessage(WebSocketMessageReceiver message) throws SecurityException
 	{
+		ISessionMasterService<?> sessionMasterService = get(ISessionMasterService.class);
+
 		try
 		{
 			String js = get(ObjectMapper.class).writeValueAsString(message.getData());
-			GeoData data = new GeoData().From(js, GeoData.class);
+			GeoData data = IJsonRepresentation.From(js, GeoData.class);
 			if (data.getLocalStorage() != null)
 			{
 				if (data.getSuccess() != null && data.getSuccess())
 				{
 					IInvolvedPartyService<?> involvedPartyService = get(IInvolvedPartyService.class);
-					IInvolvedParty<?,?> involvedParty = involvedPartyService.findByIdentificationType("IdentificationTypeWebClientUUID", data.getLocalStorage());
+					IInvolvedParty<?, ?> involvedParty = involvedPartyService.get()
+					                                                         .builder()
+					                                                         .findByIdentificationType("IdentificationTypeWebClientUUID", data.getLocalStorage(), system, identityToken)
+					                                                         .get()
+					                                                         .orElse(null);
 					if (involvedParty == null)
 					{
 						return;
@@ -49,11 +64,11 @@ public class GeoDataMessageReceiver
 					{
 						//addressService.addOrFindIPAddress(data.getIp(),)
 					}
-					ISessionMasterService<?> sessionMasterService = get(ISessionMasterService.class);
-					ISystems<?,?> system = get(GeographySystem.class)
-							.getSystem(involvedParty.getEnterprise());
+				
 					UUID token = GuiceContext.get(GeographySystem.class)
 					                         .getSystemToken(involvedParty.getEnterprise());
+					ISystems<?,?> system = GuiceContext.get(GeographySystem.class)
+					                                   .getSystem(involvedParty.getEnterprise());
 					ISession<?> sesion = sessionMasterService.getSession(involvedParty, system, token);
 					sesion.setInvolvedParty(involvedParty);
 					sesion.setSystem(system);

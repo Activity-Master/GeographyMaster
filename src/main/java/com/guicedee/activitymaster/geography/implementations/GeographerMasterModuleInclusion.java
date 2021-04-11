@@ -12,7 +12,7 @@ public class GeographerMasterModuleInclusion implements IGuiceScanModuleInclusio
 	public @NotNull Set<String> includeModules()
 	{
 		Set<String> set = new HashSet<>();
-		//set.add("com.guicedee.activitymaster.geography");
+	//	set.add("com.guicedee.activitymaster.geography");
 		return set;
 	}
 }

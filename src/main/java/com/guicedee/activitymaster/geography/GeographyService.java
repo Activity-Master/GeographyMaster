@@ -1,19 +1,19 @@
 package com.guicedee.activitymaster.geography;
 
 import com.google.common.base.Strings;
-import com.guicedee.activitymaster.client.services.IClassificationDataConceptService;
-import com.guicedee.activitymaster.client.services.IClassificationService;
-import com.guicedee.activitymaster.client.services.builders.warehouse.classifications.IClassification;
-import com.guicedee.activitymaster.client.services.builders.warehouse.geography.IGeography;
-import com.guicedee.activitymaster.client.services.builders.warehouse.systems.ISystems;
-import com.guicedee.activitymaster.client.services.classifications.EnterpriseClassificationDataConcepts;
-import com.guicedee.activitymaster.client.services.systems.IActivityMasterProgressMonitor;
-import com.guicedee.activitymaster.client.services.systems.IProgressable;
-import com.guicedee.activitymaster.core.ClassificationService;
-import com.guicedee.activitymaster.core.db.entities.classifications.Classification;
-import com.guicedee.activitymaster.core.db.entities.geography.Geography;
-import com.guicedee.activitymaster.core.db.entities.geography.builders.GeographyQueryBuilder;
-import com.guicedee.activitymaster.core.db.entities.systems.Systems;
+import com.guicedee.activitymaster.fsdm.ClassificationService;
+import com.guicedee.activitymaster.fsdm.client.services.IClassificationDataConceptService;
+import com.guicedee.activitymaster.fsdm.client.services.IClassificationService;
+import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.classifications.IClassification;
+import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.geography.IGeography;
+import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.systems.ISystems;
+import com.guicedee.activitymaster.fsdm.client.services.classifications.EnterpriseClassificationDataConcepts;
+import com.guicedee.activitymaster.fsdm.client.services.systems.IActivityMasterProgressMonitor;
+import com.guicedee.activitymaster.fsdm.client.services.systems.IProgressable;
+import com.guicedee.activitymaster.fsdm.db.entities.classifications.Classification;
+import com.guicedee.activitymaster.fsdm.db.entities.geography.*;
+import com.guicedee.activitymaster.fsdm.db.entities.geography.builders.*;
+import com.guicedee.guicedinjection.GuiceContext;
 import com.guicedee.activitymaster.geography.implementations.GeographySystem;
 import com.guicedee.activitymaster.geography.services.IGeographyService;
 import com.guicedee.activitymaster.geography.services.dto.*;
@@ -33,7 +33,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
-import static com.guicedee.activitymaster.client.services.classifications.DefaultClassifications.*;
+import static com.guicedee.activitymaster.fsdm.client.services.classifications.DefaultClassifications.*;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
 import static com.guicedee.guicedinjection.GuiceContext.*;
 import static com.guicedee.guicedinjection.json.StaticStrings.*;
@@ -150,7 +150,7 @@ public class GeographyService
 		
 		
 		IClassification<?,?> currency = get(ClassificationService.class).find(country.getCurrency()
-		                                                                           .getCurrencyCode(), EnterpriseClassificationDataConcepts.ClassificationXClassification, system, identityToken);
+		                                                                             .getCurrencyCode(), EnterpriseClassificationDataConcepts.ClassificationXClassification, system, identityToken);
 		geoCountry.addOrUpdateClassification(Currency, currency.getName(), system, identityToken);
 		
 		
@@ -163,10 +163,10 @@ public class GeographyService
 	}
 	
 	@Override
-	public void loadProvincesASCII1(ISystems<?,?> system, String countryCode, IActivityMasterProgressMonitor progressMonitor)
+	public void loadProvincesASCII1(ISystems<?,?> system, String countryCode)
 	{
-		progressMonitor.setCurrentTask(0);
-		progressMonitor.setTotalTasks(4470);
+		setCurrentTask(0);
+		setTotalTasks(4470);
 		try (GeoDataFinder finder = new GeoDataFinder(Admin1CodesASCII, CSVFormat.TDF, Admin1CodesASCII.getHeaderNames()))
 		{
 			int current = 0;
@@ -187,18 +187,18 @@ public class GeographyService
 				}
 				if (current % 50 == 0)
 				{
-					logProgress("Geography Service", "Loaded Province Codes - " + ascii.getName(), 50, progressMonitor);
+					logProgress("Geography Service", "Loaded Province Codes - " + ascii.getName(), 50);
 				}
 			}
-			logProgress("Geography Service", "Finished Province Codes", 0, progressMonitor);
+			logProgress("Geography Service", "Finished Province Codes", 0);
 		}
 	}
 	
 	@Override
-	public void loadDistrictsASCII2(ISystems<?,?> system, String countryCode, IActivityMasterProgressMonitor progressMonitor)
+	public void loadDistrictsASCII2(ISystems<?,?> system, String countryCode)
 	{
-		progressMonitor.setCurrentTask(0);
-		progressMonitor.setTotalTasks(47850);
+		setCurrentTask(0);
+		setTotalTasks(47850);
 		try (GeoDataFinder finder = new GeoDataFinder(Admin2Codes, CSVFormat.TDF, Admin2Codes.getHeaderNames()))
 		{
 			int current = 0;
@@ -226,22 +226,22 @@ public class GeographyService
 					}
 				if (current % 50 == 0)
 				{
-					logProgress("Geography Service", "Loaded 50 Districts/Cities - " + ascii.getName(), 50, progressMonitor);
+					logProgress("Geography Service", "Loaded 50 Districts/Cities - " + ascii.getName(), 50);
 				}
 			}
 		}
-		logProgress("Geography Service", "Finished Districts/Cities", 10, progressMonitor);
+		logProgress("Geography Service", "Finished Districts/Cities", 10);
 	}
 	
 	@Override
-	public void loadLanguages(ISystems<?,?> system, IActivityMasterProgressMonitor progressMonitor)
+	public void loadLanguages(ISystems<?,?> system)
 	{
-		progressMonitor.setCurrentTask(0);
-		progressMonitor.setTotalTasks(547);
+		setCurrentTask(0);
+		setTotalTasks(547);
 		try (GeoDataFinder finder = new GeoDataFinder(ISO639Languages, CSVFormat.TDF, ISO639Languages.getHeaderNames()))
 		{
 			int current = 0;
-			logProgress("Geography Service", "Starting Geography Associated Languages", 1, progressMonitor);
+			logProgress("Geography Service", "Starting Geography Associated Languages", 1);
 			for (CSVRecord record : finder.getRecords())
 			{
 				current++;
@@ -308,23 +308,23 @@ public class GeographyService
 									(language.getName()
 									         .isEmpty() ? " - " : language.getName()
 									                                      .toArray()[0])
-							, 5, progressMonitor);
+							, 5);
 				}
 			}
 		}
-		logProgress("Geography Service", "Geography Associated Languages queued", 1, progressMonitor);
+		logProgress("Geography Service", "Geography Associated Languages queued", 1);
 	}
 	
 	
 	@Override
-	public void loadCountryInfo(ISystems<?,?> system, IActivityMasterProgressMonitor progressMonitor)
+	public void loadCountryInfo(ISystems<?,?> system)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		IClassificationDataConceptService<?> conceptService = get(IClassificationDataConceptService.class);
-		UUID identityToken = get(GeographySystem.class).getSystemToken(system.getEnterprise());
+		UUID identityToken = GuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
 		
-		progressMonitor.setCurrentTask(0);
-		progressMonitor.setTotalTasks(252);
+		setCurrentTask(0);
+		setTotalTasks(252);
 		try (GeoDataFinder finder = new GeoDataFinder(CountryInfo, CSVFormat.TDF, CountryInfo.getHeaderNames()))
 		{
 			int current = 0;
@@ -390,10 +390,10 @@ public class GeographyService
 				}
 				
 				GeographyCountry gccc = createCountry(country, system);
-				logProgress("Geography Service", "Loaded Country " + country.getCountryName(), 1, progressMonitor);
+				logProgress("Geography Service", "Loaded Country " + country.getCountryName(), 1);
 			}
 		}
-		logProgress("Geography Service", "Finished Loading Countries", 10, progressMonitor);
+		logProgress("Geography Service", "Finished Loading Countries", 10);
 	}
 	
 	/**
@@ -410,7 +410,7 @@ public class GeographyService
 	@CacheResult(cacheName = "GeographyTimezones")
 	public GeographyTimezone findTimezone(@CacheKey GeographyTimezone timezone, @CacheKey ISystems<?,?> system)
 	{
-		UUID identityToken = get(GeographySystem.class).getSystemToken(system.getEnterprise());
+		UUID identityToken = GuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
 		TimeZoneService timeZoneService = get(TimeZoneService.class);
 		
 		IClassification<?,?> timeZoneClassification = timeZoneService.findTimeZone(timezone.getTimezoneID(), system, identityToken);
@@ -439,10 +439,10 @@ public class GeographyService
 	}
 	
 	@Override
-	public void loadTimeZones(ISystems<?,?> system, IActivityMasterProgressMonitor progressMonitor)
+	public void loadTimeZones(ISystems<?,?> system)
 	{
-		progressMonitor.setCurrentTask(0);
-		progressMonitor.setTotalTasks(425);
+		setCurrentTask(0);
+		setTotalTasks(425);
 		try (GeoDataFinder finder = new GeoDataFinder(TimeZones, CSVFormat.TDF, TimeZones.getHeaderNames()))
 		{
 			int current = 0;
@@ -456,8 +456,8 @@ public class GeographyService
 				timezone.setRawOffset(Double.parseDouble(record.get(4)));
 				create(timezone, system);
 				
-				ISystems<?,?> geoSystem = get(GeographySystem.class).getSystem(system.getEnterprise());
-				UUID identityToken = get(GeographySystem.class).getSystemToken(system.getEnterprise());
+				ISystems<?,?> geoSystem = GuiceContext.get(GeographySystem.class).getSystem(system.getEnterprise());
+				UUID identityToken = GuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
 				CountryService cs = get(CountryService.class);
 				IGeography<?,?> country = cs.findCountry(record.get(0), system);
 				
@@ -467,7 +467,7 @@ public class GeographyService
 				
 				if (current % 5 == 0)
 				{
-					logProgress("TimeZones", "Loaded Timezone - " + timezone.getTimezoneID(), 5, progressMonitor);
+					logProgress("TimeZones", "Loaded Timezone - " + timezone.getTimezoneID(), 5);
 				}
 			}
 		}
@@ -475,7 +475,7 @@ public class GeographyService
 	
 	public GeographyTimezone create(GeographyTimezone timezone, ISystems<?,?> system)
 	{
-		UUID identityToken = get(GeographySystem.class).getSystemToken(system.getEnterprise());
+		UUID identityToken = GuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
 		TimeZoneService timeZoneService = get(TimeZoneService.class);
 		timeZoneService.createTimeZone(timezone.getTimezoneID(), timezone.getTimezoneID(), null, system, identityToken);
 		
@@ -486,16 +486,16 @@ public class GeographyService
 	}
 	
 	@Override
-	public void loadPostalCodes(ISystems<?,?> system, IActivityMasterProgressMonitor progressMonitor)
+	public void loadPostalCodes(ISystems<?,?> system)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		IClassificationDataConceptService<?> conceptService = get(IClassificationDataConceptService.class);
 
-		UUID identityToken = get(GeographySystem.class).getSystemToken(system.getEnterprise());
+		UUID identityToken = GuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
 		//Postal Codes Full Listing
 		Map<Long, List<GeographyPostalCode>> postalCodeMap = new HashMap<>();
-		progressMonitor.setCurrentTask(0);
-		progressMonitor.setTotalTasks(3921);
+		setCurrentTask(0);
+		setTotalTasks(3921);
 		try (GeoDataFinder finder = new GeoDataFinder(ZAPostalCodes, CSVFormat.TDF, ZAPostalCodes.getHeaderNames()))
 		{
 			int current = 0;
@@ -528,13 +528,13 @@ public class GeographyService
 				//create(post, enterpriseName);
 				if (current % 3 == 0)
 				{
-					logProgress("Postal Codes", "Loaded PostalCode - " + post.getPostalCode(), 3, progressMonitor);
+					logProgress("Postal Codes", "Loaded PostalCode - " + post.getPostalCode(), 3);
 				}
 			}
 		}
 		
-		/*progressMonitor.setCurrentTask(0);
-		progressMonitor.setTotalTasks(19888);
+		/*setCurrentTask(0);
+		setTotalTasks(19888);
 		try (GeoDataFinder finder = new GeoDataFinder(ZAPostalCodesUpdates, CSVFormat.TDF))
 		{
 			int current = 0;
@@ -588,7 +588,7 @@ public class GeographyService
 				
 				if (current % 3 == 0)
 				{
-					logProgress("Postal Codes", "Loaded PostalCode Updates - " + post.getPostalCode(), 3, progressMonitor);
+					logProgress("Postal Codes", "Loaded PostalCode Updates - " + post.getPostalCode(), 3);
 				}
 			}
 		}*/
@@ -596,8 +596,8 @@ public class GeographyService
 		DistrictService districtService = get(DistrictService.class);
 		PostalCodeService postalCodeService = get(PostalCodeService.class);
 		int current = 0;
-		progressMonitor.setTotalTasks(postalCodeMap.size());
-		progressMonitor.setCurrentTask(0);
+		setTotalTasks(postalCodeMap.size());
+		setCurrentTask(0);
 		for (Map.Entry<Long, List<GeographyPostalCode>> entry : postalCodeMap.entrySet())
 		{
 			Long key = entry.getKey();
@@ -704,7 +704,7 @@ public class GeographyService
 			}
 			if (current % 10 == 0)
 			{
-				logProgress("Postal Codes", "Loaded District->PostalCode Updates - " + gp.getPostalCode(), 10, progressMonitor);
+				logProgress("Postal Codes", "Loaded District->PostalCode Updates - " + gp.getPostalCode(), 10);
 			}
 		}
 		//postalCodeService.createPostalCode();
@@ -784,7 +784,7 @@ public class GeographyService
 	{
 		return new Geography().builder()
 		                      .find(geographyID)
-		                      .inActiveRange(system.getEnterprise(), identityToken)
+		                      .inActiveRange()
 		                      .inDateRange()
 		                      .withEnterprise(system.getEnterprise())
 		                      .get(true)
@@ -816,11 +816,11 @@ public class GeographyService
 	
 	
 	@Override
-	public void loadFeatureCodes(ISystems<?,?> system, IActivityMasterProgressMonitor progressMonitor, UUID... identityToken)
+	public void loadFeatureCodes(ISystems<?,?> system, UUID... identityToken)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
-		progressMonitor.setCurrentTask(0);
-		progressMonitor.setTotalTasks(681);
+		setCurrentTask(0);
+		setTotalTasks(681);
 		try (GeoDataFinder finder = new GeoDataFinder(FeatureCodes_en, CSVFormat.TDF, FeatureCodes_en.getHeaderNames()))
 		{
 			for (CSVRecord record : finder.getRecords())
@@ -836,7 +836,7 @@ public class GeographyService
 				Classification featureCodeClassification = (Classification) classificationService.find(featureCode.getCode(), FeatureCodes.concept(), system, identityToken);
 				clazz.addChild(featureCodeClassification,NoClassification.toString(),null, system, identityToken);
 				
-				logProgress("Geography Feature Codes", "Loaded Feature Code - " + featureCode.toString(), 1, progressMonitor);
+				logProgress("Geography Feature Codes", "Loaded Feature Code - " + featureCode.toString(), 1);
 			}
 		}
 	}
@@ -860,14 +860,14 @@ public class GeographyService
 	}
 	
 	@Override
-	public void loadTownsAndCities(ISystems<?,?> system, IActivityMasterProgressMonitor progressMonitor)
+	public void loadTownsAndCities(ISystems<?,?> system)
 	{
-		UUID identityToken = get(GeographySystem.class).getSystemToken(system.getEnterprise());
+		UUID identityToken = GuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
 		
 		Map<Long, GeoNameDefaultData<?>> dataMap = new TreeMap<>();
 		Map<Long, List<Long>> hierarchyMap = new ConcurrentHashMap<>();
 		
-		progressMonitor.setTotalTasks(102850);
+		setTotalTasks(102850);
 		try (GeoDataFinder finder = new GeoDataFinder(ZAGeoData, CSVFormat.TDF, ZAGeoData.getHeaderNames()))
 		{
 			int count = 0;
@@ -895,7 +895,7 @@ public class GeographyService
 					if (count % 50 == 0)
 					{
 						logProgress("Geography Data", "Skipped Non-Place Location - " + a.get("asciiname") +
-								" (" + progressMonitor.getCurrentTask() + "/" + progressMonitor.getTotalTasks() + ")", 50, progressMonitor);
+								" (" + getCurrentTask() + "/" + getTotalTasks() + ")", 50);
 					}
 					continue;
 				}
@@ -940,13 +940,13 @@ public class GeographyService
 				if (count % 50 == 0)
 				{
 					logProgress("Geography Data", "Loaded - " + a.get("asciiname") +
-							" (" + progressMonitor.getCurrentTask() + "/" + progressMonitor.getTotalTasks() + ")", 50, progressMonitor);
+							" (" + getCurrentTask() + "/" + getTotalTasks() + ")", 50);
 				}
 			}
 		}
 		
-		progressMonitor.setCurrentTask(0);
-		progressMonitor.setTotalTasks(488058);
+		setCurrentTask(0);
+		setTotalTasks(488058);
 		try (GeoDataFinder finder = new GeoDataFinder(Hierarchy, CSVFormat.TDF, Hierarchy.getHeaderNames()))
 		{
 			int count = 0;
@@ -961,13 +961,13 @@ public class GeographyService
 				if (count % 50 == 0)
 				{
 					logProgress("Geography Data", "Loaded Hierarchy Data - " + record.get(0) +
-							" (" + progressMonitor.getCurrentTask() + "/" + progressMonitor.getTotalTasks() + ")", 50, progressMonitor);
+							" (" + getCurrentTask() + "/" + getTotalTasks() + ")", 50);
 				}
 			}
 		}
 		
 		logProgress("Geography Data", "Cleaning up hierarchy for data map..." +
-				" (" + progressMonitor.getCurrentTask() + "/" + progressMonitor.getTotalTasks() + ")", 1, progressMonitor);
+				" (" + getCurrentTask() + "/" + getTotalTasks() + ")", 1);
 		
 		hierarchyMap.entrySet()
 		            .iterator()
@@ -979,7 +979,7 @@ public class GeographyService
 		            });
 		
 		logProgress("Geography Data", "Mapping Districts to Places..." +
-				" (" + progressMonitor.getCurrentTask() + "/" + progressMonitor.getTotalTasks() + ")", 1, progressMonitor);
+				" (" + getCurrentTask() + "/" + getTotalTasks() + ")", 1);
 		dataMap.forEach((key, value) -> {
 			if (value.getAdmin2Code() != null)
 			{
@@ -1014,16 +1014,15 @@ public class GeographyService
 		ProvinceService provinceService = get(ProvinceService.class);
 		List<Geography> allDistricts = districtService.findAllDistricts(system, identityToken);
 		
-		progressMonitor.setCurrentTask(0);
-		progressMonitor.setTotalTasks(hierarchyMap.size());
-		logProgress("Geo Hierarchy", "Loading Structure... " + hierarchyMap.size() + " in total", 1, progressMonitor);
-		loadHierarchyLevel(hierarchyMap, dataMap, allDistricts, system, progressMonitor, identityToken);
+		setCurrentTask(0);
+		setTotalTasks(hierarchyMap.size());
+		logProgress("Geo Hierarchy", "Loading Structure... " + hierarchyMap.size() + " in total", 1);
+		loadHierarchyLevel(hierarchyMap, dataMap, allDistricts, system, identityToken);
 		
 	}
 	
 	private void loadHierarchyLevel(Map<Long, List<Long>> hierarchyMap, Map<Long, GeoNameDefaultData<?>> dataMap,
 	                                List<Geography> geoList, ISystems<?,?> system,
-	                                IActivityMasterProgressMonitor progressMonitor,
 	                                UUID... identityToken)
 	{
 		for (int i = 0; i < geoList.size(); i++)
@@ -1071,7 +1070,7 @@ public class GeographyService
 				}
 			}
 			
-			logProgress("Geo Hierarchy", "Loading Structure... (" + i + "/" + geoList.size() + ")", 1, progressMonitor);
+			logProgress("Geo Hierarchy", "Loading Structure... (" + i + "/" + geoList.size() + ")", 1);
 		}
 	}
 	
@@ -1117,7 +1116,7 @@ public class GeographyService
 			geo.setEnterpriseID(system.getEnterprise());
 			geo.setClassification((Classification) classification);
 			geo.setSystemID(system);
-			geo.setActiveFlagID(((Systems) system).getActiveFlagID());
+			geo.setActiveFlagID(system.getActiveFlagID());
 			geo.setOriginalSourceSystemID(system);
 			
 			geo.setClassification((Classification) classification);

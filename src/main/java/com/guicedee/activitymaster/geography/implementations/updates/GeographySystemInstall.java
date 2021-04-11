@@ -1,12 +1,12 @@
 package com.guicedee.activitymaster.geography.implementations.updates;
 
-import com.guicedee.activitymaster.client.services.*;
-import com.guicedee.activitymaster.client.services.builders.warehouse.classifications.IClassification;
-import com.guicedee.activitymaster.client.services.builders.warehouse.enterprise.IEnterprise;
-import com.guicedee.activitymaster.client.services.builders.warehouse.party.IInvolvedPartyIdentificationType;
-import com.guicedee.activitymaster.client.services.builders.warehouse.systems.ISystems;
-import com.guicedee.activitymaster.client.services.classifications.EnterpriseClassificationDataConcepts;
-import com.guicedee.activitymaster.client.services.systems.*;
+import com.guicedee.activitymaster.fsdm.client.services.*;
+import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.classifications.IClassification;
+import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.enterprise.IEnterprise;
+import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.party.IInvolvedPartyIdentificationType;
+import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.systems.ISystems;
+import com.guicedee.activitymaster.fsdm.client.services.classifications.EnterpriseClassificationDataConcepts;
+import com.guicedee.activitymaster.fsdm.client.services.systems.*;
 import com.guicedee.activitymaster.geography.implementations.GeographySystem;
 import com.guicedee.activitymaster.geography.services.IGeographyService;
 import com.guicedee.activitymaster.geography.services.dto.GeographyContinent;
@@ -15,8 +15,8 @@ import com.guicedee.activitymaster.geography.services.enumerations.GeographyIPId
 
 import java.util.UUID;
 
-import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
 import static com.guicedee.guicedinjection.GuiceContext.*;
+import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
 
 @SortedUpdate(sortOrder = 1000, taskCount = 12)
 public class GeographySystemInstall
@@ -24,7 +24,7 @@ public class GeographySystemInstall
 {
 	
 	@Override
-	public void update(IEnterprise<?,?> enterprise, IActivityMasterProgressMonitor progressMonitor)
+	public void update(IEnterprise<?,?> enterprise)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		IClassificationDataConceptService<?> dataConceptService = get(IClassificationDataConceptService.class);
@@ -33,11 +33,7 @@ public class GeographySystemInstall
 		ISystems<?,?> system = gs.getSystem(enterprise);
 		UUID token = gs.getSystemToken(enterprise);
 		
-		if (progressMonitor != null)
-		
-		{
-			progressMonitor.progressUpdate("Geography Master", "Creating Regional Areas");
-		}
+		logProgress("Geography Master", "Creating Regional Areas");
 		
 		classificationService.create(Planet, system);
 		classificationService.create(Languages, system, Planet);
@@ -56,13 +52,8 @@ public class GeographySystemInstall
 		classificationService.create(City, system, Municipalities);
 		classificationService.create(Town, system, City);
 		
-		
-		
-		if (progressMonitor != null)
-		{
-			progressMonitor.progressUpdate("Geography Master", "Creating Default Geography Classifications");
-		}
-		
+		logProgress("Geography Master", "Creating Default Geography Classifications");
+
 		classificationService.create(GeographyClassifications, system);
 		classificationService.create(FeatureCodes, system, GeographyClassifications);
 		
@@ -100,28 +91,20 @@ public class GeographySystemInstall
 		classificationService.create(GeographyAsciiName, system, GeographyAdmin1AsciiCodes);
 		
 		//Country Data
-		if (progressMonitor != null)
-		{
-			progressMonitor.progressUpdate("Geography Master", "Creating Geography Involved Parties");
-		}
+		logProgress("Geography Master", "Creating Geography Involved Parties");
 		//Create Identification TYpe
 		IInvolvedPartyService<?> involvedPartyService = get(IInvolvedPartyService.class);
 		IInvolvedPartyIdentificationType<?,?> idType = involvedPartyService
 				.createIdentificationType(system, GeographyIPIdentificationTypes.ISP,
 						"An Internet Service Provider",
 						token);
-		if (progressMonitor != null)
-		{
-			progressMonitor.progressUpdate("Loading Geography Updates", "Creating Planets");
-		}
+
+		logProgress("Geography Master", "Creating Planets");
 		//Create Planets and Continents by default
 		IGeographyService<?> service = get(IGeographyService.class);
 		service.createPlanet("Earth", null, system, token);
-		if (progressMonitor != null)
-		{
-			progressMonitor.progressUpdate("Loading Geography Updates", "Creating Continents");
-		}
-		
+
+		logProgress("Geography Master", "Creating Continents");
 		service.createContinent("Earth", new GeographyContinent().setContinentName("Africa")
 		                                                         .setContinentCode("AF"), system, "6255146", token);
 		service.createContinent("Earth", new GeographyContinent().setContinentName("Asia")
@@ -136,20 +119,10 @@ public class GeographySystemInstall
 		                                                         .setContinentCode("SA"), system, "6255150", token);
 		service.createContinent("Earth", new GeographyContinent().setContinentName("Antarctica")
 		                                                         .setContinentCode("AN"), system, "6255152", token);
-		//createInvolvedPartyClassifications(enterprise);
-		if (progressMonitor != null)
-		{
-			progressMonitor.progressUpdate("Loading Geography Updates", "Creating Feature Classes");
-		}
-		
+
+		logProgress("Geography Master", "Creating Feature Classes");
 		//next update
 		geonamesClassifications(enterprise);
-		
-		if (progressMonitor != null)
-		{
-			progressMonitor.setCurrentTask(0);
-		}
-		
 	}
 	
 	private void geonamesClassifications(IEnterprise<?,?> enterprise)

@@ -1,6 +1,6 @@
 package com.guicedee.activitymaster.geography.services;
 
-import com.guicedee.activitymaster.client.services.builders.warehouse.party.IInvolvedParty;
+import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.party.IInvolvedParty;
 import com.guicedee.activitymaster.geography.services.dto.*;
 import lombok.Data;
 import lombok.experimental.Accessors;
