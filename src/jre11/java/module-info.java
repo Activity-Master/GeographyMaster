@@ -41,6 +41,10 @@ module com.guicedee.activitymaster.geography {
 	provides com.guicedee.guicedinjection.interfaces.IGuiceModule with GeographyBinder;
 	provides com.guicedee.guicedinjection.interfaces.IGuiceScanModuleInclusions with GeographerMasterModuleInclusion;
 	
+	
+	exports com.guicedee.activitymaster.geography;
+	exports com.guicedee.activitymaster.geography.implementations.updates;
+	
 	opens com.guicedee.activitymaster.geography to com.google.guice;
 	opens com.guicedee.activitymaster.geography.implementations.updates to com.google.guice;
 	opens com.guicedee.activitymaster.geography.implementations to com.google.guice;
