@@ -1,22 +1,21 @@
 package com.guicedee.activitymaster.geography;
 
 import com.guicedee.activitymaster.fsdm.client.services.IClassificationService;
+import com.guicedee.activitymaster.fsdm.client.services.annotations.ActivityMasterDB;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.classifications.IClassification;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.systems.ISystems;
 import com.guicedee.activitymaster.fsdm.client.services.classifications.EnterpriseClassificationDataConcepts;
 import com.guicedee.activitymaster.fsdm.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
+import com.guicedee.guicedpersistence.db.annotations.Transactional;
 import jakarta.cache.annotation.CacheKey;
 import jakarta.cache.annotation.CacheResult;
 
 import java.util.Set;
 import java.util.UUID;
 
-import com.guicedee.activitymaster.fsdm.db.entities.geography.*;
-import com.guicedee.activitymaster.fsdm.db.entities.geography.builders.*;
-
-import static com.guicedee.guicedinjection.GuiceContext.*;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
+import static com.guicedee.guicedinjection.GuiceContext.*;
 
 public class TimeZoneService
 {
@@ -26,6 +25,7 @@ public class TimeZoneService
 			TimeZoneOffsetJan2016.toString());
 	
 	@CacheResult(cacheName = "GeographyTimezones", skipGet = true)
+	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public IClassification<?,?> createTimeZone(@CacheKey String code, String description, String originalUniqueID, @CacheKey ISystems<?,?> system, @CacheKey UUID...identityToken)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
@@ -60,6 +60,7 @@ public class TimeZoneService
 	}
 	
 	@CacheResult(cacheName = "GeographyTimezones", skipGet = true)
+	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public IClassification<?,?> updateTimeZone(@CacheKey String code, String description,
 	                                         String timeZoneRawOffset, String timeZoneOffsetJuly2016, String timeZoneOffsetJan2016,
 	                                         @CacheKey ISystems<?,?> system, @CacheKey UUID...identityToken)

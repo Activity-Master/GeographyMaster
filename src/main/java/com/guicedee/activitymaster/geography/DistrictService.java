@@ -1,14 +1,16 @@
 package com.guicedee.activitymaster.geography;
 
 import com.guicedee.activitymaster.fsdm.ClassificationService;
+import com.guicedee.activitymaster.fsdm.client.services.annotations.ActivityMasterDB;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.enterprise.IEnterprise;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.geography.IGeography;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.systems.ISystems;
 import com.guicedee.activitymaster.fsdm.db.entities.classifications.Classification;
-import com.guicedee.activitymaster.fsdm.db.entities.geography.*;
-import com.guicedee.activitymaster.fsdm.db.entities.geography.builders.*;
+import com.guicedee.activitymaster.fsdm.db.entities.geography.Geography;
+import com.guicedee.activitymaster.fsdm.db.entities.geography.builders.GeographyQueryBuilder;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
+import com.guicedee.guicedpersistence.db.annotations.Transactional;
 import jakarta.cache.annotation.CacheKey;
 import jakarta.cache.annotation.CacheResult;
 import jakarta.validation.constraints.NotNull;
@@ -24,6 +26,7 @@ public class DistrictService
 	public static final Set<String> DistrictClassifications = Set.copyOf(ProvinceService.ProvinceClassifications);
 	
 	@CacheResult(cacheName = "GeographyDistricts", skipGet = true)
+	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public IGeography<?, ?> createDistrict(IGeography<Geography, GeographyQueryBuilder> province, @CacheKey String code, String name, String originalUniqueID, @CacheKey ISystems<?, ?> system, @CacheKey UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
@@ -114,6 +117,7 @@ public class DistrictService
 	}
 	
 	@CacheResult(cacheName = "GeographyDistricts", skipGet = true)
+	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public IGeography<?, ?> updateDistrict(@NotNull @CacheKey String name, String description,
 	                                       String latitude, String longitude, String featureCodes, String featureClass, Integer population, Integer elevation, Integer dEM,
 	                                       @CacheKey ISystems<?, ?> system, @CacheKey UUID... identityToken)

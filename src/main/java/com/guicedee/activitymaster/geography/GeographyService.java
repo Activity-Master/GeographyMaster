@@ -4,16 +4,15 @@ import com.google.common.base.Strings;
 import com.guicedee.activitymaster.fsdm.ClassificationService;
 import com.guicedee.activitymaster.fsdm.client.services.IClassificationDataConceptService;
 import com.guicedee.activitymaster.fsdm.client.services.IClassificationService;
+import com.guicedee.activitymaster.fsdm.client.services.annotations.ActivityMasterDB;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.classifications.IClassification;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.geography.IGeography;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.systems.ISystems;
 import com.guicedee.activitymaster.fsdm.client.services.classifications.EnterpriseClassificationDataConcepts;
-import com.guicedee.activitymaster.fsdm.client.services.systems.IActivityMasterProgressMonitor;
 import com.guicedee.activitymaster.fsdm.client.services.systems.IProgressable;
 import com.guicedee.activitymaster.fsdm.db.entities.classifications.Classification;
-import com.guicedee.activitymaster.fsdm.db.entities.geography.*;
-import com.guicedee.activitymaster.fsdm.db.entities.geography.builders.*;
-import com.guicedee.guicedinjection.GuiceContext;
+import com.guicedee.activitymaster.fsdm.db.entities.geography.Geography;
+import com.guicedee.activitymaster.fsdm.db.entities.geography.builders.GeographyQueryBuilder;
 import com.guicedee.activitymaster.geography.implementations.GeographySystem;
 import com.guicedee.activitymaster.geography.services.IGeographyService;
 import com.guicedee.activitymaster.geography.services.dto.*;
@@ -21,6 +20,8 @@ import com.guicedee.activitymaster.geography.services.dto.classifications.Geogra
 import com.guicedee.activitymaster.geography.services.dto.classifications.ISO639Language;
 import com.guicedee.activitymaster.geography.services.enumerations.GeographyFeatureClassesClassifications;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
+import com.guicedee.guicedinjection.GuiceContext;
+import com.guicedee.guicedpersistence.db.annotations.Transactional;
 import com.guicedee.logger.LogFactory;
 import geodata.GeoDataFinder;
 import jakarta.cache.annotation.CacheKey;
@@ -44,6 +45,7 @@ public class GeographyService
 		           IGeographyService<GeographyService>
 {
 	@Override
+	
 	public IGeography<?,?> createPlanet(@CacheKey @NotNull String value, String originalUniqueID, ISystems<?,?> system, UUID... identityToken)
 	{
 		PlanetService service = get(PlanetService.class);
@@ -473,6 +475,7 @@ public class GeographyService
 		}
 	}
 	
+	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public GeographyTimezone create(GeographyTimezone timezone, ISystems<?,?> system)
 	{
 		UUID identityToken = GuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
@@ -806,6 +809,7 @@ public class GeographyService
 	 * @param system
 	 * @param identityToken
 	 */
+	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public GeographyFeatureCode create(GeographyFeatureCode featureCode, ISystems<?,?> system, UUID... identityToken)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
@@ -1091,6 +1095,7 @@ public class GeographyService
 	 * @param system
 	 * @param identityToken
 	 */
+	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public GeoNameDefaultData<?> create(GeoNameDefaultData<?> geoData, IClassification<?,?> classification, ISystems<?,?> system, UUID... identityToken)
 	{
 		if (geoData.getGeonameId() == null)

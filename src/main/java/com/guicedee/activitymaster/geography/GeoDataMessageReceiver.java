@@ -7,8 +7,8 @@ import com.guicedee.activitymaster.fsdm.client.services.IInvolvedPartyService;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.party.IInvolvedParty;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.systems.ISystems;
 import com.guicedee.activitymaster.geography.implementations.GeographySystem;
-import com.guicedee.activitymaster.sessions.services.ISession;
-import com.guicedee.activitymaster.sessions.services.ISessionMasterService;
+import com.guicedee.activitymaster.sessions.services.IUserSession;
+import com.guicedee.activitymaster.sessions.services.IUserSessionService;
 import com.guicedee.guicedinjection.GuiceContext;
 import com.guicedee.guicedinjection.representations.IJsonRepresentation;
 import com.guicedee.guicedservlets.websockets.options.WebSocketMessageReceiver;
@@ -39,7 +39,7 @@ public class GeoDataMessageReceiver
 	@Override
 	public void receiveMessage(WebSocketMessageReceiver message) throws SecurityException
 	{
-		ISessionMasterService<?> sessionMasterService = get(ISessionMasterService.class);
+		IUserSessionService<?> sessionMasterService = get(IUserSessionService.class);
 
 		try
 		{
@@ -69,7 +69,7 @@ public class GeoDataMessageReceiver
 					                         .getSystemToken(involvedParty.getEnterprise());
 					ISystems<?,?> system = GuiceContext.get(GeographySystem.class)
 					                                   .getSystem(involvedParty.getEnterprise());
-					ISession<?> sesion = sessionMasterService.getSession(involvedParty, system, token);
+					IUserSession<?> sesion = sessionMasterService.getSession(involvedParty, system, token);
 					sesion.setInvolvedParty(involvedParty);
 					sesion.setSystem(system);
 					sesion.addValue("geo-data", data);

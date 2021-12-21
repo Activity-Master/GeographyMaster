@@ -2,13 +2,15 @@ package com.guicedee.activitymaster.geography;
 
 import com.google.common.base.Strings;
 import com.guicedee.activitymaster.fsdm.ClassificationService;
+import com.guicedee.activitymaster.fsdm.client.services.annotations.ActivityMasterDB;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.geography.IGeography;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.systems.ISystems;
 import com.guicedee.activitymaster.fsdm.db.entities.classifications.Classification;
-import com.guicedee.activitymaster.fsdm.db.entities.geography.*;
-import com.guicedee.activitymaster.fsdm.db.entities.geography.builders.*;
+import com.guicedee.activitymaster.fsdm.db.entities.geography.Geography;
+import com.guicedee.activitymaster.fsdm.db.entities.geography.builders.GeographyQueryBuilder;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
+import com.guicedee.guicedpersistence.db.annotations.Transactional;
 import com.guicedee.logger.LogFactory;
 import jakarta.cache.annotation.CacheKey;
 import jakarta.cache.annotation.CacheResult;
@@ -35,6 +37,7 @@ public class PostalCodeService
 	}
 	
 	@CacheResult(cacheName = "GeographyPostalCodes", skipGet = true)
+	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public IGeography<?,?> createPostalCode(@CacheKey IGeography<Geography, GeographyQueryBuilder> town, @NotNull @CacheKey String code,
 	                                        String description, String originalUniqueID,
 	                                        @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
@@ -76,6 +79,7 @@ public class PostalCodeService
 	}
 	
 	@CacheResult(cacheName = "GeographyPostalCodeSuburbs", skipGet = true)
+	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public IGeography<Geography, GeographyQueryBuilder> createPostalCodeSuburb(@CacheKey IGeography<Geography, GeographyQueryBuilder> postalCode, @NotNull @CacheKey String code,
 	                                            @NotNull @CacheKey String description, String originalUniqueID,
 	                                            @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
@@ -185,6 +189,7 @@ public class PostalCodeService
 	
 	@SuppressWarnings("DuplicatedCode")
 	@CacheResult(cacheName = "GeographyPostalCodes", skipGet = true)
+	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public IGeography<Geography, GeographyQueryBuilder> updatePostalCode(String districtCode, String townCode, @NotNull @CacheKey String code,
 	                                      String description, String latitude, String longitude,
 	                                      @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
@@ -224,6 +229,7 @@ public class PostalCodeService
 	
 	@SuppressWarnings("DuplicatedCode")
 	@CacheResult(cacheName = "GeographyPostalCodes", skipGet = true)
+	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public IGeography<Geography, GeographyQueryBuilder> updatePostalCodeParent(@NotNull @CacheKey String code,
 	                                            String description, String latitude, String longitude,
 	                                            @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)

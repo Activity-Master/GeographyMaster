@@ -1,23 +1,26 @@
 package com.guicedee.activitymaster.geography;
 
 import com.guicedee.activitymaster.fsdm.client.services.IClassificationService;
+import com.guicedee.activitymaster.fsdm.client.services.annotations.ActivityMasterDB;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.classifications.IClassification;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.systems.ISystems;
 import com.guicedee.activitymaster.fsdm.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
+import com.guicedee.guicedpersistence.db.annotations.Transactional;
 import jakarta.cache.annotation.CacheKey;
 import jakarta.cache.annotation.CacheResult;
 
 import java.util.UUID;
 
-import static com.guicedee.guicedinjection.GuiceContext.*;
 import static com.guicedee.activitymaster.fsdm.client.services.classifications.EnterpriseClassificationDataConcepts.*;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
+import static com.guicedee.guicedinjection.GuiceContext.*;
 
 
 public class CurrencyService
 {
 	@CacheResult(cacheName = "GeographyCurrencies", skipGet = true)
+	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public IClassification<?,?> createCurrency(@CacheKey String code, String description, @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
@@ -55,6 +58,7 @@ public class CurrencyService
 	}
 	
 	@CacheResult(cacheName = "GeographyCurrencies", skipGet = true)
+	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public IClassification<?,?> updateCurrency(@CacheKey String code, String description, @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
 	{
 		IClassification<?,?> toUpdate = findCurrency(code, system, identityToken);

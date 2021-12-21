@@ -1,13 +1,13 @@
 package com.guicedee.activitymaster.geography;
 
 import com.guicedee.activitymaster.fsdm.ClassificationService;
+import com.guicedee.activitymaster.fsdm.client.services.annotations.ActivityMasterDB;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.classifications.IClassification;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.systems.ISystems;
 import com.guicedee.activitymaster.fsdm.db.entities.classifications.Classification;
-import com.guicedee.activitymaster.fsdm.db.entities.geography.*;
-import com.guicedee.activitymaster.fsdm.db.entities.geography.builders.*;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
+import com.guicedee.guicedpersistence.db.annotations.Transactional;
 import jakarta.cache.annotation.CacheKey;
 import jakarta.cache.annotation.CacheResult;
 import jakarta.validation.constraints.NotNull;
@@ -28,6 +28,7 @@ public class LanguagesService
 	
 	@CacheResult(cacheName = "GeographyLanguages",
 	             skipGet = true)
+	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public IClassification<?,?> createLanguage(@NotNull @CacheKey String code, String description, String originalUniqueID,
 	                                           @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
 	{
@@ -62,6 +63,7 @@ public class LanguagesService
 	}
 	@CacheResult(cacheName = "GeographyLanguages",
 	             skipGet = true)
+	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public IClassification<?,?> updateLanguage(@NotNull @CacheKey String code, String description,
 	                                         String iso_2, String englishName, String frenchName, String germanName,
 	                                         @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
