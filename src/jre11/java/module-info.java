@@ -1,7 +1,5 @@
 import com.guicedee.activitymaster.fsdm.client.services.systems.IActivityMasterSystem;
-import com.guicedee.activitymaster.geography.GeoDataMessageReceiver;
 import com.guicedee.activitymaster.geography.implementations.*;
-import com.guicedee.guicedservlets.websockets.services.IWebSocketMessageReceiver;
 
 module com.guicedee.activitymaster.geography {
 
@@ -20,13 +18,12 @@ module com.guicedee.activitymaster.geography {
 
 	requires cache.api;
 
-	requires static lombok;
 	requires org.apache.commons.csv;
-	requires org.apache.commons.text;
+//	requires org.apache.commons.text;
 	requires org.apache.commons.lang3;
 
 	requires com.guicedee.guicedservlets.websockets;
-	requires com.jwebmp.plugins.security.ipgeography;
+	//requires com.jwebmp.plugins.security.ipgeography;
 	requires com.entityassist;
 
 	requires com.guicedee.guicedpersistence;
@@ -34,10 +31,6 @@ module com.guicedee.activitymaster.geography {
 	
 	
 	provides IActivityMasterSystem with GeographySystem;
-	
-	
-	
-	provides IWebSocketMessageReceiver with GeoDataMessageReceiver;
 	provides com.guicedee.guicedinjection.interfaces.IGuiceModule with GeographyBinder;
 	provides com.guicedee.guicedinjection.interfaces.IGuiceScanModuleInclusions with GeographerMasterModuleInclusion;
 	
