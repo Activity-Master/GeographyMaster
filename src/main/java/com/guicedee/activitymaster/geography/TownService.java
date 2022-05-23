@@ -15,7 +15,7 @@ import jakarta.cache.annotation.CacheResult;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.Set;
-import java.util.UUID;
+
 
 import static com.guicedee.activitymaster.fsdm.client.services.classifications.DefaultClassifications.*;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
@@ -30,7 +30,7 @@ public class TownService
 	                                  String description,
 	                                  String originalUniqueID,
 	                                  @CacheKey ISystems<?,?> system,
-	                                  @CacheKey UUID... identityToken)
+	                                  @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Town, system, identityToken);
@@ -68,7 +68,7 @@ public class TownService
 	}
 	
 	@CacheResult(cacheName = "GeographyTowns")
-	public IGeography<?,?> findTown(@CacheKey IGeography<?,?> district, @CacheKey String name, @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
+	public IGeography<?,?> findTown(@CacheKey IGeography<?,?> district, @CacheKey String name, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Town, system, identityToken);
@@ -84,7 +84,7 @@ public class TownService
 	}
 	
 	@CacheResult(cacheName = "GeographyTownNames")
-	public IGeography<?,?> findTown( @CacheKey String name, @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
+	public IGeography<?,?> findTown( @CacheKey String name, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Town, system, identityToken);
@@ -105,7 +105,7 @@ public class TownService
 	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public IGeography<?,?> updateTown(String districtCode, @NotNull @CacheKey String name, String description,
 	                                    String latitude, String longitude, String featureCodes, String featureClass, Integer population, Integer elevation, Integer dEM,
-	                                    @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
+	                                    @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		IGeography<?,?> district = GuiceContext.get(DistrictService.class)
 		                                     .findDistrict(districtCode, system, identityToken);

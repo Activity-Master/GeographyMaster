@@ -13,7 +13,7 @@ import com.guicedee.activitymaster.geography.services.dto.GeographyContinent;
 import com.guicedee.activitymaster.geography.services.enumerations.GeographyFeatureClassesClassifications;
 import com.guicedee.activitymaster.geography.services.enumerations.GeographyIPIdentificationTypes;
 
-import java.util.UUID;
+
 
 import static com.guicedee.guicedinjection.GuiceContext.*;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
@@ -84,7 +84,7 @@ public class GeographySystemInstall
 					EnterpriseClassificationDataConcepts.GeographyXClassification,
 					system,
 					0,
-					classification, token);
+					classification, identityToken);
 		}
 		
 		classificationService.create(GeographyAdmin1AsciiCodes, system, GeographyClassifications);
@@ -102,23 +102,23 @@ public class GeographySystemInstall
 		logProgress("Geography Master", "Creating Planets");
 		//Create Planets and Continents by default
 		IGeographyService<?> service = get(IGeographyService.class);
-		service.createPlanet("Earth", null, system, token);
+		service.createPlanet("Earth", null, system, identityToken);
 
 		logProgress("Geography Master", "Creating Continents");
 		service.createContinent("Earth", new GeographyContinent().setContinentName("Africa")
-		                                                         .setContinentCode("AF"), system, "6255146", token);
+		                                                         .setContinentCode("AF"), system, "6255146", identityToken);
 		service.createContinent("Earth", new GeographyContinent().setContinentName("Asia")
-		                                                         .setContinentCode("AS"), system, "6255147", token);
+		                                                         .setContinentCode("AS"), system, "6255147", identityToken);
 		service.createContinent("Earth", new GeographyContinent().setContinentName("North America")
-		                                                         .setContinentCode("NA"), system, "6255149", token);
+		                                                         .setContinentCode("NA"), system, "6255149", identityToken);
 		service.createContinent("Earth", new GeographyContinent().setContinentName("Europe")
-		                                                         .setContinentCode("EU"), system, "6255148", token);
+		                                                         .setContinentCode("EU"), system, "6255148", identityToken);
 		service.createContinent("Earth", new GeographyContinent().setContinentName("Oceania")
-		                                                         .setContinentCode("OC"), system, "6255151", token);
+		                                                         .setContinentCode("OC"), system, "6255151", identityToken);
 		service.createContinent("Earth", new GeographyContinent().setContinentName("South America")
-		                                                         .setContinentCode("SA"), system, "6255150", token);
+		                                                         .setContinentCode("SA"), system, "6255150", identityToken);
 		service.createContinent("Earth", new GeographyContinent().setContinentName("Antarctica")
-		                                                         .setContinentCode("AN"), system, "6255152", token);
+		                                                         .setContinentCode("AN"), system, "6255152", identityToken);
 
 		logProgress("Geography Master", "Creating Feature Classes");
 		//next update

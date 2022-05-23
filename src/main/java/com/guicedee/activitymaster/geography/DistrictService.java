@@ -27,7 +27,7 @@ public class DistrictService
 	
 	@CacheResult(cacheName = "GeographyDistricts", skipGet = true)
 	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
-	public IGeography<?, ?> createDistrict(IGeography<Geography, GeographyQueryBuilder> province, @CacheKey String code, String name, String originalUniqueID, @CacheKey ISystems<?, ?> system, @CacheKey UUID... identityToken)
+	public IGeography<?, ?> createDistrict(IGeography<Geography, GeographyQueryBuilder> province, @CacheKey String code, String name, String originalUniqueID, @CacheKey ISystems<?, ?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
 		
@@ -68,7 +68,7 @@ public class DistrictService
 	}
 	
 	@CacheResult(cacheName = "GeographyDistricts")
-	public IGeography<?, ?> findDistrict(@CacheKey String name, @CacheKey ISystems<?, ?> system, @CacheKey UUID... identityToken)
+	public IGeography<?, ?> findDistrict(@CacheKey String name, @CacheKey ISystems<?, ?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
 		IEnterprise<?, ?> enterprise = system.getEnterprise();
@@ -86,7 +86,7 @@ public class DistrictService
 	
 	
 	@CacheResult(cacheName = "GeographyDistrictInProvince")
-	public IGeography<?, ?> findFirstDistrictInProvince(@CacheKey String provinceCode, @CacheKey ISystems<?, ?> system, @CacheKey UUID... identityToken)
+	public IGeography<?, ?> findFirstDistrictInProvince(@CacheKey String provinceCode, @CacheKey ISystems<?, ?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ProvinceService ps = get(ProvinceService.class);
 		IGeography<?, ?> province = ps.findProvince(provinceCode, system, identityToken);
@@ -103,7 +103,7 @@ public class DistrictService
 	}
 	
 	@CacheResult(cacheName = "GeographyDistricts")
-	public List<Geography> findAllDistricts(@CacheKey ISystems<?, ?> system, @CacheKey UUID... identityToken)
+	public List<Geography> findAllDistricts(@CacheKey ISystems<?, ?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
 		IEnterprise<?, ?> enterprise = system.getEnterprise();
@@ -120,7 +120,7 @@ public class DistrictService
 	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public IGeography<?, ?> updateDistrict(@NotNull @CacheKey String name, String description,
 	                                       String latitude, String longitude, String featureCodes, String featureClass, Integer population, Integer elevation, Integer dEM,
-	                                       @CacheKey ISystems<?, ?> system, @CacheKey UUID... identityToken)
+	                                       @CacheKey ISystems<?, ?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		IEnterprise<?, ?> enterprise = system.getEnterprise();
 		IGeography<?, ?> toUpdate = findDistrict(name, system, identityToken);

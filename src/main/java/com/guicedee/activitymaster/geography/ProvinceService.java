@@ -17,7 +17,7 @@ import jakarta.cache.annotation.CacheResult;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.Set;
-import java.util.UUID;
+
 
 import static com.entityassist.enumerations.Operand.*;
 import static com.guicedee.activitymaster.fsdm.client.services.classifications.DefaultClassifications.*;
@@ -36,7 +36,7 @@ public class ProvinceService
 	@CacheResult(cacheName = "GeographyProvinces",
 	             skipGet = true)
 	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
-	public IGeography<Geography, GeographyQueryBuilder> createProvince(IGeography<Geography, GeographyQueryBuilder> country, @CacheKey String code, String name, String originalUniqueID, @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
+	public IGeography<Geography, GeographyQueryBuilder> createProvince(IGeography<Geography, GeographyQueryBuilder> country, @CacheKey String code, String name, String originalUniqueID, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Province, system, identityToken);
@@ -71,7 +71,7 @@ public class ProvinceService
 	}
 	
 	@CacheResult(cacheName = "GeographyProvinces")
-	public IGeography<Geography, GeographyQueryBuilder> findProvince(@CacheKey String code, @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
+	public IGeography<Geography, GeographyQueryBuilder> findProvince(@CacheKey String code, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Province, system, identityToken);
@@ -92,7 +92,7 @@ public class ProvinceService
 	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public IGeography<Geography, GeographyQueryBuilder> updateProvince(@NotNull @CacheKey String name, String description,
 	                           String latitude, String longitude, String featureCodes, String featureClass, Integer population, Integer elevation, Integer dEM,
-	                           @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
+	                           @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		IGeography<Geography, GeographyQueryBuilder> toUpdate = findProvince(name, system, identityToken);
 		if (description != null)

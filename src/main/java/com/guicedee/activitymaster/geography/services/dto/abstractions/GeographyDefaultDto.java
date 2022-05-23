@@ -6,7 +6,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.UUID;
+
 
 @Data
 @Accessors(chain = true)
@@ -19,7 +19,7 @@ public abstract class GeographyDefaultDto<J extends GeographyDefaultDto<J>>
 	private UUID geographyId;
 	private Long geonameId;
 
-	public J setGeographyId(UUID geographyId)
+	public J setGeographyId(java.lang.String geographyId)
 	{
 		this.geographyId = geographyId;
 		return (J) this;

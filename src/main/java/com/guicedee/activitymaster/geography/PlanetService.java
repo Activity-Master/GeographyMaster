@@ -13,7 +13,7 @@ import com.guicedee.guicedpersistence.db.annotations.Transactional;
 import jakarta.cache.annotation.CacheKey;
 import jakarta.cache.annotation.CacheResult;
 
-import java.util.UUID;
+
 
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
 
@@ -22,7 +22,7 @@ public class PlanetService
 	@CacheResult(cacheName = "GeographyPlanets",
 	             skipGet = true)
 	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
-	public IGeography<Geography, GeographyQueryBuilder> createPlanet(@CacheKey String code, String description, String originalUniqueID, @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
+	public IGeography<Geography, GeographyQueryBuilder> createPlanet(@CacheKey String code, String description, String originalUniqueID, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Planet, system, identityToken);
@@ -59,7 +59,7 @@ public class PlanetService
 	}
 	
 	@CacheResult(cacheName = "GeographyPlanets")
-	public IGeography<Geography, GeographyQueryBuilder> findPlanet(@CacheKey String code, @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
+	public IGeography<Geography, GeographyQueryBuilder> findPlanet(@CacheKey String code, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Planet, system, identityToken);

@@ -13,7 +13,7 @@ import jakarta.cache.annotation.CacheResult;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.Set;
-import java.util.UUID;
+
 
 import static com.guicedee.activitymaster.fsdm.client.services.classifications.InvolvedPartyClassifications.*;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.Languages;
@@ -30,7 +30,7 @@ public class LanguagesService
 	             skipGet = true)
 	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public IClassification<?,?> createLanguage(@NotNull @CacheKey String code, String description, String originalUniqueID,
-	                                           @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
+	                                           @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
 		boolean exists = new Classification().builder()
@@ -50,7 +50,7 @@ public class LanguagesService
 	
 	@CacheResult(cacheName = "GeographyLanguages")
 	public IClassification<?,?> findLanguage(@NotNull @CacheKey String code,
-	                                       @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
+	                                       @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		return new Classification().builder()
 		                           .withName(code)
@@ -66,7 +66,7 @@ public class LanguagesService
 	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public IClassification<?,?> updateLanguage(@NotNull @CacheKey String code, String description,
 	                                         String iso_2, String englishName, String frenchName, String germanName,
-	                                         @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
+	                                         @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		IClassification<?,?> toUpdate = findLanguage(code, system, identityToken);
 		if (description != null)

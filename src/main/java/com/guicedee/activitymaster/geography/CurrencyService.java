@@ -10,7 +10,7 @@ import com.guicedee.guicedpersistence.db.annotations.Transactional;
 import jakarta.cache.annotation.CacheKey;
 import jakarta.cache.annotation.CacheResult;
 
-import java.util.UUID;
+
 
 import static com.guicedee.activitymaster.fsdm.client.services.classifications.EnterpriseClassificationDataConcepts.*;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
@@ -21,7 +21,7 @@ public class CurrencyService
 {
 	@CacheResult(cacheName = "GeographyCurrencies", skipGet = true)
 	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
-	public IClassification<?,?> createCurrency(@CacheKey String code, String description, @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
+	public IClassification<?,?> createCurrency(@CacheKey String code, String description, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		
@@ -45,7 +45,7 @@ public class CurrencyService
 	}
 	
 	@CacheResult(cacheName = "GeographyCurrencies")
-	public IClassification<?,?> findCurrency(@CacheKey String code, @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
+	public IClassification<?,?> findCurrency(@CacheKey String code, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		return new Classification().builder()
 		                           .withName(code)
@@ -59,7 +59,7 @@ public class CurrencyService
 	
 	@CacheResult(cacheName = "GeographyCurrencies", skipGet = true)
 	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
-	public IClassification<?,?> updateCurrency(@CacheKey String code, String description, @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
+	public IClassification<?,?> updateCurrency(@CacheKey String code, String description, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		IClassification<?,?> toUpdate = findCurrency(code, system, identityToken);
 		if (description != null)

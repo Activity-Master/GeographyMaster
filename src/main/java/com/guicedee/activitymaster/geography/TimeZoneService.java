@@ -12,7 +12,7 @@ import jakarta.cache.annotation.CacheKey;
 import jakarta.cache.annotation.CacheResult;
 
 import java.util.Set;
-import java.util.UUID;
+
 
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
 import static com.guicedee.guicedinjection.GuiceContext.*;
@@ -26,7 +26,7 @@ public class TimeZoneService
 	
 	@CacheResult(cacheName = "GeographyTimezones", skipGet = true)
 	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
-	public IClassification<?,?> createTimeZone(@CacheKey String code, String description, String originalUniqueID, @CacheKey ISystems<?,?> system, @CacheKey UUID...identityToken)
+	public IClassification<?,?> createTimeZone(@CacheKey String code, String description, String originalUniqueID, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		boolean exists = new Classification().builder()
@@ -47,7 +47,7 @@ public class TimeZoneService
 	}
 	
 	@CacheResult(cacheName = "GeographyTimezones")
-	public IClassification<?,?> findTimeZone(@CacheKey String code, @CacheKey ISystems<?,?> system, @CacheKey UUID...identityToken)
+	public IClassification<?,?> findTimeZone(@CacheKey String code, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		return new Classification().builder()
 		                           .withName(code)
@@ -63,7 +63,7 @@ public class TimeZoneService
 	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public IClassification<?,?> updateTimeZone(@CacheKey String code, String description,
 	                                         String timeZoneRawOffset, String timeZoneOffsetJuly2016, String timeZoneOffsetJan2016,
-	                                         @CacheKey ISystems<?,?> system, @CacheKey UUID...identityToken)
+	                                         @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		IClassification<?,?> toUpdate = findTimeZone(code, system, identityToken);
 		if (description != null)

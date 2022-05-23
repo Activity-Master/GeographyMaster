@@ -17,7 +17,7 @@ import jakarta.cache.annotation.CacheResult;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.Set;
-import java.util.UUID;
+
 
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
 import static com.guicedee.guicedinjection.json.StaticStrings.*;
@@ -38,7 +38,7 @@ public class CountryService
 	@CacheResult(cacheName = "GeographyCountry",skipGet = true)
 	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public IGeography<Geography, GeographyQueryBuilder> createCountry(IGeography<Geography, GeographyQueryBuilder> continent, @CacheKey @NotNull String iso, @NotNull String description, String originalUniqueID,
-	                                     @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
+	                                     @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Country, system, identityToken);
@@ -77,7 +77,7 @@ public class CountryService
 	}
 	
 	@CacheResult(cacheName = "GeographyCountry")
-	public IGeography<Geography, GeographyQueryBuilder> findCountry(@CacheKey @NotNull String iso, @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
+	public IGeography<Geography, GeographyQueryBuilder> findCountry(@CacheKey @NotNull String iso, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Country, system, identityToken);
@@ -95,7 +95,7 @@ public class CountryService
 	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public IGeography<Geography, GeographyQueryBuilder> updateCountry(IClassification<?,?> currency, @CacheKey @NotNull String iso, @NotNull String description, String iso3, String isoNumeric,
 	                                     String dialCode, String fips, String capital, String areaSqlKM, String postalCodeFormat, String postalCodeRegex, Integer population, String webTld,
-	                                     @CacheKey ISystems<?,?> system, @CacheKey UUID... identityToken)
+	                                     @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		Geography geo = (Geography) findCountry(iso, system, identityToken);
 		if(iso != null)
