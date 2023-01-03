@@ -1,31 +1,27 @@
-package com.guicedee.activitymaster.geography;
+package com.guicedee.activitymaster.fsdm.geography;
 
 import com.google.common.base.Strings;
+import com.google.inject.Inject;
 import com.guicedee.activitymaster.fsdm.ClassificationService;
-import com.guicedee.activitymaster.fsdm.client.services.IClassificationDataConceptService;
-import com.guicedee.activitymaster.fsdm.client.services.IClassificationService;
+import com.guicedee.activitymaster.fsdm.client.services.*;
 import com.guicedee.activitymaster.fsdm.client.services.annotations.ActivityMasterDB;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.classifications.IClassification;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.geography.IGeography;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.systems.ISystems;
-import com.guicedee.activitymaster.fsdm.client.services.classifications.EnterpriseClassificationDataConcepts;
 import com.guicedee.activitymaster.fsdm.client.services.systems.IProgressable;
+import com.guicedee.activitymaster.fsdm.client.types.geography.*;
+import com.guicedee.activitymaster.fsdm.client.types.geography.classifications.GeographyAsciiCode;
+import com.guicedee.activitymaster.fsdm.client.types.geography.classifications.ISO639Language;
 import com.guicedee.activitymaster.fsdm.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.fsdm.db.entities.geography.Geography;
 import com.guicedee.activitymaster.fsdm.db.entities.geography.builders.GeographyQueryBuilder;
-import com.guicedee.activitymaster.geography.implementations.GeographySystem;
-import com.guicedee.activitymaster.geography.services.IGeographyService;
-import com.guicedee.activitymaster.geography.services.dto.*;
-import com.guicedee.activitymaster.geography.services.dto.classifications.GeographyAsciiCode;
-import com.guicedee.activitymaster.geography.services.dto.classifications.ISO639Language;
-import com.guicedee.activitymaster.geography.services.enumerations.GeographyFeatureClassesClassifications;
-import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
+import com.guicedee.activitymaster.fsdm.systems.GeographySystem;
 import com.guicedee.guicedinjection.GuiceContext;
-import com.guicedee.guicedpersistence.db.annotations.Transactional;
 import com.guicedee.logger.LogFactory;
 import geodata.GeoDataFinder;
 import jakarta.cache.annotation.CacheKey;
 import jakarta.cache.annotation.CacheResult;
+import jakarta.persistence.EntityManager;
 import jakarta.validation.constraints.NotNull;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
@@ -34,8 +30,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
-import static com.guicedee.activitymaster.fsdm.client.services.classifications.DefaultClassifications.*;
-import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
+import static com.guicedee.activitymaster.fsdm.client.types.classifications.geography.GeographyClassifications.*;
 import static com.guicedee.guicedinjection.GuiceContext.*;
 import static com.guicedee.guicedinjection.json.StaticStrings.*;
 import static geodata.GeoDataFiles.*;
@@ -44,6 +39,10 @@ public class GeographyService
 		implements IProgressable,
 		           IGeographyService<GeographyService>
 {
+	@Inject
+	@ActivityMasterDB
+	private EntityManager entityManager;
+	
 	@Override
 	
 	public IGeography<?,?> createPlanet(@CacheKey @NotNull String value, String originalUniqueID, ISystems<?,?> system, java.util.UUID... identityToken)
@@ -475,7 +474,7 @@ public class GeographyService
 		}
 	}
 	
-	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
+	////@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public GeographyTimezone create(GeographyTimezone timezone, ISystems<?,?> system)
 	{
 		UUID identityToken = GuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
@@ -809,7 +808,7 @@ public class GeographyService
 	 * @param system
 	 * @param identityToken
 	 */
-	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
+	////@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public GeographyFeatureCode create(GeographyFeatureCode featureCode, ISystems<?,?> system, java.util.UUID... identityToken)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
@@ -1095,7 +1094,7 @@ public class GeographyService
 	 * @param system
 	 * @param identityToken
 	 */
-	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
+	////@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public GeoNameDefaultData<?> create(GeoNameDefaultData<?> geoData, IClassification<?,?> classification, ISystems<?,?> system, java.util.UUID... identityToken)
 	{
 		if (geoData.getGeonameId() == null)
