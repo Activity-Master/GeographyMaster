@@ -5,7 +5,7 @@ import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.geogr
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.systems.ISystems;
 import com.guicedee.activitymaster.fsdm.client.services.systems.IActivityMasterProgressMonitor;
 import com.guicedee.activitymaster.geography.services.dto.*;
-import jakarta.cache.annotation.CacheKey;
+import javax.cache.annotation.CacheKey;
 import jakarta.validation.constraints.NotNull;
 
 
