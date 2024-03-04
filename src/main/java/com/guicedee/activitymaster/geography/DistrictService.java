@@ -19,7 +19,7 @@ import java.util.*;
 
 import static com.guicedee.activitymaster.fsdm.client.services.classifications.DefaultClassifications.*;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
-import static com.guicedee.guicedinjection.GuiceContext.*;
+import static com.guicedee.client.IGuiceContext.*;
 
 public class DistrictService
 {
@@ -29,7 +29,7 @@ public class DistrictService
 	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public IGeography<?, ?> createDistrict(IGeography<Geography, GeographyQueryBuilder> province, @CacheKey String code, String name, String originalUniqueID, @CacheKey ISystems<?, ?> system, @CacheKey java.util.UUID... identityToken)
 	{
-		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
+		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		
 		IEnterprise<?, ?> enterprise = system.getEnterprise();
 		Classification classification = (Classification) classificationService.find(City, system, identityToken);
@@ -47,7 +47,7 @@ public class DistrictService
 		}
 		
 		Geography geo = new Geography();
-		ISystems<?, ?> geoSystem = GuiceContext.get(com.guicedee.activitymaster.geography.implementations.GeographySystem.class).getSystem(enterprise);
+		ISystems<?, ?> geoSystem = com.guicedee.client.IGuiceContext.get(com.guicedee.activitymaster.geography.implementations.GeographySystem.class).getSystem(enterprise);
 		geo.setEnterpriseID(classification.getEnterpriseID());
 		geo.setClassification(classification);
 		geo.setSystemID(geoSystem);
@@ -70,7 +70,7 @@ public class DistrictService
 	@CacheResult(cacheName = "GeographyDistricts")
 	public IGeography<?, ?> findDistrict(@CacheKey String name, @CacheKey ISystems<?, ?> system, @CacheKey java.util.UUID... identityToken)
 	{
-		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
+		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		IEnterprise<?, ?> enterprise = system.getEnterprise();
 		Classification classification = (Classification) classificationService.find(City, system, identityToken);
 		
@@ -105,7 +105,7 @@ public class DistrictService
 	@CacheResult(cacheName = "GeographyDistricts")
 	public List<Geography> findAllDistricts(@CacheKey ISystems<?, ?> system, @CacheKey java.util.UUID... identityToken)
 	{
-		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
+		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		IEnterprise<?, ?> enterprise = system.getEnterprise();
 		Classification classification = (Classification) classificationService.find(City, system, identityToken);
 		return new Geography().builder()

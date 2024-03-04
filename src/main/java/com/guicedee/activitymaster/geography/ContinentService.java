@@ -24,7 +24,7 @@ public class ContinentService
 	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public IGeography<Geography, GeographyQueryBuilder> createContinent(IGeography<Geography, GeographyQueryBuilder> planet, @CacheKey String code, String description, String originalUniqueID, @CacheKey ISystems<?,?> system, @CacheKey  java.util.UUID... identityToken)
 	{
-		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
+		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Continent, system, identityToken);
 		
 		boolean exists = new Geography().builder()
@@ -62,7 +62,7 @@ public class ContinentService
 	@CacheResult(cacheName = "GeographyContinents",skipGet = true)
 	public IGeography<Geography, GeographyQueryBuilder> findContinent(@CacheKey String code,@CacheKey  ISystems<?,?> system,@CacheKey  java.util.UUID... identityToken)
 	{
-		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
+		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Continent, system, identityToken);
 		
 		return new Geography().builder()

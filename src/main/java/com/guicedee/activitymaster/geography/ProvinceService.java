@@ -38,7 +38,7 @@ public class ProvinceService
 	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public IGeography<Geography, GeographyQueryBuilder> createProvince(IGeography<Geography, GeographyQueryBuilder> country, @CacheKey String code, String name, String originalUniqueID, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
-		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
+		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Province, system, identityToken);
 		
 		boolean exists = new Geography().builder()
@@ -73,7 +73,7 @@ public class ProvinceService
 	@CacheResult(cacheName = "GeographyProvinces")
 	public IGeography<Geography, GeographyQueryBuilder> findProvince(@CacheKey String code, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
-		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
+		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Province, system, identityToken);
 		
 		return new Geography().builder()

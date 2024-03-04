@@ -32,7 +32,7 @@ public class LanguagesService
 	public IClassification<?,?> createLanguage(@NotNull @CacheKey String code, String description, String originalUniqueID,
 	                                           @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
-		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
+		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		boolean exists = new Classification().builder()
 		                                     .withName(code)
 		                                     .withConcept(Languages.concept(),system,identityToken)

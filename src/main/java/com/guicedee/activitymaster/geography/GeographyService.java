@@ -36,7 +36,7 @@ import java.util.logging.Level;
 
 import static com.guicedee.activitymaster.fsdm.client.services.classifications.DefaultClassifications.*;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
-import static com.guicedee.guicedinjection.GuiceContext.*;
+import static com.guicedee.client.IGuiceContext.*;
 import static com.guicedee.guicedinjection.json.StaticStrings.*;
 import static geodata.GeoDataFiles.*;
 
@@ -323,7 +323,7 @@ public class GeographyService
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		IClassificationDataConceptService<?> conceptService = get(IClassificationDataConceptService.class);
-		UUID identityToken = GuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
+		UUID identityToken = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
 		
 		setCurrentTask(0);
 		setTotalTasks(252);
@@ -412,7 +412,7 @@ public class GeographyService
 	@CacheResult(cacheName = "GeographyTimezones")
 	public GeographyTimezone findTimezone(@CacheKey GeographyTimezone timezone, @CacheKey ISystems<?,?> system)
 	{
-		UUID identityToken = GuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
+		UUID identityToken = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
 		TimeZoneService timeZoneService = get(TimeZoneService.class);
 		
 		IClassification<?,?> timeZoneClassification = timeZoneService.findTimeZone(timezone.getTimezoneID(), system, identityToken);
@@ -458,8 +458,8 @@ public class GeographyService
 				timezone.setRawOffset(Double.parseDouble(record.get(4)));
 				create(timezone, system);
 				
-				ISystems<?,?> geoSystem = GuiceContext.get(GeographySystem.class).getSystem(system.getEnterprise());
-				UUID identityToken = GuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
+				ISystems<?,?> geoSystem = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystem(system.getEnterprise());
+				UUID identityToken = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
 				CountryService cs = get(CountryService.class);
 				IGeography<?,?> country = cs.findCountry(record.get(0), system);
 				
@@ -478,7 +478,7 @@ public class GeographyService
 	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public GeographyTimezone create(GeographyTimezone timezone, ISystems<?,?> system)
 	{
-		UUID identityToken = GuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
+		UUID identityToken = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
 		TimeZoneService timeZoneService = get(TimeZoneService.class);
 		timeZoneService.createTimeZone(timezone.getTimezoneID(), timezone.getTimezoneID(), null, system, identityToken);
 		
@@ -494,7 +494,7 @@ public class GeographyService
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		IClassificationDataConceptService<?> conceptService = get(IClassificationDataConceptService.class);
 
-		UUID identityToken = GuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
+		UUID identityToken = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
 		//Postal Codes Full Listing
 		Map<Long, List<GeographyPostalCode>> postalCodeMap = new HashMap<>();
 		setCurrentTask(0);
@@ -866,7 +866,7 @@ public class GeographyService
 	@Override
 	public void loadTownsAndCities(ISystems<?,?> system)
 	{
-		UUID identityToken = GuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
+		UUID identityToken = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
 		
 		Map<Long, GeoNameDefaultData<?>> dataMap = new TreeMap<>();
 		Map<Long, List<Long>> hierarchyMap = new ConcurrentHashMap<>();

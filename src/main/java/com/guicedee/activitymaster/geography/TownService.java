@@ -32,7 +32,7 @@ public class TownService
 	                                  @CacheKey ISystems<?,?> system,
 	                                  @CacheKey java.util.UUID... identityToken)
 	{
-		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
+		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Town, system, identityToken);
 		
 		boolean exists = new Geography().builder()
@@ -70,7 +70,7 @@ public class TownService
 	@CacheResult(cacheName = "GeographyTowns")
 	public IGeography<?,?> findTown(@CacheKey IGeography<?,?> district, @CacheKey String name, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
-		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
+		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Town, system, identityToken);
 		
 		return new Geography().builder()
@@ -86,7 +86,7 @@ public class TownService
 	@CacheResult(cacheName = "GeographyTownNames")
 	public IGeography<?,?> findTown( @CacheKey String name, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
-		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
+		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Town, system, identityToken);
 		
 		return new Geography().builder()
@@ -107,7 +107,7 @@ public class TownService
 	                                    String latitude, String longitude, String featureCodes, String featureClass, Integer population, Integer elevation, Integer dEM,
 	                                    @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
-		IGeography<?,?> district = GuiceContext.get(DistrictService.class)
+		IGeography<?,?> district = com.guicedee.client.IGuiceContext.get(DistrictService.class)
 		                                     .findDistrict(districtCode, system, identityToken);
 		
 		IGeography<?,?> toUpdate = findTown(district, name, system, identityToken);

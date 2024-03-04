@@ -15,7 +15,7 @@ import com.guicedee.activitymaster.geography.services.enumerations.GeographyIPId
 
 
 
-import static com.guicedee.guicedinjection.GuiceContext.*;
+import static com.guicedee.client.IGuiceContext.*;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
 
 @SortedUpdate(sortOrder = 1000, taskCount = 12)

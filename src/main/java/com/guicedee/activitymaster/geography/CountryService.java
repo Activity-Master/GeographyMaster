@@ -40,7 +40,7 @@ public class CountryService
 	public IGeography<Geography, GeographyQueryBuilder> createCountry(IGeography<Geography, GeographyQueryBuilder> continent, @CacheKey @NotNull String iso, @NotNull String description, String originalUniqueID,
 	                                     @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
-		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
+		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Country, system, identityToken);
 		
 		boolean exists = new Geography().builder()
@@ -79,7 +79,7 @@ public class CountryService
 	@CacheResult(cacheName = "GeographyCountry")
 	public IGeography<Geography, GeographyQueryBuilder> findCountry(@CacheKey @NotNull String iso, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
-		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
+		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Country, system, identityToken);
 		return new Geography().builder()
 		                      .withName(iso)

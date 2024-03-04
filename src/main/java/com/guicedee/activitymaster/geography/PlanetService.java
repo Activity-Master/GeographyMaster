@@ -24,7 +24,7 @@ public class PlanetService
 	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
 	public IGeography<Geography, GeographyQueryBuilder> createPlanet(@CacheKey String code, String description, String originalUniqueID, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
-		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
+		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Planet, system, identityToken);
 		
 		boolean exists = new Geography().builder()
@@ -61,7 +61,7 @@ public class PlanetService
 	@CacheResult(cacheName = "GeographyPlanets")
 	public IGeography<Geography, GeographyQueryBuilder> findPlanet(@CacheKey String code, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
-		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
+		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Planet, system, identityToken);
 		
 		return new Geography().builder()

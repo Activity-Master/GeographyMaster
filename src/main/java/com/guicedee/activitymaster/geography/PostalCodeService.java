@@ -42,7 +42,7 @@ public class PostalCodeService
 	                                        String description, String originalUniqueID,
 	                                        @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
-		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
+		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(PostalCode, system, identityToken);
 		
 		code = postalCodeFormat.format(Integer.parseInt(code));
@@ -84,7 +84,7 @@ public class PostalCodeService
 	                                            @NotNull @CacheKey String description, String originalUniqueID,
 	                                            @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
-		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
+		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(PostalCodeSuburb, system, identityToken);
 		code = postalCodeFormat.format(Integer.parseInt(code));
 		
@@ -124,7 +124,7 @@ public class PostalCodeService
 	@CacheResult(cacheName = "GeographyPostalCodes")
 	public IGeography<Geography, GeographyQueryBuilder> findPostalCode(@CacheKey IGeography<Geography, GeographyQueryBuilder> town, @NotNull @CacheKey String code, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
-		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
+		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(PostalCode, system, identityToken);
 		
 		return new Geography().builder()
@@ -140,7 +140,7 @@ public class PostalCodeService
 	@CacheResult(cacheName = "GeographyPostalCodesByNumber")
 	public IGeography<Geography, GeographyQueryBuilder> findPostalCodeSuburb(@NotNull @CacheKey String code, @CacheKey String description, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
-		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
+		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(PostalCodeSuburb, system, identityToken);
 		
 		return new Geography().builder()
@@ -157,7 +157,7 @@ public class PostalCodeService
 	@CacheResult(cacheName = "GeographyPostalCodesByNumber")
 	public IGeography<Geography, GeographyQueryBuilder> findOrCreatePostalCodeSuburb(@NotNull @CacheKey String code, @CacheKey String description, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
-		ClassificationService classificationService = GuiceContext.get(ClassificationService.class);
+		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(PostalCodeSuburb, system, identityToken);
 		
 		Geography geography = new Geography().builder()
@@ -197,9 +197,9 @@ public class PostalCodeService
 		IGeography<Geography, GeographyQueryBuilder> toUpdate = null;
 		if (!Strings.isNullOrEmpty(districtCode))
 		{
-			IGeography<?,?> district = GuiceContext.get(DistrictService.class)
+			IGeography<?,?> district = com.guicedee.client.IGuiceContext.get(DistrictService.class)
 			                                     .findDistrict(districtCode, system, identityToken);
-			IGeography<?,?> town = GuiceContext.get(TownService.class)
+			IGeography<?,?> town = com.guicedee.client.IGuiceContext.get(TownService.class)
 			                                 .findTown(district, townCode, system, identityToken);
 			toUpdate = findPostalCode((IGeography<Geography, GeographyQueryBuilder>) town, code, system, identityToken);
 		}
