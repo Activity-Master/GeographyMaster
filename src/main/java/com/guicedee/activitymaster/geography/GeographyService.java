@@ -21,7 +21,7 @@ import com.guicedee.activitymaster.geography.services.dto.classifications.ISO639
 import com.guicedee.activitymaster.geography.services.enumerations.GeographyFeatureClassesClassifications;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
-import com.guicedee.guicedpersistence.db.annotations.Transactional;
+import com.google.inject.persist.Transactional;
 import com.guicedee.logger.LogFactory;
 import geodata.GeoDataFinder;
 import javax.cache.annotation.CacheKey;
@@ -475,7 +475,7 @@ public class GeographyService
 		}
 	}
 	
-	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
+	//@Transactional()
 	public GeographyTimezone create(GeographyTimezone timezone, ISystems<?,?> system)
 	{
 		UUID identityToken = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
@@ -809,7 +809,7 @@ public class GeographyService
 	 * @param system
 	 * @param identityToken
 	 */
-	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
+	//@Transactional()
 	public GeographyFeatureCode create(GeographyFeatureCode featureCode, ISystems<?,?> system, java.util.UUID... identityToken)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
@@ -1095,7 +1095,7 @@ public class GeographyService
 	 * @param system
 	 * @param identityToken
 	 */
-	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
+	//@Transactional()
 	public GeoNameDefaultData<?> create(GeoNameDefaultData<?> geoData, IClassification<?,?> classification, ISystems<?,?> system, java.util.UUID... identityToken)
 	{
 		if (geoData.getGeonameId() == null)

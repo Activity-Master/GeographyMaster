@@ -7,7 +7,7 @@ import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.syste
 import com.guicedee.activitymaster.fsdm.client.services.classifications.EnterpriseClassificationDataConcepts;
 import com.guicedee.activitymaster.fsdm.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
-import com.guicedee.guicedpersistence.db.annotations.Transactional;
+import com.google.inject.persist.Transactional;
 import javax.cache.annotation.CacheKey;
 import javax.cache.annotation.CacheResult;
 
@@ -25,7 +25,7 @@ public class TimeZoneService
 			TimeZoneOffsetJan2016.toString());
 	
 	@CacheResult(cacheName = "GeographyTimezones", skipGet = true)
-	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
+	//@Transactional()
 	public IClassification<?,?> createTimeZone(@CacheKey String code, String description, String originalUniqueID, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
@@ -60,7 +60,7 @@ public class TimeZoneService
 	}
 	
 	@CacheResult(cacheName = "GeographyTimezones", skipGet = true)
-	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
+	//@Transactional()
 	public IClassification<?,?> updateTimeZone(@CacheKey String code, String description,
 	                                         String timeZoneRawOffset, String timeZoneOffsetJuly2016, String timeZoneOffsetJan2016,
 	                                         @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)

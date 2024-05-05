@@ -11,7 +11,7 @@ import com.guicedee.activitymaster.fsdm.db.entities.geography.Geography;
 import com.guicedee.activitymaster.fsdm.db.entities.geography.builders.GeographyQueryBuilder;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
-import com.guicedee.guicedpersistence.db.annotations.Transactional;
+import com.google.inject.persist.Transactional;
 import javax.cache.annotation.CacheKey;
 import javax.cache.annotation.CacheResult;
 import jakarta.validation.constraints.NotNull;
@@ -36,7 +36,7 @@ public class CountryService
 			CountryPostalCodeRegex.toString());
 	
 	@CacheResult(cacheName = "GeographyCountry",skipGet = true)
-	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
+	//@Transactional()
 	public IGeography<Geography, GeographyQueryBuilder> createCountry(IGeography<Geography, GeographyQueryBuilder> continent, @CacheKey @NotNull String iso, @NotNull String description, String originalUniqueID,
 	                                     @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
@@ -92,7 +92,7 @@ public class CountryService
 	}
 	
 	@CacheResult(cacheName = "GeographyCountry",skipGet = true)
-	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
+	//@Transactional()
 	public IGeography<Geography, GeographyQueryBuilder> updateCountry(IClassification<?,?> currency, @CacheKey @NotNull String iso, @NotNull String description, String iso3, String isoNumeric,
 	                                     String dialCode, String fips, String capital, String areaSqlKM, String postalCodeFormat, String postalCodeRegex, Integer population, String webTld,
 	                                     @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)

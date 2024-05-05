@@ -9,7 +9,7 @@ import com.guicedee.activitymaster.fsdm.db.entities.geography.Geography;
 import com.guicedee.activitymaster.fsdm.db.entities.geography.builders.GeographyQueryBuilder;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
-import com.guicedee.guicedpersistence.db.annotations.Transactional;
+import com.google.inject.persist.Transactional;
 import javax.cache.annotation.CacheKey;
 import javax.cache.annotation.CacheResult;
 
@@ -21,7 +21,7 @@ public class PlanetService
 {
 	@CacheResult(cacheName = "GeographyPlanets",
 	             skipGet = true)
-	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
+	//@Transactional()
 	public IGeography<Geography, GeographyQueryBuilder> createPlanet(@CacheKey String code, String description, String originalUniqueID, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);

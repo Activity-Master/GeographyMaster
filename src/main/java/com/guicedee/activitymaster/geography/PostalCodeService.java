@@ -10,7 +10,7 @@ import com.guicedee.activitymaster.fsdm.db.entities.geography.Geography;
 import com.guicedee.activitymaster.fsdm.db.entities.geography.builders.GeographyQueryBuilder;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
-import com.guicedee.guicedpersistence.db.annotations.Transactional;
+import com.google.inject.persist.Transactional;
 import com.guicedee.logger.LogFactory;
 import javax.cache.annotation.CacheKey;
 import javax.cache.annotation.CacheResult;
@@ -37,7 +37,7 @@ public class PostalCodeService
 	}
 	
 	@CacheResult(cacheName = "GeographyPostalCodes", skipGet = true)
-	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
+	//@Transactional()
 	public IGeography<?,?> createPostalCode(@CacheKey IGeography<Geography, GeographyQueryBuilder> town, @NotNull @CacheKey String code,
 	                                        String description, String originalUniqueID,
 	                                        @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
@@ -79,7 +79,7 @@ public class PostalCodeService
 	}
 	
 	@CacheResult(cacheName = "GeographyPostalCodeSuburbs", skipGet = true)
-	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
+	//@Transactional()
 	public IGeography<Geography, GeographyQueryBuilder> createPostalCodeSuburb(@CacheKey IGeography<Geography, GeographyQueryBuilder> postalCode, @NotNull @CacheKey String code,
 	                                            @NotNull @CacheKey String description, String originalUniqueID,
 	                                            @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
@@ -189,7 +189,7 @@ public class PostalCodeService
 	
 	@SuppressWarnings("DuplicatedCode")
 	@CacheResult(cacheName = "GeographyPostalCodes", skipGet = true)
-	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
+	//@Transactional()
 	public IGeography<Geography, GeographyQueryBuilder> updatePostalCode(String districtCode, String townCode, @NotNull @CacheKey String code,
 	                                      String description, String latitude, String longitude,
 	                                      @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
@@ -229,7 +229,7 @@ public class PostalCodeService
 	
 	@SuppressWarnings("DuplicatedCode")
 	@CacheResult(cacheName = "GeographyPostalCodes", skipGet = true)
-	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
+	//@Transactional()
 	public IGeography<Geography, GeographyQueryBuilder> updatePostalCodeParent(@NotNull @CacheKey String code,
 	                                            String description, String latitude, String longitude,
 	                                            @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)

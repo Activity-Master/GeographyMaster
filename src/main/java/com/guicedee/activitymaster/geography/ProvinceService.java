@@ -11,7 +11,7 @@ import com.guicedee.activitymaster.fsdm.db.entities.geography.Geography_;
 import com.guicedee.activitymaster.fsdm.db.entities.geography.builders.GeographyQueryBuilder;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
-import com.guicedee.guicedpersistence.db.annotations.Transactional;
+import com.google.inject.persist.Transactional;
 import javax.cache.annotation.CacheKey;
 import javax.cache.annotation.CacheResult;
 import jakarta.validation.constraints.NotNull;
@@ -35,7 +35,7 @@ public class ProvinceService
 	
 	@CacheResult(cacheName = "GeographyProvinces",
 	             skipGet = true)
-	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
+	//@Transactional()
 	public IGeography<Geography, GeographyQueryBuilder> createProvince(IGeography<Geography, GeographyQueryBuilder> country, @CacheKey String code, String name, String originalUniqueID, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
@@ -89,7 +89,7 @@ public class ProvinceService
 	
 	@SuppressWarnings("DuplicatedCode")
 	@CacheResult(cacheName = "GeographyProvinces", skipGet = true)
-	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
+	//@Transactional()
 	public IGeography<Geography, GeographyQueryBuilder> updateProvince(@NotNull @CacheKey String name, String description,
 	                           String latitude, String longitude, String featureCodes, String featureClass, Integer population, Integer elevation, Integer dEM,
 	                           @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)

@@ -9,7 +9,7 @@ import com.guicedee.activitymaster.fsdm.db.entities.geography.Geography;
 import com.guicedee.activitymaster.fsdm.db.entities.geography.builders.GeographyQueryBuilder;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
-import com.guicedee.guicedpersistence.db.annotations.Transactional;
+import com.google.inject.persist.Transactional;
 import javax.cache.annotation.CacheKey;
 import javax.cache.annotation.CacheResult;
 import jakarta.validation.constraints.NotNull;
@@ -24,7 +24,7 @@ public class TownService
 {
 	public static final Set<String> TownClassifications = Set.copyOf(ProvinceService.ProvinceClassifications);
 	
-	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
+	//@Transactional()
 	public IGeography<?,?> createTown(@CacheKey IGeography<Geography, GeographyQueryBuilder> district,
 	                                  @CacheKey String name,
 	                                  String description,
@@ -102,7 +102,7 @@ public class TownService
 	
 	@SuppressWarnings("DuplicatedCode")
 	@CacheResult(cacheName = "GeographyTowns", skipGet = true)
-	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
+	//@Transactional()
 	public IGeography<?,?> updateTown(String districtCode, @NotNull @CacheKey String name, String description,
 	                                    String latitude, String longitude, String featureCodes, String featureClass, Integer population, Integer elevation, Integer dEM,
 	                                    @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)

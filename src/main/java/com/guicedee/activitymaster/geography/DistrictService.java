@@ -10,7 +10,7 @@ import com.guicedee.activitymaster.fsdm.db.entities.geography.Geography;
 import com.guicedee.activitymaster.fsdm.db.entities.geography.builders.GeographyQueryBuilder;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
-import com.guicedee.guicedpersistence.db.annotations.Transactional;
+import com.google.inject.persist.Transactional;
 import javax.cache.annotation.CacheKey;
 import javax.cache.annotation.CacheResult;
 import jakarta.validation.constraints.NotNull;
@@ -26,7 +26,7 @@ public class DistrictService
 	public static final Set<String> DistrictClassifications = Set.copyOf(ProvinceService.ProvinceClassifications);
 	
 	@CacheResult(cacheName = "GeographyDistricts", skipGet = true)
-	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
+	//@Transactional()
 	public IGeography<?, ?> createDistrict(IGeography<Geography, GeographyQueryBuilder> province, @CacheKey String code, String name, String originalUniqueID, @CacheKey ISystems<?, ?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
@@ -117,7 +117,7 @@ public class DistrictService
 	}
 	
 	@CacheResult(cacheName = "GeographyDistricts", skipGet = true)
-	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
+	//@Transactional()
 	public IGeography<?, ?> updateDistrict(@NotNull @CacheKey String name, String description,
 	                                       String latitude, String longitude, String featureCodes, String featureClass, Integer population, Integer elevation, Integer dEM,
 	                                       @CacheKey ISystems<?, ?> system, @CacheKey java.util.UUID... identityToken)

@@ -7,7 +7,7 @@ import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.syste
 import com.guicedee.activitymaster.fsdm.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
-import com.guicedee.guicedpersistence.db.annotations.Transactional;
+import com.google.inject.persist.Transactional;
 import javax.cache.annotation.CacheKey;
 import javax.cache.annotation.CacheResult;
 import jakarta.validation.constraints.NotNull;
@@ -28,7 +28,7 @@ public class LanguagesService
 	
 	@CacheResult(cacheName = "GeographyLanguages",
 	             skipGet = true)
-	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
+	//@Transactional()
 	public IClassification<?,?> createLanguage(@NotNull @CacheKey String code, String description, String originalUniqueID,
 	                                           @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
@@ -63,7 +63,7 @@ public class LanguagesService
 	}
 	@CacheResult(cacheName = "GeographyLanguages",
 	             skipGet = true)
-	//@Transactional(entityManagerAnnotation = ActivityMasterDB.class)
+	//@Transactional()
 	public IClassification<?,?> updateLanguage(@NotNull @CacheKey String code, String description,
 	                                         String iso_2, String englishName, String frenchName, String germanName,
 	                                         @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
