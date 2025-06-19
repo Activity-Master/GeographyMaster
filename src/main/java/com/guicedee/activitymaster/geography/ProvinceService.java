@@ -56,7 +56,7 @@ public class ProvinceService
 		geo.setEnterpriseID(classification.getEnterpriseID());
 		geo.setClassification(classification);
 		geo.setSystemID(system);
-		geo.setOriginalSourceSystemID(system);
+		geo.setOriginalSourceSystemID(system.getId());
 		geo.setName(code);
 		geo.setDescription(name);
 		if (originalUniqueID != null)

@@ -1122,7 +1122,7 @@ public class GeographyService
 			geo.setClassification((Classification) classification);
 			geo.setSystemID(system);
 			geo.setActiveFlagID(system.getActiveFlagID());
-			geo.setOriginalSourceSystemID(system);
+			geo.setOriginalSourceSystemID(system.getId());
 			
 			geo.setClassification((Classification) classification);
 			

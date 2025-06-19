@@ -17,18 +17,11 @@
         <dependency>
             <groupId>com.guicedee.activitymaster</groupId>
             <artifactId>activity-master</artifactId>
-            <version>${project.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.guicedee.activitymaster</groupId>
             <artifactId>session-master</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.guicedee.servlets</groupId>
-            <artifactId>guiced-websockets</artifactId>
         </dependency>
 
         <dependency>

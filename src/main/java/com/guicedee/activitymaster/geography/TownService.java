@@ -51,7 +51,7 @@ public class TownService
 		geo.setEnterpriseID(classification.getEnterpriseID());
 		geo.setClassification(classification);
 		geo.setSystemID(system);
-		geo.setOriginalSourceSystemID(system);
+		geo.setOriginalSourceSystemID(system.getId());
 		geo.setName(name);
 		geo.setDescription(description);
 		if (originalUniqueID != null)

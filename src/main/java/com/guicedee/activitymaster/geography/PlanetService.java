@@ -43,7 +43,7 @@ public class PlanetService
 		geo.setEnterpriseID(classification.getEnterpriseID());
 		geo.setClassification(classification);
 		geo.setSystemID(system);
-		geo.setOriginalSourceSystemID(system);
+		geo.setOriginalSourceSystemID(system.getId());
 		geo.setName(code);
 		geo.setDescription(description);
 		if (originalUniqueID != null)

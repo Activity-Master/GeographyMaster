@@ -59,7 +59,7 @@ public class CountryService
 		geo.setEnterpriseID(classification.getEnterpriseID());
 		geo.setClassificationID(classification);
 		geo.setSystemID(system);
-		geo.setOriginalSourceSystemID(system);
+		geo.setOriginalSourceSystemID(system.getId());
 		geo.setName(iso);
 		geo.setDescription(description);
 		if (originalUniqueID != null)
