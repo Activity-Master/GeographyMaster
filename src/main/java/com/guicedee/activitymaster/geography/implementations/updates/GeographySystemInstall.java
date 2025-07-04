@@ -9,6 +9,7 @@ import com.guicedee.activitymaster.fsdm.client.services.classifications.Enterpri
 import com.guicedee.activitymaster.fsdm.client.services.systems.*;
 import com.guicedee.activitymaster.geography.implementations.GeographySystem;
 import com.guicedee.activitymaster.geography.services.IGeographyService;
+import io.vertx.core.Future;
 import com.guicedee.activitymaster.geography.services.dto.GeographyContinent;
 import com.guicedee.activitymaster.geography.services.enumerations.GeographyFeatureClassesClassifications;
 import com.guicedee.activitymaster.geography.services.enumerations.GeographyIPIdentificationTypes;
@@ -22,41 +23,41 @@ import static com.guicedee.activitymaster.geography.services.enumerations.Geogra
 public class GeographySystemInstall
 		implements ISystemUpdate
 {
-	
+
 	@Override
-	public void update(IEnterprise<?,?> enterprise)
+	public Future<Boolean> update(IEnterprise<?,?> enterprise)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		IClassificationDataConceptService<?> dataConceptService = get(IClassificationDataConceptService.class);
-		
+
 		GeographySystem gs = get(GeographySystem.class);
 		ISystems<?,?> system = gs.getSystem(enterprise);
 		UUID token = gs.getSystemToken(enterprise);
-		
+
 		logProgress("Geography Master", "Creating Regional Areas");
-		
+
 		classificationService.create(Planet, system);
 		classificationService.create(Languages, system, Planet);
 		classificationService.create(Continent, system, Planet);
 		classificationService.create(Currency, system, Planet);
 		classificationService.create(TimeZone, system,Planet);
-		
-		
+
+
 		classificationService.create(Country, system, Continent);
 		classificationService.create(Province, system, Country);
 		classificationService.create(Location, system, Country);
-		
+
 		classificationService.create(PostalCode, system, Province);
 		classificationService.create(PostalCodeSuburb, system, PostalCode);
 		classificationService.create(Municipalities, system, Province);
 		classificationService.create(City, system, Municipalities);
 		classificationService.create(Town, system, City);
-		
+
 		logProgress("Geography Master", "Creating Default Geography Classifications");
 
 		classificationService.create(GeographyClassifications, system);
 		classificationService.create(FeatureCodes, system, GeographyClassifications);
-		
+
 		classificationService.create(Admin1CodeASCII, system, GeographyClassifications);
 		classificationService.create(Admin2Code, system, GeographyClassifications);
 		classificationService.create(Admin3Code, system, GeographyClassifications);
@@ -74,7 +75,7 @@ public class GeographySystemInstall
 		classificationService.create(CountryCode2, system, GeographyClassifications);
 		classificationService.create(ContinentCode, system, GeographyClassifications);
 		classificationService.create(GeoNameID, system, GeographyClassifications);
-		
+
 		//Lookups for geography data
 		//Static features classes
 		IClassification<?, ?> classification = classificationService.create(FeatureClass, system, GeographyClassifications);
@@ -86,10 +87,10 @@ public class GeographySystemInstall
 					0,
 					classification, identityToken);
 		}
-		
+
 		classificationService.create(GeographyAdmin1AsciiCodes, system, GeographyClassifications);
 		classificationService.create(GeographyAsciiName, system, GeographyAdmin1AsciiCodes);
-		
+
 		//Country Data
 		logProgress("Geography Master", "Creating Geography Involved Parties");
 		//Create Identification TYpe
@@ -123,17 +124,19 @@ public class GeographySystemInstall
 		logProgress("Geography Master", "Creating Feature Classes");
 		//next update
 		geonamesClassifications(enterprise);
+
+		return Future.succeededFuture(true);
 	}
-	
+
 	private void geonamesClassifications(IEnterprise<?,?> enterprise)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		GeographySystem gs = get(GeographySystem.class);
 		ISystems<?,?> system = gs.getSystem(enterprise);
-		
+
 		classificationService.create(GeographyAsciiName, system, Country);
 		classificationService.create(GeographyAdmin2Codes, system, City);
-		
+
 		classificationService.create(CountryISO3166, system, Country);
 		classificationService.create(CountryISO3166_3, system, Country);
 		classificationService.create(CountryISO_Numeric, system, Country);
@@ -152,7 +155,7 @@ public class GeographySystemInstall
 		classificationService.create(TimeZoneOffsetJan2016, system, TimeZone);
 		classificationService.create(TimeZoneOffsetJuly2016, system, TimeZone);
 		classificationService.create(TimeZoneRawOffset, system, TimeZone);
-		
+
 		classificationService.create(PostalNumber, system, PostalCode);
 		classificationService.create(PostalPlaceName, system, PostalCode);
 	}

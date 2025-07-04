@@ -6,6 +6,7 @@ import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.enter
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.systems.ISystems;
 import com.guicedee.activitymaster.fsdm.client.services.systems.*;
 import com.guicedee.activitymaster.geography.services.IGeographyService;
+import io.vertx.core.Future;
 import jakarta.inject.Named;
 
 import static com.guicedee.activitymaster.fsdm.services.ActivityMasterSystemsManager.*;
@@ -17,15 +18,16 @@ public class GeographyInstallFeatureCodes implements ISystemUpdate
 	@Inject
 	@Named(GeographySystemName)
 	private Provider<ISystems<?,?>> system;
-	
+
 	@Inject
 	private IGeographyService<?> geographyService;
-	
+
 	@Override
-	public void update(IEnterprise<?,?> enterprise)
+	public Future<Boolean> update(IEnterprise<?,?> enterprise)
 	{
 		geographyService.loadFeatureCodes(system.get());
 		wipeCaches();
+		return Future.succeededFuture(true);
 	}
-	
+
 }
