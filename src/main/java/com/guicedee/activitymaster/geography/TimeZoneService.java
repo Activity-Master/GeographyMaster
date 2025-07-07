@@ -25,7 +25,7 @@ public class TimeZoneService
 			TimeZoneOffsetJan2016.toString());
 	
 	@CacheResult(cacheName = "GeographyTimezones", skipGet = true)
-	//@Transactional()
+	////@Transactional()
 	public IClassification<?,?> createTimeZone(@CacheKey String code, String description, String originalUniqueID, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
@@ -60,7 +60,7 @@ public class TimeZoneService
 	}
 	
 	@CacheResult(cacheName = "GeographyTimezones", skipGet = true)
-	//@Transactional()
+	////@Transactional()
 	public IClassification<?,?> updateTimeZone(@CacheKey String code, String description,
 	                                         String timeZoneRawOffset, String timeZoneOffsetJuly2016, String timeZoneOffsetJan2016,
 	                                         @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)

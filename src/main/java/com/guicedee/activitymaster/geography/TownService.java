@@ -24,7 +24,7 @@ public class TownService
 {
 	public static final Set<String> TownClassifications = Set.copyOf(ProvinceService.ProvinceClassifications);
 	
-	//@Transactional()
+	////@Transactional()
 	public IGeography<?,?> createTown(@CacheKey IGeography<Geography, GeographyQueryBuilder> district,
 	                                  @CacheKey String name,
 	                                  String description,
@@ -102,7 +102,7 @@ public class TownService
 	
 	@SuppressWarnings("DuplicatedCode")
 	@CacheResult(cacheName = "GeographyTowns", skipGet = true)
-	//@Transactional()
+	////@Transactional()
 	public IGeography<?,?> updateTown(String districtCode, @NotNull @CacheKey String name, String description,
 	                                    String latitude, String longitude, String featureCodes, String featureClass, Integer population, Integer elevation, Integer dEM,
 	                                    @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)

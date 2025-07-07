@@ -36,7 +36,7 @@ public class CountryService
 			CountryPostalCodeRegex.toString());
 	
 	@CacheResult(cacheName = "GeographyCountry",skipGet = true)
-	//@Transactional()
+	////@Transactional()
 	public IGeography<Geography, GeographyQueryBuilder> createCountry(IGeography<Geography, GeographyQueryBuilder> continent, @CacheKey @NotNull String iso, @NotNull String description, String originalUniqueID,
 	                                     @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
@@ -92,7 +92,7 @@ public class CountryService
 	}
 	
 	@CacheResult(cacheName = "GeographyCountry",skipGet = true)
-	//@Transactional()
+	////@Transactional()
 	public IGeography<Geography, GeographyQueryBuilder> updateCountry(IClassification<?,?> currency, @CacheKey @NotNull String iso, @NotNull String description, String iso3, String isoNumeric,
 	                                     String dialCode, String fips, String capital, String areaSqlKM, String postalCodeFormat, String postalCodeRegex, Integer population, String webTld,
 	                                     @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)

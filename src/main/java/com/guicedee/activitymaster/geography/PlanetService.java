@@ -21,7 +21,7 @@ public class PlanetService
 {
 	@CacheResult(cacheName = "GeographyPlanets",
 	             skipGet = true)
-	//@Transactional()
+	////@Transactional()
 	public IGeography<Geography, GeographyQueryBuilder> createPlanet(@CacheKey String code, String description, String originalUniqueID, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);

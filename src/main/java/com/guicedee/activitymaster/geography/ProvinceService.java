@@ -35,7 +35,7 @@ public class ProvinceService
 	
 	@CacheResult(cacheName = "GeographyProvinces",
 	             skipGet = true)
-	//@Transactional()
+	////@Transactional()
 	public IGeography<Geography, GeographyQueryBuilder> createProvince(IGeography<Geography, GeographyQueryBuilder> country, @CacheKey String code, String name, String originalUniqueID, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
@@ -89,7 +89,7 @@ public class ProvinceService
 	
 	@SuppressWarnings("DuplicatedCode")
 	@CacheResult(cacheName = "GeographyProvinces", skipGet = true)
-	//@Transactional()
+	////@Transactional()
 	public IGeography<Geography, GeographyQueryBuilder> updateProvince(@NotNull @CacheKey String name, String description,
 	                           String latitude, String longitude, String featureCodes, String featureClass, Integer population, Integer elevation, Integer dEM,
 	                           @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)

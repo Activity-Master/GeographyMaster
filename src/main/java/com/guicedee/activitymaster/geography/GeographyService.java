@@ -475,7 +475,7 @@ public class GeographyService
 		}
 	}
 	
-	//@Transactional()
+	////@Transactional()
 	public GeographyTimezone create(GeographyTimezone timezone, ISystems<?,?> system)
 	{
 		UUID identityToken = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
@@ -809,7 +809,7 @@ public class GeographyService
 	 * @param system
 	 * @param identityToken
 	 */
-	//@Transactional()
+	////@Transactional()
 	public GeographyFeatureCode create(GeographyFeatureCode featureCode, ISystems<?,?> system, java.util.UUID... identityToken)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
@@ -1095,7 +1095,7 @@ public class GeographyService
 	 * @param system
 	 * @param identityToken
 	 */
-	//@Transactional()
+	////@Transactional()
 	public GeoNameDefaultData<?> create(GeoNameDefaultData<?> geoData, IClassification<?,?> classification, ISystems<?,?> system, java.util.UUID... identityToken)
 	{
 		if (geoData.getGeonameId() == null)

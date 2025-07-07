@@ -26,7 +26,7 @@ public class DistrictService
 	public static final Set<String> DistrictClassifications = Set.copyOf(ProvinceService.ProvinceClassifications);
 	
 	@CacheResult(cacheName = "GeographyDistricts", skipGet = true)
-	//@Transactional()
+	////@Transactional()
 	public IGeography<?, ?> createDistrict(IGeography<Geography, GeographyQueryBuilder> province, @CacheKey String code, String name, String originalUniqueID, @CacheKey ISystems<?, ?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
@@ -117,7 +117,7 @@ public class DistrictService
 	}
 	
 	@CacheResult(cacheName = "GeographyDistricts", skipGet = true)
-	//@Transactional()
+	////@Transactional()
 	public IGeography<?, ?> updateDistrict(@NotNull @CacheKey String name, String description,
 	                                       String latitude, String longitude, String featureCodes, String featureClass, Integer population, Integer elevation, Integer dEM,
 	                                       @CacheKey ISystems<?, ?> system, @CacheKey java.util.UUID... identityToken)

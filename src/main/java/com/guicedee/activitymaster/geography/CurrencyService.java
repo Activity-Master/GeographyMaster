@@ -20,7 +20,7 @@ import static com.guicedee.client.IGuiceContext.*;
 public class CurrencyService
 {
 	@CacheResult(cacheName = "GeographyCurrencies", skipGet = true)
-	//@Transactional()
+	////@Transactional()
 	public IClassification<?,?> createCurrency(@CacheKey String code, String description, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
@@ -58,7 +58,7 @@ public class CurrencyService
 	}
 	
 	@CacheResult(cacheName = "GeographyCurrencies", skipGet = true)
-	//@Transactional()
+	////@Transactional()
 	public IClassification<?,?> updateCurrency(@CacheKey String code, String description, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		IClassification<?,?> toUpdate = findCurrency(code, system, identityToken);

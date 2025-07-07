@@ -21,7 +21,7 @@ import static com.guicedee.activitymaster.geography.services.enumerations.Geogra
 public class ContinentService
 {
 	@CacheResult(cacheName = "GeographyContinents",skipGet = true)
-	//@Transactional()
+	////@Transactional()
 	public IGeography<Geography, GeographyQueryBuilder> createContinent(IGeography<Geography, GeographyQueryBuilder> planet, @CacheKey String code, String description, String originalUniqueID, @CacheKey ISystems<?,?> system, @CacheKey  java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
