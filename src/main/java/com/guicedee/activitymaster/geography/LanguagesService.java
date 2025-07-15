@@ -26,7 +26,7 @@ public class LanguagesService
 			ISO6392FrenchName.toString(),
 			ISO6392GermanName.toString());
 	
-	@CacheResult(cacheName = "GeographyLanguages",
+	//@CacheResult(cacheName = "GeographyLanguages",
 	             skipGet = true)
 	////@Transactional()
 	public IClassification<?,?> createLanguage(@NotNull @CacheKey String code, String description, String originalUniqueID,
@@ -48,7 +48,7 @@ public class LanguagesService
 		return classificationService.create(code, description, Languages.concept(), system, 0, classification, identityToken);
 	}
 	
-	@CacheResult(cacheName = "GeographyLanguages")
+	//@CacheResult(cacheName = "GeographyLanguages")
 	public IClassification<?,?> findLanguage(@NotNull @CacheKey String code,
 	                                       @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
@@ -61,7 +61,7 @@ public class LanguagesService
 		                           .get()
 		                           .orElseThrow(() -> new GeographyException("Cannot find language - " + code));
 	}
-	@CacheResult(cacheName = "GeographyLanguages",
+	//@CacheResult(cacheName = "GeographyLanguages",
 	             skipGet = true)
 	////@Transactional()
 	public IClassification<?,?> updateLanguage(@NotNull @CacheKey String code, String description,

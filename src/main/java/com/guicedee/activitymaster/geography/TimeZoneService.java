@@ -24,7 +24,7 @@ public class TimeZoneService
 			TimeZoneOffsetJuly2016.toString(),
 			TimeZoneOffsetJan2016.toString());
 	
-	@CacheResult(cacheName = "GeographyTimezones", skipGet = true)
+	//@CacheResult(cacheName = "GeographyTimezones", skipGet = true)
 	////@Transactional()
 	public IClassification<?,?> createTimeZone(@CacheKey String code, String description, String originalUniqueID, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
@@ -46,7 +46,7 @@ public class TimeZoneService
 		                                    identityToken);
 	}
 	
-	@CacheResult(cacheName = "GeographyTimezones")
+	//@CacheResult(cacheName = "GeographyTimezones")
 	public IClassification<?,?> findTimeZone(@CacheKey String code, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		return new Classification().builder()
@@ -59,7 +59,7 @@ public class TimeZoneService
 		                           .orElseThrow(() -> new GeographyException("Unable to find timezone with code - " + code));
 	}
 	
-	@CacheResult(cacheName = "GeographyTimezones", skipGet = true)
+	//@CacheResult(cacheName = "GeographyTimezones", skipGet = true)
 	////@Transactional()
 	public IClassification<?,?> updateTimeZone(@CacheKey String code, String description,
 	                                         String timeZoneRawOffset, String timeZoneOffsetJuly2016, String timeZoneOffsetJan2016,

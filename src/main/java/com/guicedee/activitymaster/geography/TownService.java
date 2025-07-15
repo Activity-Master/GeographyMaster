@@ -67,7 +67,7 @@ public class TownService
 		return geo;
 	}
 	
-	@CacheResult(cacheName = "GeographyTowns")
+	//@CacheResult(cacheName = "GeographyTowns")
 	public IGeography<?,?> findTown(@CacheKey IGeography<?,?> district, @CacheKey String name, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
@@ -83,7 +83,7 @@ public class TownService
 		                      .orElseThrow(() -> new GeographyException("Cannot find town - " + name + " - in district - " + district));
 	}
 	
-	@CacheResult(cacheName = "GeographyTownNames")
+	//@CacheResult(cacheName = "GeographyTownNames")
 	public IGeography<?,?> findTown( @CacheKey String name, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
@@ -101,7 +101,7 @@ public class TownService
 	}
 	
 	@SuppressWarnings("DuplicatedCode")
-	@CacheResult(cacheName = "GeographyTowns", skipGet = true)
+	//@CacheResult(cacheName = "GeographyTowns", skipGet = true)
 	////@Transactional()
 	public IGeography<?,?> updateTown(String districtCode, @NotNull @CacheKey String name, String description,
 	                                    String latitude, String longitude, String featureCodes, String featureClass, Integer population, Integer elevation, Integer dEM,

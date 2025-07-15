@@ -19,7 +19,7 @@ import static com.guicedee.client.IGuiceContext.*;
 
 public class CurrencyService
 {
-	@CacheResult(cacheName = "GeographyCurrencies", skipGet = true)
+	//@CacheResult(cacheName = "GeographyCurrencies", skipGet = true)
 	////@Transactional()
 	public IClassification<?,?> createCurrency(@CacheKey String code, String description, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
@@ -44,7 +44,7 @@ public class CurrencyService
 				identityToken);
 	}
 	
-	@CacheResult(cacheName = "GeographyCurrencies")
+	//@CacheResult(cacheName = "GeographyCurrencies")
 	public IClassification<?,?> findCurrency(@CacheKey String code, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		return new Classification().builder()
@@ -57,7 +57,7 @@ public class CurrencyService
 		                           .orElseThrow(() -> new GeographyException("Cannot find currency with code : " + code));
 	}
 	
-	@CacheResult(cacheName = "GeographyCurrencies", skipGet = true)
+	//@CacheResult(cacheName = "GeographyCurrencies", skipGet = true)
 	////@Transactional()
 	public IClassification<?,?> updateCurrency(@CacheKey String code, String description, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{

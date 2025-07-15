@@ -25,7 +25,7 @@ public class DistrictService
 {
 	public static final Set<String> DistrictClassifications = Set.copyOf(ProvinceService.ProvinceClassifications);
 	
-	@CacheResult(cacheName = "GeographyDistricts", skipGet = true)
+	//@CacheResult(cacheName = "GeographyDistricts", skipGet = true)
 	////@Transactional()
 	public IGeography<?, ?> createDistrict(IGeography<Geography, GeographyQueryBuilder> province, @CacheKey String code, String name, String originalUniqueID, @CacheKey ISystems<?, ?> system, @CacheKey java.util.UUID... identityToken)
 	{
@@ -67,7 +67,7 @@ public class DistrictService
 		return geo;
 	}
 	
-	@CacheResult(cacheName = "GeographyDistricts")
+	//@CacheResult(cacheName = "GeographyDistricts")
 	public IGeography<?, ?> findDistrict(@CacheKey String name, @CacheKey ISystems<?, ?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
@@ -85,7 +85,7 @@ public class DistrictService
 	}
 	
 	
-	@CacheResult(cacheName = "GeographyDistrictInProvince")
+	//@CacheResult(cacheName = "GeographyDistrictInProvince")
 	public IGeography<?, ?> findFirstDistrictInProvince(@CacheKey String provinceCode, @CacheKey ISystems<?, ?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ProvinceService ps = get(ProvinceService.class);
@@ -102,7 +102,7 @@ public class DistrictService
 		return geoLink.getSecondary();
 	}
 	
-	@CacheResult(cacheName = "GeographyDistricts")
+	//@CacheResult(cacheName = "GeographyDistricts")
 	public List<Geography> findAllDistricts(@CacheKey ISystems<?, ?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
@@ -116,7 +116,7 @@ public class DistrictService
 		                      .getAll();
 	}
 	
-	@CacheResult(cacheName = "GeographyDistricts", skipGet = true)
+	//@CacheResult(cacheName = "GeographyDistricts", skipGet = true)
 	////@Transactional()
 	public IGeography<?, ?> updateDistrict(@NotNull @CacheKey String name, String description,
 	                                       String latitude, String longitude, String featureCodes, String featureClass, Integer population, Integer elevation, Integer dEM,

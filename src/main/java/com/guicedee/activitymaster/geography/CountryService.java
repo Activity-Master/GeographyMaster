@@ -35,7 +35,7 @@ public class CountryService
 			CountryPostalCodeFormat.toString(),
 			CountryPostalCodeRegex.toString());
 	
-	@CacheResult(cacheName = "GeographyCountry",skipGet = true)
+	//@CacheResult(cacheName = "GeographyCountry",skipGet = true)
 	////@Transactional()
 	public IGeography<Geography, GeographyQueryBuilder> createCountry(IGeography<Geography, GeographyQueryBuilder> continent, @CacheKey @NotNull String iso, @NotNull String description, String originalUniqueID,
 	                                     @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
@@ -76,7 +76,7 @@ public class CountryService
 		return geo;
 	}
 	
-	@CacheResult(cacheName = "GeographyCountry")
+	//@CacheResult(cacheName = "GeographyCountry")
 	public IGeography<Geography, GeographyQueryBuilder> findCountry(@CacheKey @NotNull String iso, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
@@ -91,7 +91,7 @@ public class CountryService
 		                      .orElseThrow(() -> new GeographyException("Cannot find country - " + iso));
 	}
 	
-	@CacheResult(cacheName = "GeographyCountry",skipGet = true)
+	//@CacheResult(cacheName = "GeographyCountry",skipGet = true)
 	////@Transactional()
 	public IGeography<Geography, GeographyQueryBuilder> updateCountry(IClassification<?,?> currency, @CacheKey @NotNull String iso, @NotNull String description, String iso3, String isoNumeric,
 	                                     String dialCode, String fips, String capital, String areaSqlKM, String postalCodeFormat, String postalCodeRegex, Integer population, String webTld,

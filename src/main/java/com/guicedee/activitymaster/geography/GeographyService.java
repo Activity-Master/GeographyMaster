@@ -63,7 +63,7 @@ public class GeographyService
 	
 	
 	@Override
-	@CacheResult
+	//@CacheResult
 	public IGeography<?,?> findPlanet(@CacheKey String name, @CacheKey ISystems<?,?> originatingSystem, @CacheKey java.util.UUID... identityToken)
 	{
 		PlanetService service = get(PlanetService.class);
@@ -72,7 +72,7 @@ public class GeographyService
 	
 	
 	@Override
-	@CacheResult
+	//@CacheResult
 	public GeographyContinent findContinent(@CacheKey GeographyContinent continent, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ContinentService service = get(ContinentService.class);
@@ -85,7 +85,7 @@ public class GeographyService
 	}
 	
 	@Override
-	@CacheResult
+	//@CacheResult
 	public GeographyCountry findCountry(@CacheKey GeographyCountry country, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		CountryService cs = get(CountryService.class);
@@ -409,7 +409,7 @@ public class GeographyService
 	 * @return
 	 */
 	@Override
-	@CacheResult(cacheName = "GeographyTimezones")
+	//@CacheResult(cacheName = "GeographyTimezones")
 	public GeographyTimezone findTimezone(@CacheKey GeographyTimezone timezone, @CacheKey ISystems<?,?> system)
 	{
 		UUID identityToken = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
@@ -714,7 +714,7 @@ public class GeographyService
 	}
 	
 	@Override
-	@CacheResult(cacheName = "GeographyPostalCodes")
+	//@CacheResult(cacheName = "GeographyPostalCodes")
 	public GeographyPostalCode findPostalCode(@CacheKey GeographyPostalCode postalCode, @CacheKey ISystems<?,?> system, java.util.UUID... identityToken)
 	{
 		PostalCodeService postalCodeService = get(PostalCodeService.class);
@@ -737,7 +737,7 @@ public class GeographyService
 	
 	
 	@Override
-	@CacheResult(cacheName = "GeographyPostalCodesSuburb")
+	//@CacheResult(cacheName = "GeographyPostalCodesSuburb")
 	public GeographyPostalCode findPostalCodeSuburb(@CacheKey String code, @CacheKey String description, @CacheKey ISystems<?,?> system, java.util.UUID... identityToken)
 	{
 		PostalCodeService postalCodeService = get(PostalCodeService.class);
@@ -760,7 +760,7 @@ public class GeographyService
 	}
 	
 	@Override
-	@CacheResult(cacheName = "GeographyPostalCodesSuburb")
+	//@CacheResult(cacheName = "GeographyPostalCodesSuburb")
 	public GeographyPostalCode findOrCreatePostalCodeSuburb(@CacheKey String code, @CacheKey String description, @CacheKey ISystems<?,?> system, java.util.UUID... identityToken)
 	{
 		PostalCodeService postalCodeService = get(PostalCodeService.class);
@@ -782,7 +782,7 @@ public class GeographyService
 	}
 	
 	@Override
-	@CacheResult(cacheName = "GeographyFindGeographyById")
+	//@CacheResult(cacheName = "GeographyFindGeographyById")
 	public IGeography<?,?> findGeographyById(@CacheKey UUID geographyID, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		return new Geography().builder()
@@ -795,7 +795,7 @@ public class GeographyService
 	}
 	
 	
-	@CacheResult(cacheName = "GeographyFindFeatureClass")
+	//@CacheResult(cacheName = "GeographyFindFeatureClass")
 	public IClassification<?,?> findFeatureClass(@CacheKey GeographyFeatureClassesClassifications key, @CacheKey ISystems<?,?> system, java.util.UUID... identityToken)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
@@ -846,7 +846,7 @@ public class GeographyService
 	}
 	
 	@Override
-	@CacheResult(cacheName = "GeographyfindFeatureCode")
+	//@CacheResult(cacheName = "GeographyfindFeatureCode")
 	public GeographyFeatureCode findFeatureCode(@CacheKey String featureCode, @CacheKey ISystems<?,?> system, java.util.UUID... identityToken)
 	{
 		IClassification<?,?> fClass = findFeatureCodeClassification(featureCode, system, identityToken);
@@ -856,7 +856,7 @@ public class GeographyService
 	}
 	
 	@Override
-	@CacheResult(cacheName = "GeographyfindFeatureCodeClassification")
+	//@CacheResult(cacheName = "GeographyfindFeatureCodeClassification")
 	public IClassification<?,?> findFeatureCodeClassification(@CacheKey String featureCode, @CacheKey ISystems<?,?> system, java.util.UUID... identityToken)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
@@ -1180,7 +1180,7 @@ public class GeographyService
 		return geoData;
 	}
 	
-	@CacheResult(cacheName = "GeographyByGeoNameID")
+	//@CacheResult(cacheName = "GeographyByGeoNameID")
 	public Geography findGeographyByID(@CacheKey UUID geographyID)
 	{
 		if (geographyID == null)

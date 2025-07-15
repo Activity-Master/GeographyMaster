@@ -19,7 +19,7 @@ import static com.guicedee.activitymaster.geography.services.enumerations.Geogra
 
 public class PlanetService
 {
-	@CacheResult(cacheName = "GeographyPlanets",
+	//@CacheResult(cacheName = "GeographyPlanets",
 	             skipGet = true)
 	////@Transactional()
 	public IGeography<Geography, GeographyQueryBuilder> createPlanet(@CacheKey String code, String description, String originalUniqueID, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
@@ -58,7 +58,7 @@ public class PlanetService
 		return geo;
 	}
 	
-	@CacheResult(cacheName = "GeographyPlanets")
+	//@CacheResult(cacheName = "GeographyPlanets")
 	public IGeography<Geography, GeographyQueryBuilder> findPlanet(@CacheKey String code, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);

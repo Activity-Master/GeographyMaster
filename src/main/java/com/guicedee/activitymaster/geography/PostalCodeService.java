@@ -36,7 +36,7 @@ public class PostalCodeService
 		postalCodeFormat.setMinimumIntegerDigits(4);
 	}
 	
-	@CacheResult(cacheName = "GeographyPostalCodes", skipGet = true)
+	//@CacheResult(cacheName = "GeographyPostalCodes", skipGet = true)
 	////@Transactional()
 	public IGeography<?,?> createPostalCode(@CacheKey IGeography<Geography, GeographyQueryBuilder> town, @NotNull @CacheKey String code,
 	                                        String description, String originalUniqueID,
@@ -78,7 +78,7 @@ public class PostalCodeService
 		return geo;
 	}
 	
-	@CacheResult(cacheName = "GeographyPostalCodeSuburbs", skipGet = true)
+	//@CacheResult(cacheName = "GeographyPostalCodeSuburbs", skipGet = true)
 	////@Transactional()
 	public IGeography<Geography, GeographyQueryBuilder> createPostalCodeSuburb(@CacheKey IGeography<Geography, GeographyQueryBuilder> postalCode, @NotNull @CacheKey String code,
 	                                            @NotNull @CacheKey String description, String originalUniqueID,
@@ -121,7 +121,7 @@ public class PostalCodeService
 		return geo;
 	}
 	
-	@CacheResult(cacheName = "GeographyPostalCodes")
+	//@CacheResult(cacheName = "GeographyPostalCodes")
 	public IGeography<Geography, GeographyQueryBuilder> findPostalCode(@CacheKey IGeography<Geography, GeographyQueryBuilder> town, @NotNull @CacheKey String code, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
@@ -137,7 +137,7 @@ public class PostalCodeService
 		                      .orElseThrow(() -> new GeographyException("Cannot find postal code in town - " + town + " - " + code));
 	}
 	
-	@CacheResult(cacheName = "GeographyPostalCodesByNumber")
+	//@CacheResult(cacheName = "GeographyPostalCodesByNumber")
 	public IGeography<Geography, GeographyQueryBuilder> findPostalCodeSuburb(@NotNull @CacheKey String code, @CacheKey String description, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
@@ -154,7 +154,7 @@ public class PostalCodeService
 		                      .orElseThrow(() -> new GeographyException("Cannot find postal code suburb " + " - " + code));
 	}
 	
-	@CacheResult(cacheName = "GeographyPostalCodesByNumber")
+	//@CacheResult(cacheName = "GeographyPostalCodesByNumber")
 	public IGeography<Geography, GeographyQueryBuilder> findOrCreatePostalCodeSuburb(@NotNull @CacheKey String code, @CacheKey String description, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
@@ -188,7 +188,7 @@ public class PostalCodeService
 	}
 	
 	@SuppressWarnings("DuplicatedCode")
-	@CacheResult(cacheName = "GeographyPostalCodes", skipGet = true)
+	//@CacheResult(cacheName = "GeographyPostalCodes", skipGet = true)
 	////@Transactional()
 	public IGeography<Geography, GeographyQueryBuilder> updatePostalCode(String districtCode, String townCode, @NotNull @CacheKey String code,
 	                                      String description, String latitude, String longitude,
@@ -228,7 +228,7 @@ public class PostalCodeService
 	
 	
 	@SuppressWarnings("DuplicatedCode")
-	@CacheResult(cacheName = "GeographyPostalCodes", skipGet = true)
+	//@CacheResult(cacheName = "GeographyPostalCodes", skipGet = true)
 	////@Transactional()
 	public IGeography<Geography, GeographyQueryBuilder> updatePostalCodeParent(@NotNull @CacheKey String code,
 	                                            String description, String latitude, String longitude,
