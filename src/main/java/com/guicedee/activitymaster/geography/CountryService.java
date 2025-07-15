@@ -12,8 +12,8 @@ import com.guicedee.activitymaster.fsdm.db.entities.geography.builders.Geography
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
 //import com.google.inject.persist.Transactional;
-import javax.cache.annotation.CacheKey;
-import javax.cache.annotation.CacheResult;
+
+
 import jakarta.validation.constraints.NotNull;
 
 import java.util.Set;
@@ -37,8 +37,8 @@ public class CountryService
 	
 	//@CacheResult(cacheName = "GeographyCountry",skipGet = true)
 	////@Transactional()
-	public IGeography<Geography, GeographyQueryBuilder> createCountry(IGeography<Geography, GeographyQueryBuilder> continent, @CacheKey @NotNull String iso, @NotNull String description, String originalUniqueID,
-	                                     @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
+	public IGeography<Geography, GeographyQueryBuilder> createCountry(IGeography<Geography, GeographyQueryBuilder> continent,  @NotNull String iso, @NotNull String description, String originalUniqueID,
+	                                      ISystems<?,?> system,  java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Country, system, identityToken);
@@ -77,7 +77,7 @@ public class CountryService
 	}
 	
 	//@CacheResult(cacheName = "GeographyCountry")
-	public IGeography<Geography, GeographyQueryBuilder> findCountry(@CacheKey @NotNull String iso, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
+	public IGeography<Geography, GeographyQueryBuilder> findCountry( @NotNull String iso,  ISystems<?,?> system,  java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Country, system, identityToken);
@@ -93,9 +93,9 @@ public class CountryService
 	
 	//@CacheResult(cacheName = "GeographyCountry",skipGet = true)
 	////@Transactional()
-	public IGeography<Geography, GeographyQueryBuilder> updateCountry(IClassification<?,?> currency, @CacheKey @NotNull String iso, @NotNull String description, String iso3, String isoNumeric,
+	public IGeography<Geography, GeographyQueryBuilder> updateCountry(IClassification<?,?> currency,  @NotNull String iso, @NotNull String description, String iso3, String isoNumeric,
 	                                     String dialCode, String fips, String capital, String areaSqlKM, String postalCodeFormat, String postalCodeRegex, Integer population, String webTld,
-	                                     @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
+	                                      ISystems<?,?> system,  java.util.UUID... identityToken)
 	{
 		Geography geo = (Geography) findCountry(iso, system, identityToken);
 		if(iso != null)

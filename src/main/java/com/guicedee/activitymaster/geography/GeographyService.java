@@ -24,8 +24,8 @@ import com.guicedee.guicedinjection.GuiceContext;
 //import com.google.inject.persist.Transactional;
 import com.guicedee.logger.LogFactory;
 import geodata.GeoDataFinder;
-import javax.cache.annotation.CacheKey;
-import javax.cache.annotation.CacheResult;
+
+
 import jakarta.validation.constraints.NotNull;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
@@ -46,7 +46,7 @@ public class GeographyService
 {
 	@Override
 	
-	public IGeography<?,?> createPlanet(@CacheKey @NotNull String value, String originalUniqueID, ISystems<?,?> system, java.util.UUID... identityToken)
+	public IGeography<?,?> createPlanet( @NotNull String value, String originalUniqueID, ISystems<?,?> system, java.util.UUID... identityToken)
 	{
 		PlanetService service = get(PlanetService.class);
 		return service.createPlanet(value, "The planet " + value, originalUniqueID, system, identityToken);
@@ -64,7 +64,7 @@ public class GeographyService
 	
 	@Override
 	//@CacheResult
-	public IGeography<?,?> findPlanet(@CacheKey String name, @CacheKey ISystems<?,?> originatingSystem, @CacheKey java.util.UUID... identityToken)
+	public IGeography<?,?> findPlanet( String name,  ISystems<?,?> originatingSystem,  java.util.UUID... identityToken)
 	{
 		PlanetService service = get(PlanetService.class);
 		return service.findPlanet(name, originatingSystem, identityToken);
@@ -73,7 +73,7 @@ public class GeographyService
 	
 	@Override
 	//@CacheResult
-	public GeographyContinent findContinent(@CacheKey GeographyContinent continent, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
+	public GeographyContinent findContinent( GeographyContinent continent,  ISystems<?,?> system,  java.util.UUID... identityToken)
 	{
 		ContinentService service = get(ContinentService.class);
 		IGeography<?,?> continentGeo = service.findContinent(continent.getContinentCode(), system, identityToken);
@@ -86,7 +86,7 @@ public class GeographyService
 	
 	@Override
 	//@CacheResult
-	public GeographyCountry findCountry(@CacheKey GeographyCountry country, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
+	public GeographyCountry findCountry( GeographyCountry country,  ISystems<?,?> system,  java.util.UUID... identityToken)
 	{
 		CountryService cs = get(CountryService.class);
 		IGeography<?,?> geo = cs.findCountry(country.getIso(), system, identityToken);
@@ -410,7 +410,7 @@ public class GeographyService
 	 */
 	@Override
 	//@CacheResult(cacheName = "GeographyTimezones")
-	public GeographyTimezone findTimezone(@CacheKey GeographyTimezone timezone, @CacheKey ISystems<?,?> system)
+	public GeographyTimezone findTimezone( GeographyTimezone timezone,  ISystems<?,?> system)
 	{
 		UUID identityToken = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
 		TimeZoneService timeZoneService = get(TimeZoneService.class);
@@ -715,7 +715,7 @@ public class GeographyService
 	
 	@Override
 	//@CacheResult(cacheName = "GeographyPostalCodes")
-	public GeographyPostalCode findPostalCode(@CacheKey GeographyPostalCode postalCode, @CacheKey ISystems<?,?> system, java.util.UUID... identityToken)
+	public GeographyPostalCode findPostalCode( GeographyPostalCode postalCode,  ISystems<?,?> system, java.util.UUID... identityToken)
 	{
 		PostalCodeService postalCodeService = get(PostalCodeService.class);
 		IGeography<?,?> geo = postalCodeService.findPostalCode(null, postalCode.getPostalCode(), system, identityToken);
@@ -738,7 +738,7 @@ public class GeographyService
 	
 	@Override
 	//@CacheResult(cacheName = "GeographyPostalCodesSuburb")
-	public GeographyPostalCode findPostalCodeSuburb(@CacheKey String code, @CacheKey String description, @CacheKey ISystems<?,?> system, java.util.UUID... identityToken)
+	public GeographyPostalCode findPostalCodeSuburb( String code,  String description,  ISystems<?,?> system, java.util.UUID... identityToken)
 	{
 		PostalCodeService postalCodeService = get(PostalCodeService.class);
 		IGeography<?,?> geo = postalCodeService.findPostalCodeSuburb(code, description, system, identityToken);
@@ -761,7 +761,7 @@ public class GeographyService
 	
 	@Override
 	//@CacheResult(cacheName = "GeographyPostalCodesSuburb")
-	public GeographyPostalCode findOrCreatePostalCodeSuburb(@CacheKey String code, @CacheKey String description, @CacheKey ISystems<?,?> system, java.util.UUID... identityToken)
+	public GeographyPostalCode findOrCreatePostalCodeSuburb( String code,  String description,  ISystems<?,?> system, java.util.UUID... identityToken)
 	{
 		PostalCodeService postalCodeService = get(PostalCodeService.class);
 		IGeography<?,?> geo = postalCodeService.findOrCreatePostalCodeSuburb(code, description, system, identityToken);
@@ -783,7 +783,7 @@ public class GeographyService
 	
 	@Override
 	//@CacheResult(cacheName = "GeographyFindGeographyById")
-	public IGeography<?,?> findGeographyById(@CacheKey UUID geographyID, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
+	public IGeography<?,?> findGeographyById( UUID geographyID,  ISystems<?,?> system,  java.util.UUID... identityToken)
 	{
 		return new Geography().builder()
 		                      .find(geographyID)
@@ -796,7 +796,7 @@ public class GeographyService
 	
 	
 	//@CacheResult(cacheName = "GeographyFindFeatureClass")
-	public IClassification<?,?> findFeatureClass(@CacheKey GeographyFeatureClassesClassifications key, @CacheKey ISystems<?,?> system, java.util.UUID... identityToken)
+	public IClassification<?,?> findFeatureClass( GeographyFeatureClassesClassifications key,  ISystems<?,?> system, java.util.UUID... identityToken)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		return classificationService.find(key.toString(), system, identityToken);
@@ -847,7 +847,7 @@ public class GeographyService
 	
 	@Override
 	//@CacheResult(cacheName = "GeographyfindFeatureCode")
-	public GeographyFeatureCode findFeatureCode(@CacheKey String featureCode, @CacheKey ISystems<?,?> system, java.util.UUID... identityToken)
+	public GeographyFeatureCode findFeatureCode( String featureCode,  ISystems<?,?> system, java.util.UUID... identityToken)
 	{
 		IClassification<?,?> fClass = findFeatureCodeClassification(featureCode, system, identityToken);
 		GeographyFeatureCode fCode = new GeographyFeatureCode().setCode(fClass.getName())
@@ -857,7 +857,7 @@ public class GeographyService
 	
 	@Override
 	//@CacheResult(cacheName = "GeographyfindFeatureCodeClassification")
-	public IClassification<?,?> findFeatureCodeClassification(@CacheKey String featureCode, @CacheKey ISystems<?,?> system, java.util.UUID... identityToken)
+	public IClassification<?,?> findFeatureCodeClassification( String featureCode,  ISystems<?,?> system, java.util.UUID... identityToken)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		return classificationService.find(featureCode, system, identityToken);
@@ -1181,7 +1181,7 @@ public class GeographyService
 	}
 	
 	//@CacheResult(cacheName = "GeographyByGeoNameID")
-	public Geography findGeographyByID(@CacheKey UUID geographyID)
+	public Geography findGeographyByID( UUID geographyID)
 	{
 		if (geographyID == null)
 		{

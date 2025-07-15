@@ -12,8 +12,8 @@ import com.guicedee.activitymaster.geography.services.exceptions.GeographyExcept
 import com.guicedee.guicedinjection.GuiceContext;
 //import com.google.inject.persist.Transactional;
 import com.guicedee.logger.LogFactory;
-import javax.cache.annotation.CacheKey;
-import javax.cache.annotation.CacheResult;
+
+
 import jakarta.validation.constraints.NotNull;
 
 import java.text.NumberFormat;
@@ -38,9 +38,9 @@ public class PostalCodeService
 	
 	//@CacheResult(cacheName = "GeographyPostalCodes", skipGet = true)
 	////@Transactional()
-	public IGeography<?,?> createPostalCode(@CacheKey IGeography<Geography, GeographyQueryBuilder> town, @NotNull @CacheKey String code,
+	public IGeography<?,?> createPostalCode( IGeography<Geography, GeographyQueryBuilder> town, @NotNull  String code,
 	                                        String description, String originalUniqueID,
-	                                        @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
+	                                         ISystems<?,?> system,  java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(PostalCode, system, identityToken);
@@ -80,9 +80,9 @@ public class PostalCodeService
 	
 	//@CacheResult(cacheName = "GeographyPostalCodeSuburbs", skipGet = true)
 	////@Transactional()
-	public IGeography<Geography, GeographyQueryBuilder> createPostalCodeSuburb(@CacheKey IGeography<Geography, GeographyQueryBuilder> postalCode, @NotNull @CacheKey String code,
-	                                            @NotNull @CacheKey String description, String originalUniqueID,
-	                                            @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
+	public IGeography<Geography, GeographyQueryBuilder> createPostalCodeSuburb( IGeography<Geography, GeographyQueryBuilder> postalCode, @NotNull  String code,
+	                                            @NotNull  String description, String originalUniqueID,
+	                                             ISystems<?,?> system,  java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(PostalCodeSuburb, system, identityToken);
@@ -122,7 +122,7 @@ public class PostalCodeService
 	}
 	
 	//@CacheResult(cacheName = "GeographyPostalCodes")
-	public IGeography<Geography, GeographyQueryBuilder> findPostalCode(@CacheKey IGeography<Geography, GeographyQueryBuilder> town, @NotNull @CacheKey String code, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
+	public IGeography<Geography, GeographyQueryBuilder> findPostalCode( IGeography<Geography, GeographyQueryBuilder> town, @NotNull  String code,  ISystems<?,?> system,  java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(PostalCode, system, identityToken);
@@ -138,7 +138,7 @@ public class PostalCodeService
 	}
 	
 	//@CacheResult(cacheName = "GeographyPostalCodesByNumber")
-	public IGeography<Geography, GeographyQueryBuilder> findPostalCodeSuburb(@NotNull @CacheKey String code, @CacheKey String description, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
+	public IGeography<Geography, GeographyQueryBuilder> findPostalCodeSuburb(@NotNull  String code,  String description,  ISystems<?,?> system,  java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(PostalCodeSuburb, system, identityToken);
@@ -155,7 +155,7 @@ public class PostalCodeService
 	}
 	
 	//@CacheResult(cacheName = "GeographyPostalCodesByNumber")
-	public IGeography<Geography, GeographyQueryBuilder> findOrCreatePostalCodeSuburb(@NotNull @CacheKey String code, @CacheKey String description, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
+	public IGeography<Geography, GeographyQueryBuilder> findOrCreatePostalCodeSuburb(@NotNull  String code,  String description,  ISystems<?,?> system,  java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(PostalCodeSuburb, system, identityToken);
@@ -190,9 +190,9 @@ public class PostalCodeService
 	@SuppressWarnings("DuplicatedCode")
 	//@CacheResult(cacheName = "GeographyPostalCodes", skipGet = true)
 	////@Transactional()
-	public IGeography<Geography, GeographyQueryBuilder> updatePostalCode(String districtCode, String townCode, @NotNull @CacheKey String code,
+	public IGeography<Geography, GeographyQueryBuilder> updatePostalCode(String districtCode, String townCode, @NotNull  String code,
 	                                      String description, String latitude, String longitude,
-	                                      @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
+	                                       ISystems<?,?> system,  java.util.UUID... identityToken)
 	{
 		IGeography<Geography, GeographyQueryBuilder> toUpdate = null;
 		if (!Strings.isNullOrEmpty(districtCode))
@@ -230,9 +230,9 @@ public class PostalCodeService
 	@SuppressWarnings("DuplicatedCode")
 	//@CacheResult(cacheName = "GeographyPostalCodes", skipGet = true)
 	////@Transactional()
-	public IGeography<Geography, GeographyQueryBuilder> updatePostalCodeParent(@NotNull @CacheKey String code,
+	public IGeography<Geography, GeographyQueryBuilder> updatePostalCodeParent(@NotNull  String code,
 	                                            String description, String latitude, String longitude,
-	                                            @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
+	                                             ISystems<?,?> system,  java.util.UUID... identityToken)
 	{
 		IGeography<Geography, GeographyQueryBuilder> toUpdate = null;
 		toUpdate = findPostalCode(null, code, system, identityToken);

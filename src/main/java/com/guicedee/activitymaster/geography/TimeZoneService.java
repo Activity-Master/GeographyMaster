@@ -8,8 +8,8 @@ import com.guicedee.activitymaster.fsdm.client.services.classifications.Enterpri
 import com.guicedee.activitymaster.fsdm.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 //import com.google.inject.persist.Transactional;
-import javax.cache.annotation.CacheKey;
-import javax.cache.annotation.CacheResult;
+
+
 
 import java.util.Set;
 
@@ -26,7 +26,7 @@ public class TimeZoneService
 	
 	//@CacheResult(cacheName = "GeographyTimezones", skipGet = true)
 	////@Transactional()
-	public IClassification<?,?> createTimeZone(@CacheKey String code, String description, String originalUniqueID, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
+	public IClassification<?,?> createTimeZone( String code, String description, String originalUniqueID,  ISystems<?,?> system,  java.util.UUID... identityToken)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		boolean exists = new Classification().builder()
@@ -47,7 +47,7 @@ public class TimeZoneService
 	}
 	
 	//@CacheResult(cacheName = "GeographyTimezones")
-	public IClassification<?,?> findTimeZone(@CacheKey String code, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
+	public IClassification<?,?> findTimeZone( String code,  ISystems<?,?> system,  java.util.UUID... identityToken)
 	{
 		return new Classification().builder()
 		                           .withName(code)
@@ -61,9 +61,9 @@ public class TimeZoneService
 	
 	//@CacheResult(cacheName = "GeographyTimezones", skipGet = true)
 	////@Transactional()
-	public IClassification<?,?> updateTimeZone(@CacheKey String code, String description,
+	public IClassification<?,?> updateTimeZone( String code, String description,
 	                                         String timeZoneRawOffset, String timeZoneOffsetJuly2016, String timeZoneOffsetJan2016,
-	                                         @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
+	                                          ISystems<?,?> system,  java.util.UUID... identityToken)
 	{
 		IClassification<?,?> toUpdate = findTimeZone(code, system, identityToken);
 		if (description != null)

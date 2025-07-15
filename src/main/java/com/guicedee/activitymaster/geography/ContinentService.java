@@ -10,8 +10,8 @@ import com.guicedee.activitymaster.fsdm.db.entities.geography.builders.Geography
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
 //import com.google.inject.persist.Transactional;
-import javax.cache.annotation.CacheKey;
-import javax.cache.annotation.CacheResult;
+
+
 
 
 
@@ -22,7 +22,7 @@ public class ContinentService
 {
 	//@CacheResult(cacheName = "GeographyContinents",skipGet = true)
 	////@Transactional()
-	public IGeography<Geography, GeographyQueryBuilder> createContinent(IGeography<Geography, GeographyQueryBuilder> planet, @CacheKey String code, String description, String originalUniqueID, @CacheKey ISystems<?,?> system, @CacheKey  java.util.UUID... identityToken)
+	public IGeography<Geography, GeographyQueryBuilder> createContinent(IGeography<Geography, GeographyQueryBuilder> planet,  String code, String description, String originalUniqueID,  ISystems<?,?> system,   java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Continent, system, identityToken);
@@ -60,7 +60,7 @@ public class ContinentService
 	}
 	
 	//@CacheResult(cacheName = "GeographyContinents",skipGet = true)
-	public IGeography<Geography, GeographyQueryBuilder> findContinent(@CacheKey String code,@CacheKey  ISystems<?,?> system,@CacheKey  java.util.UUID... identityToken)
+	public IGeography<Geography, GeographyQueryBuilder> findContinent( String code,  ISystems<?,?> system,  java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Continent, system, identityToken);

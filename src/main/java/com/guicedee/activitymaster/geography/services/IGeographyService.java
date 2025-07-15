@@ -5,7 +5,7 @@ import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.geogr
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.systems.ISystems;
 import com.guicedee.activitymaster.fsdm.client.services.systems.IActivityMasterProgressMonitor;
 import com.guicedee.activitymaster.geography.services.dto.*;
-import javax.cache.annotation.CacheKey;
+
 import jakarta.validation.constraints.NotNull;
 
 
@@ -14,7 +14,7 @@ public interface IGeographyService<J extends IGeographyService<J>>
 {
 	String GeographySystemName = "Geography System";
 	
-	IGeography<?,?> createPlanet(@CacheKey @NotNull String value, String originalUniqueID, ISystems<?,?> system, java.util.UUID... identityToken);
+	IGeography<?,?> createPlanet( @NotNull String value, String originalUniqueID, ISystems<?,?> system, java.util.UUID... identityToken);
 	
 	IGeography<?,?> createContinent(String planetName, GeographyContinent continent, ISystems<?,?> originatingSystem, String originalUniqueID, java.util.UUID... identityToken);
 	

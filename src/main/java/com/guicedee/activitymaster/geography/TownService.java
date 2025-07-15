@@ -10,8 +10,8 @@ import com.guicedee.activitymaster.fsdm.db.entities.geography.builders.Geography
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
 //import com.google.inject.persist.Transactional;
-import javax.cache.annotation.CacheKey;
-import javax.cache.annotation.CacheResult;
+
+
 import jakarta.validation.constraints.NotNull;
 
 import java.util.Set;
@@ -25,12 +25,12 @@ public class TownService
 	public static final Set<String> TownClassifications = Set.copyOf(ProvinceService.ProvinceClassifications);
 	
 	////@Transactional()
-	public IGeography<?,?> createTown(@CacheKey IGeography<Geography, GeographyQueryBuilder> district,
-	                                  @CacheKey String name,
+	public IGeography<?,?> createTown( IGeography<Geography, GeographyQueryBuilder> district,
+	                                   String name,
 	                                  String description,
 	                                  String originalUniqueID,
-	                                  @CacheKey ISystems<?,?> system,
-	                                  @CacheKey java.util.UUID... identityToken)
+	                                   ISystems<?,?> system,
+	                                   java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Town, system, identityToken);
@@ -68,7 +68,7 @@ public class TownService
 	}
 	
 	//@CacheResult(cacheName = "GeographyTowns")
-	public IGeography<?,?> findTown(@CacheKey IGeography<?,?> district, @CacheKey String name, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
+	public IGeography<?,?> findTown( IGeography<?,?> district,  String name,  ISystems<?,?> system,  java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Town, system, identityToken);
@@ -84,7 +84,7 @@ public class TownService
 	}
 	
 	//@CacheResult(cacheName = "GeographyTownNames")
-	public IGeography<?,?> findTown( @CacheKey String name, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
+	public IGeography<?,?> findTown(  String name,  ISystems<?,?> system,  java.util.UUID... identityToken)
 	{
 		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
 		Classification classification = (Classification) classificationService.find(Town, system, identityToken);
@@ -103,9 +103,9 @@ public class TownService
 	@SuppressWarnings("DuplicatedCode")
 	//@CacheResult(cacheName = "GeographyTowns", skipGet = true)
 	////@Transactional()
-	public IGeography<?,?> updateTown(String districtCode, @NotNull @CacheKey String name, String description,
+	public IGeography<?,?> updateTown(String districtCode, @NotNull  String name, String description,
 	                                    String latitude, String longitude, String featureCodes, String featureClass, Integer population, Integer elevation, Integer dEM,
-	                                    @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
+	                                     ISystems<?,?> system,  java.util.UUID... identityToken)
 	{
 		IGeography<?,?> district = com.guicedee.client.IGuiceContext.get(DistrictService.class)
 		                                     .findDistrict(districtCode, system, identityToken);

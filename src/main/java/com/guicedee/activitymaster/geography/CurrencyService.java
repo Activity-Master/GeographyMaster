@@ -7,8 +7,8 @@ import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.syste
 import com.guicedee.activitymaster.fsdm.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 //import com.google.inject.persist.Transactional;
-import javax.cache.annotation.CacheKey;
-import javax.cache.annotation.CacheResult;
+
+
 
 
 
@@ -21,7 +21,7 @@ public class CurrencyService
 {
 	//@CacheResult(cacheName = "GeographyCurrencies", skipGet = true)
 	////@Transactional()
-	public IClassification<?,?> createCurrency(@CacheKey String code, String description, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
+	public IClassification<?,?> createCurrency( String code, String description,  ISystems<?,?> system,  java.util.UUID... identityToken)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		
@@ -45,7 +45,7 @@ public class CurrencyService
 	}
 	
 	//@CacheResult(cacheName = "GeographyCurrencies")
-	public IClassification<?,?> findCurrency(@CacheKey String code, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
+	public IClassification<?,?> findCurrency( String code,  ISystems<?,?> system,  java.util.UUID... identityToken)
 	{
 		return new Classification().builder()
 		                           .withName(code)
@@ -59,7 +59,7 @@ public class CurrencyService
 	
 	//@CacheResult(cacheName = "GeographyCurrencies", skipGet = true)
 	////@Transactional()
-	public IClassification<?,?> updateCurrency(@CacheKey String code, String description, @CacheKey ISystems<?,?> system, @CacheKey java.util.UUID... identityToken)
+	public IClassification<?,?> updateCurrency( String code, String description,  ISystems<?,?> system,  java.util.UUID... identityToken)
 	{
 		IClassification<?,?> toUpdate = findCurrency(code, system, identityToken);
 		if (description != null)
