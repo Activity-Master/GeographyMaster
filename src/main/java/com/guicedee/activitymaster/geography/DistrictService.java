@@ -10,7 +10,7 @@ import com.guicedee.activitymaster.fsdm.db.entities.geography.Geography;
 import com.guicedee.activitymaster.fsdm.db.entities.geography.builders.GeographyQueryBuilder;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
-import com.google.inject.persist.Transactional;
+//import com.google.inject.persist.Transactional;
 import javax.cache.annotation.CacheKey;
 import javax.cache.annotation.CacheResult;
 import jakarta.validation.constraints.NotNull;

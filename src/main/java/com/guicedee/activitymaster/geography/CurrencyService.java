@@ -6,7 +6,7 @@ import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.class
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.systems.ISystems;
 import com.guicedee.activitymaster.fsdm.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
-import com.google.inject.persist.Transactional;
+//import com.google.inject.persist.Transactional;
 import javax.cache.annotation.CacheKey;
 import javax.cache.annotation.CacheResult;
 

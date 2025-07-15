@@ -21,7 +21,7 @@ import com.guicedee.activitymaster.geography.services.dto.classifications.ISO639
 import com.guicedee.activitymaster.geography.services.enumerations.GeographyFeatureClassesClassifications;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.guicedinjection.GuiceContext;
-import com.google.inject.persist.Transactional;
+//import com.google.inject.persist.Transactional;
 import com.guicedee.logger.LogFactory;
 import geodata.GeoDataFinder;
 import javax.cache.annotation.CacheKey;
