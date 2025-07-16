@@ -45,13 +45,13 @@ public class GeographyService
 		           IGeographyService<GeographyService>
 {
 	@Override
-	
+
 	public IGeography<?,?> createPlanet( @NotNull String value, String originalUniqueID, ISystems<?,?> system, java.util.UUID... identityToken)
 	{
 		PlanetService service = get(PlanetService.class);
 		return service.createPlanet(value, "The planet " + value, originalUniqueID, system, identityToken);
 	}
-	
+
 	@Override
 	public IGeography<?,?> createContinent(String planetName, GeographyContinent continent, ISystems<?,?> originatingSystem, String originalUniqueID, java.util.UUID... identityToken)
 	{
@@ -60,8 +60,8 @@ public class GeographyService
 		ContinentService service = get(ContinentService.class);
 		return service.createContinent(planet, continent.getContinentCode(), continent.getContinentName(), originalUniqueID, originatingSystem, identityToken);
 	}
-	
-	
+
+
 	@Override
 	//@CacheResult
 	public IGeography<?,?> findPlanet( String name,  ISystems<?,?> originatingSystem,  java.util.UUID... identityToken)
@@ -69,8 +69,8 @@ public class GeographyService
 		PlanetService service = get(PlanetService.class);
 		return service.findPlanet(name, originatingSystem, identityToken);
 	}
-	
-	
+
+
 	@Override
 	//@CacheResult
 	public GeographyContinent findContinent( GeographyContinent continent,  ISystems<?,?> system,  java.util.UUID... identityToken)
@@ -83,7 +83,7 @@ public class GeographyService
 		gc.setGeographyId(continentGeo.getId());
 		return gc;
 	}
-	
+
 	@Override
 	//@CacheResult
 	public GeographyCountry findCountry( GeographyCountry country,  ISystems<?,?> system,  java.util.UUID... identityToken)
@@ -91,7 +91,7 @@ public class GeographyService
 		CountryService cs = get(CountryService.class);
 		IGeography<?,?> geo = cs.findCountry(country.getIso(), system, identityToken);
 		GeographyCountry gc = new GeographyCountry();
-		
+
 		List<Object[]> values = geo.builder().getClassificationsValuePivot(CountryISO3166.toString(), (String)null, system, identityToken,
 				CountryISO3166_3.toString(),
 				CountryISO_Numeric.toString(),
@@ -118,7 +118,7 @@ public class GeographyService
 			gc.setPostalCodeDecimalFormat(vals[8].toString());
 			gc.setPostalCodeRegexFormat(vals[9].toString());
 		}
-		
+
 		if (geo.hasClassifications(Currency,null, system, identityToken))
 		{
 			String currency = geo.findClassification(Currency, system, identityToken)
@@ -131,17 +131,17 @@ public class GeographyService
 			geographyCurrency.setCurrencyName(geoCurrency.getDescription());
 			gc.setCurrency(geographyCurrency);
 		}
-		
+
 		gc.setGeographyId(geo.getId());
 		if (!geo.getOriginalSourceSystemUniqueID()
 		        .isEmpty())
 		{
 			gc.setGeonameId(Long.parseLong(geo.getOriginalSourceSystemUniqueID()));
 		}
-		
+
 		return gc;
 	}
-	
+
 	public GeographyCountry createCountry(GeographyCountry country, ISystems<?,?> system, java.util.UUID... identityToken)
 	{
 		CountryService countryService = get(CountryService.class);
@@ -149,76 +149,88 @@ public class GeographyService
 		                                                                                                                                                           .getContinentCode(), system, identityToken);
 		var geoCountry =
 				countryService.createCountry(geoContinent, country.getIso(), country.getCountryName(), country.getGeonameId() + "", system, identityToken);
-		
-		
+
+
 		IClassification<?,?> currency = get(ClassificationService.class).find(country.getCurrency()
 		                                                                             .getCurrencyCode(), EnterpriseClassificationDataConcepts.ClassificationXClassification, system, identityToken);
 		geoCountry.addOrUpdateClassification(Currency, currency.getName(), system, identityToken);
-		
-		
+
+
 		countryService.updateCountry(currency, country.getIso(), country.getCountryName(), country.getIso3(), country.getIsoNumeric(), country.getCountryDialCode(),
 				country.getFips(), country.getCapital(), country.getAreaSqlKM(), country.getPostalCodeDecimalFormat(), country.getPostalCodeRegexFormat(),
 				country.getPopulation(), country.getWebTld(), system, identityToken);
-		
+
 		country.setGeographyId(geoCountry.getId());
 		return country;
 	}
-	
+
 	@Override
-	public void loadProvincesASCII1(ISystems<?,?> system, String countryCode)
+	public Uni<Void> loadProvincesASCII1(ISystems<?,?> system, String countryCode)
 	{
 		setCurrentTask(0);
 		setTotalTasks(4470);
-		try (GeoDataFinder finder = new GeoDataFinder(Admin1CodesASCII, CSVFormat.TDF, Admin1CodesASCII.getHeaderNames()))
-		{
-			int current = 0;
-			for (CSVRecord record : finder.getRecords())
+
+		return Uni.createFrom().item(() -> {
+			try (GeoDataFinder finder = new GeoDataFinder(Admin1CodesASCII, CSVFormat.TDF, Admin1CodesASCII.getHeaderNames()))
 			{
-				current++;
-				GeographyAsciiCode ascii = new GeographyAsciiCode();
-				ascii.setCode(record.get(0))
-				     .setName(record.get(1))
-				     .setNameAscii(record.get(2))
-				     .setGeonameId(Long.parseLong(record.get(3)));
-				if(ascii.getCode().startsWith(countryCode))
+				int current = 0;
+				for (CSVRecord record : finder.getRecords())
 				{
-					ProvinceService provinceService = get(ProvinceService.class);
-					CountryService countryService = get(CountryService.class);
-					IGeography<Geography,GeographyQueryBuilder> country = countryService.findCountry(countryCode, system);
-					IGeography<?,?> province = provinceService.createProvince(country, ascii.getCode(), ascii.getName(), ascii.getGeonameId() + "", system);
+					current++;
+					GeographyAsciiCode ascii = new GeographyAsciiCode();
+					ascii.setCode(record.get(0))
+					     .setName(record.get(1))
+					     .setNameAscii(record.get(2))
+					     .setGeonameId(Long.parseLong(record.get(3)));
+					if(ascii.getCode().startsWith(countryCode))
+					{
+						ProvinceService provinceService = get(ProvinceService.class);
+						CountryService countryService = get(CountryService.class);
+						IGeography<Geography,GeographyQueryBuilder> country = countryService.findCountry(countryCode, system);
+						IGeography<?,?> province = provinceService.createProvince(country, ascii.getCode(), ascii.getName(), ascii.getGeonameId() + "", system);
+					}
+					if (current % 50 == 0)
+					{
+						logProgress("Geography Service", "Loaded Province Codes - " + ascii.getName(), 50);
+					}
 				}
-				if (current % 50 == 0)
-				{
-					logProgress("Geography Service", "Loaded Province Codes - " + ascii.getName(), 50);
-				}
+				logProgress("Geography Service", "Finished Province Codes", 0);
+				return null;
 			}
-			logProgress("Geography Service", "Finished Province Codes", 0);
-		}
+			catch (Exception e) {
+				log.error("Error loading province codes", e);
+				throw new RuntimeException("Error loading province codes", e);
+			}
+		})
+		.onFailure().invoke(error -> log.error("Error loading province codes: {}", error.getMessage(), error))
+		.map(result -> null); // Convert to Void
 	}
-	
+
 	@Override
-	public void loadDistrictsASCII2(ISystems<?,?> system, String countryCode)
+	public Uni<Void> loadDistrictsASCII2(ISystems<?,?> system, String countryCode)
 	{
 		setCurrentTask(0);
 		setTotalTasks(47850);
-		try (GeoDataFinder finder = new GeoDataFinder(Admin2Codes, CSVFormat.TDF, Admin2Codes.getHeaderNames()))
-		{
-			int current = 0;
-			for (CSVRecord record : finder.getRecords())
+
+		return Uni.createFrom().item(() -> {
+			try (GeoDataFinder finder = new GeoDataFinder(Admin2Codes, CSVFormat.TDF, Admin2Codes.getHeaderNames()))
 			{
-				current++;
-				GeographyAsciiCode ascii = new GeographyAsciiCode();
-				ascii.setCode(record.get(0))
-				     .setName(record.get(1))
-				     .setNameAscii(record.get(2))
-				     .setGeonameId(Long.parseLong(record.get(3)));
-				
+				int current = 0;
+				for (CSVRecord record : finder.getRecords())
+				{
+					current++;
+					GeographyAsciiCode ascii = new GeographyAsciiCode();
+					ascii.setCode(record.get(0))
+					     .setName(record.get(1))
+					     .setNameAscii(record.get(2))
+					     .setGeonameId(Long.parseLong(record.get(3)));
+
 					int proviceCodeDecimalLocation = ascii.getCode()
 				                                      .indexOf('.', 4);
-				
+
 					String provinceCode = ascii.getCode()
 					                           .substring(0, proviceCodeDecimalLocation);
-					
+
 					if(provinceCode.startsWith(countryCode))
 					{
 						ProvinceService provinceService = get(ProvinceService.class);
@@ -226,178 +238,206 @@ public class GeographyService
 						DistrictService districtService = get(DistrictService.class);
 						districtService.createDistrict(province, ascii.getCode(), ascii.getName(), ascii.getGeonameId() + "", system);
 					}
-				if (current % 50 == 0)
-				{
-					logProgress("Geography Service", "Loaded 50 Districts/Cities - " + ascii.getName(), 50);
+					if (current % 50 == 0)
+					{
+						logProgress("Geography Service", "Loaded 50 Districts/Cities - " + ascii.getName(), 50);
+					}
 				}
+				logProgress("Geography Service", "Finished Districts/Cities", 10);
+				return null;
 			}
-		}
-		logProgress("Geography Service", "Finished Districts/Cities", 10);
+			catch (Exception e) {
+				log.error("Error loading district codes", e);
+				throw new RuntimeException("Error loading district codes", e);
+			}
+		})
+		.onFailure().invoke(error -> log.error("Error loading district codes: {}", error.getMessage(), error))
+		.map(result -> null); // Convert to Void
 	}
-	
+
 	@Override
-	public void loadLanguages(ISystems<?,?> system)
+	public Uni<Void> loadLanguages(ISystems<?,?> system)
 	{
 		setCurrentTask(0);
 		setTotalTasks(547);
-		try (GeoDataFinder finder = new GeoDataFinder(ISO639Languages, CSVFormat.TDF, ISO639Languages.getHeaderNames()))
-		{
-			int current = 0;
-			logProgress("Geography Service", "Starting Geography Associated Languages", 1);
-			for (CSVRecord record : finder.getRecords())
+
+		return Uni.createFrom().item(() -> {
+			try (GeoDataFinder finder = new GeoDataFinder(ISO639Languages, CSVFormat.TDF, ISO639Languages.getHeaderNames()))
 			{
-				current++;
-				ISO639Language language = new ISO639Language();
-				String code2 = record.get(0);
-				String code1 = record.get(1);
-				String english = record.get(2);
-				String french = record.get(3);
-				String german = record.get(4);
-				
-				language.setIso6391Code(code1);
-				language.setIso6392Code(code2);
-				if (!english.isEmpty())
+				int current = 0;
+				logProgress("Geography Service", "Starting Geography Associated Languages", 1);
+				for (CSVRecord record : finder.getRecords())
 				{
-					StringTokenizer st = new StringTokenizer(english, ";");
-					while (st.hasMoreTokens())
+					current++;
+					ISO639Language language = new ISO639Language();
+					String code2 = record.get(0);
+					String code1 = record.get(1);
+					String english = record.get(2);
+					String french = record.get(3);
+					String german = record.get(4);
+
+					language.setIso6391Code(code1);
+					language.setIso6392Code(code2);
+					if (!english.isEmpty())
 					{
-						String s = st.nextToken();
-						language.getName()
-						        .add(s);
+						StringTokenizer st = new StringTokenizer(english, ";");
+						while (st.hasMoreTokens())
+						{
+							String s = st.nextToken();
+							language.getName()
+							        .add(s);
+						}
+					}
+					if (!french.isEmpty())
+					{
+						StringTokenizer st = new StringTokenizer(french, ";");
+						while (st.hasMoreTokens())
+						{
+							String s = st.nextToken();
+							language.getFrenchName()
+							        .add(s);
+						}
+					}
+					if (!german.isEmpty())
+					{
+						StringTokenizer st = new StringTokenizer(german, ";");
+						while (st.hasMoreTokens())
+						{
+							String s = st.nextToken();
+							language.getGermanName()
+							        .add(s);
+						}
+					}
+
+					LanguagesService languagesService = get(LanguagesService.class);
+					IClassification<?,?> lang = languagesService.createLanguage(language.getIso6391Code(), english, language.getIso6391Code(), system);
+					languagesService.updateLanguage(lang.getName(), null, language.getIso6392Code(), null, null, null, system);
+
+					for (String s : language.getName())
+					{
+						languagesService.updateLanguage(lang.getName(), null, null, s, null, null, system);
+					}
+					for (String s : language.getFrenchName())
+					{
+						languagesService.updateLanguage(lang.getName(), null, null, null, s, null, system);
+					}
+					for (String s : language.getGermanName())
+					{
+						languagesService.updateLanguage(lang.getName(), null, null, null, null, s, system);
+					}
+
+					if (current % 5 == 0)
+					{
+						logProgress("Geography Service", "Loading Language - " +
+										(language.getName()
+										         .isEmpty() ? " - " : language.getName()
+										                                      .toArray()[0])
+								, 5);
 					}
 				}
-				if (!french.isEmpty())
-				{
-					StringTokenizer st = new StringTokenizer(french, ";");
-					while (st.hasMoreTokens())
-					{
-						String s = st.nextToken();
-						language.getFrenchName()
-						        .add(s);
-					}
-				}
-				if (!german.isEmpty())
-				{
-					StringTokenizer st = new StringTokenizer(german, ";");
-					while (st.hasMoreTokens())
-					{
-						String s = st.nextToken();
-						language.getGermanName()
-						        .add(s);
-					}
-				}
-				
-				LanguagesService languagesService = get(LanguagesService.class);
-				IClassification<?,?> lang = languagesService.createLanguage(language.getIso6391Code(), english, language.getIso6391Code(), system);
-				languagesService.updateLanguage(lang.getName(), null, language.getIso6392Code(), null, null, null, system);
-				
-				for (String s : language.getName())
-				{
-					languagesService.updateLanguage(lang.getName(), null, null, s, null, null, system);
-				}
-				for (String s : language.getFrenchName())
-				{
-					languagesService.updateLanguage(lang.getName(), null, null, null, s, null, system);
-				}
-				for (String s : language.getGermanName())
-				{
-					languagesService.updateLanguage(lang.getName(), null, null, null, null, s, system);
-				}
-				
-				if (current % 5 == 0)
-				{
-					logProgress("Geography Service", "Loading Language - " +
-									(language.getName()
-									         .isEmpty() ? " - " : language.getName()
-									                                      .toArray()[0])
-							, 5);
-				}
+				logProgress("Geography Service", "Geography Associated Languages queued", 1);
+				return null;
 			}
-		}
-		logProgress("Geography Service", "Geography Associated Languages queued", 1);
+			catch (Exception e) {
+				log.error("Error loading languages", e);
+				throw new RuntimeException("Error loading languages", e);
+			}
+		})
+		.onFailure().invoke(error -> log.error("Error loading languages: {}", error.getMessage(), error))
+		.map(result -> null); // Convert to Void
 	}
-	
-	
+
+
 	@Override
-	public void loadCountryInfo(ISystems<?,?> system)
+	public Uni<Void> loadCountryInfo(ISystems<?,?> system)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		IClassificationDataConceptService<?> conceptService = get(IClassificationDataConceptService.class);
 		UUID identityToken = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
-		
+
 		setCurrentTask(0);
 		setTotalTasks(252);
-		try (GeoDataFinder finder = new GeoDataFinder(CountryInfo, CSVFormat.TDF, CountryInfo.getHeaderNames()))
-		{
-			int current = 0;
-			for (CSVRecord record : finder.getRecords())
+
+		return Uni.createFrom().item(() -> {
+			try (GeoDataFinder finder = new GeoDataFinder(CountryInfo, CSVFormat.TDF, CountryInfo.getHeaderNames()))
 			{
-				current++;
-				GeographyCountry country = new GeographyCountry();
-				country.setIso(record.get(0));
-				country.setIso3(record.get(1));
-				country.setIsoNumeric(record.get(2));
-				country.setFips(record.get(3));
-				country.setCountryName(record.get(4));
-				country.setCapital(record.get(5));
-				country.setAreaSqlKM(record.get(6));
-				try
+				int current = 0;
+				for (CSVRecord record : finder.getRecords())
 				{
-					country.setPopulation(Integer.parseInt(record.get(7)));
+					current++;
+					GeographyCountry country = new GeographyCountry();
+					country.setIso(record.get(0));
+					country.setIso3(record.get(1));
+					country.setIsoNumeric(record.get(2));
+					country.setFips(record.get(3));
+					country.setCountryName(record.get(4));
+					country.setCapital(record.get(5));
+					country.setAreaSqlKM(record.get(6));
+					try
+					{
+						country.setPopulation(Integer.parseInt(record.get(7)));
+					}
+					catch (NumberFormatException nfe)
+					{
+						country.setPopulation(0);
+					}
+
+					String continentCode = record.get(8);
+					GeographyContinent gc = findContinent(new GeographyContinent().setContinentCode(continentCode), system, identityToken);
+					country.setContinent(gc);
+
+					country.setWebTld(record.get(9));
+
+					IClassification<?,?> currencyClassification = get(CurrencyService.class).createCurrency(record.get(10), record.get(11), system, identityToken);
+					GeographyCurrency gcc = new GeographyCurrency().setCurrencyCode(currencyClassification.getName())
+					                                               .setCurrencyName(currencyClassification.getDescription());
+					country.setCurrency(gcc);
+
+					country.setCountryDialCode(record.get(12));
+					country.setPostalCodeDecimalFormat(record.get(13));
+					country.setPostalCodeRegexFormat(record.get(14));
+
+					String languagesList = record.get(15);
+					for (String s : languagesList.split(","))
+					{
+						ISO639Language lang = new ISO639Language();
+						lang.setIso6391Code(s);
+						country.getLanguages()
+						       .add(lang);
+					}
+
+					try
+					{
+						country.setGeonameId(Long.parseLong(record.get(16)));
+					}
+					catch (NumberFormatException nfe)
+					{
+
+					}
+					if (record.size() > 17)
+					{
+						String neighbours = record.get(17);
+					}
+					if (record.size() > 18)
+					{
+						country.setEquivalentFips(record.get(18));
+					}
+
+					GeographyCountry gccc = createCountry(country, system);
+					logProgress("Geography Service", "Loaded Country " + country.getCountryName(), 1);
 				}
-				catch (NumberFormatException nfe)
-				{
-					country.setPopulation(0);
-				}
-				
-				String continentCode = record.get(8);
-				GeographyContinent gc = findContinent(new GeographyContinent().setContinentCode(continentCode), system, identityToken);
-				country.setContinent(gc);
-				
-				country.setWebTld(record.get(9));
-				
-				IClassification<?,?> currencyClassification = get(CurrencyService.class).createCurrency(record.get(10), record.get(11), system, identityToken);
-				GeographyCurrency gcc = new GeographyCurrency().setCurrencyCode(currencyClassification.getName())
-				                                               .setCurrencyName(currencyClassification.getDescription());
-				country.setCurrency(gcc);
-				
-				country.setCountryDialCode(record.get(12));
-				country.setPostalCodeDecimalFormat(record.get(13));
-				country.setPostalCodeRegexFormat(record.get(14));
-				
-				String languagesList = record.get(15);
-				for (String s : languagesList.split(","))
-				{
-					ISO639Language lang = new ISO639Language();
-					lang.setIso6391Code(s);
-					country.getLanguages()
-					       .add(lang);
-				}
-				
-				try
-				{
-					country.setGeonameId(Long.parseLong(record.get(16)));
-				}
-				catch (NumberFormatException nfe)
-				{
-				
-				}
-				if (record.size() > 17)
-				{
-					String neighbours = record.get(17);
-				}
-				if (record.size() > 18)
-				{
-					country.setEquivalentFips(record.get(18));
-				}
-				
-				GeographyCountry gccc = createCountry(country, system);
-				logProgress("Geography Service", "Loaded Country " + country.getCountryName(), 1);
+				logProgress("Geography Service", "Finished Loading Countries", 10);
+				return null;
 			}
-		}
-		logProgress("Geography Service", "Finished Loading Countries", 10);
+			catch (Exception e) {
+				log.error("Error loading country info", e);
+				throw new RuntimeException("Error loading country info", e);
+			}
+		})
+		.onFailure().invoke(error -> log.error("Error loading country info: {}", error.getMessage(), error))
+		.map(result -> null); // Convert to Void
 	}
-	
+
 	/**
 	 * By timezone ID
 	 * <p>
@@ -414,7 +454,7 @@ public class GeographyService
 	{
 		UUID identityToken = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
 		TimeZoneService timeZoneService = get(TimeZoneService.class);
-		
+
 		IClassification<?,?> timeZoneClassification = timeZoneService.findTimeZone(timezone.getTimezoneID(), system, identityToken);
 		GeographyTimezone tz = new GeographyTimezone();
 		tz.setTimezoneID(timeZoneClassification.getName());
@@ -436,283 +476,304 @@ public class GeographyService
 				tz.setOffsetJan2016(Double.parseDouble(values.get(0)[2].toString()));
 			}
 		}
-		
+
 		return tz;
 	}
-	
+
 	@Override
-	public void loadTimeZones(ISystems<?,?> system)
+	public Uni<Void> loadTimeZones(ISystems<?,?> system)
 	{
 		setCurrentTask(0);
 		setTotalTasks(425);
-		try (GeoDataFinder finder = new GeoDataFinder(TimeZones, CSVFormat.TDF, TimeZones.getHeaderNames()))
-		{
-			int current = 0;
-			for (CSVRecord record : finder.getRecords())
+
+		return Uni.createFrom().item(() -> {
+			try (GeoDataFinder finder = new GeoDataFinder(TimeZones, CSVFormat.TDF, TimeZones.getHeaderNames()))
 			{
-				current++;
-				GeographyTimezone timezone = new GeographyTimezone();
-				timezone.setTimezoneID(record.get(1));
-				timezone.setOffsetJan2016(Double.parseDouble(record.get(2)));
-				timezone.setOffsetJuly2016(Double.parseDouble(record.get(3)));
-				timezone.setRawOffset(Double.parseDouble(record.get(4)));
-				create(timezone, system);
-				
-				ISystems<?,?> geoSystem = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystem(system.getEnterprise());
-				UUID identityToken = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
-				CountryService cs = get(CountryService.class);
-				IGeography<?,?> country = cs.findCountry(record.get(0), system);
-				
-				TimeZoneService timeZoneService = get(TimeZoneService.class);
-				IClassification<?,?> timeZone = timeZoneService.findTimeZone(timezone.getTimezoneID(), system, identityToken);
-				country.addOrUpdateClassification(TimeZone, timeZone.getName(), geoSystem, identityToken);
-				
-				if (current % 5 == 0)
+				int current = 0;
+				for (CSVRecord record : finder.getRecords())
 				{
-					logProgress("TimeZones", "Loaded Timezone - " + timezone.getTimezoneID(), 5);
+					current++;
+					GeographyTimezone timezone = new GeographyTimezone();
+					timezone.setTimezoneID(record.get(1));
+					timezone.setOffsetJan2016(Double.parseDouble(record.get(2)));
+					timezone.setOffsetJuly2016(Double.parseDouble(record.get(3)));
+					timezone.setRawOffset(Double.parseDouble(record.get(4)));
+					create(timezone, system);
+
+					ISystems<?,?> geoSystem = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystem(system.getEnterprise());
+					UUID identityToken = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
+					CountryService cs = get(CountryService.class);
+					IGeography<?,?> country = cs.findCountry(record.get(0), system);
+
+					TimeZoneService timeZoneService = get(TimeZoneService.class);
+					IClassification<?,?> timeZone = timeZoneService.findTimeZone(timezone.getTimezoneID(), system, identityToken);
+					country.addOrUpdateClassification(TimeZone, timeZone.getName(), geoSystem, identityToken);
+
+					if (current % 5 == 0)
+					{
+						logProgress("TimeZones", "Loaded Timezone - " + timezone.getTimezoneID(), 5);
+					}
 				}
+				return null;
 			}
-		}
+			catch (Exception e) {
+				log.error("Error loading time zones", e);
+				throw new RuntimeException("Error loading time zones", e);
+			}
+		})
+		.onFailure().invoke(error -> log.error("Error loading time zones: {}", error.getMessage(), error))
+		.map(result -> null); // Convert to Void
 	}
-	
+
 	////@Transactional()
 	public GeographyTimezone create(GeographyTimezone timezone, ISystems<?,?> system)
 	{
 		UUID identityToken = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
 		TimeZoneService timeZoneService = get(TimeZoneService.class);
 		timeZoneService.createTimeZone(timezone.getTimezoneID(), timezone.getTimezoneID(), null, system, identityToken);
-		
+
 		timeZoneService.updateTimeZone(timezone.getTimezoneID(), null,
 				timezone.getRawOffset() + "", timezone.getOffsetJuly2016() + "", timezone.getOffsetJan2016() + "",
 				system, identityToken);
 		return timezone;
 	}
-	
+
 	@Override
-	public void loadPostalCodes(ISystems<?,?> system)
+	public Uni<Void> loadPostalCodes(ISystems<?,?> system)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		IClassificationDataConceptService<?> conceptService = get(IClassificationDataConceptService.class);
 
 		UUID identityToken = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
-		//Postal Codes Full Listing
-		Map<Long, List<GeographyPostalCode>> postalCodeMap = new HashMap<>();
-		setCurrentTask(0);
-		setTotalTasks(3921);
-		try (GeoDataFinder finder = new GeoDataFinder(ZAPostalCodes, CSVFormat.TDF, ZAPostalCodes.getHeaderNames()))
-		{
-			int current = 0;
-			for (CSVRecord record : finder.getRecords())
-			{
-				current++;
-				GeographyPostalCode post = new GeographyPostalCode();
-				String countryCode = record.get(0);
-				GeographyCountry cunt = findCountry(new GeographyCountry().setIso(countryCode), system, identityToken);
-				post.setCountryCode(cunt);
-				post.setPostalCode(record.get(1));
-				post.setPostalCodePlaceName(record.get(2));
-				post.setParentPlaceName(record.get(2));
-				GeographyCoordinates coordinates = new GeographyCoordinates(record.get(9), record.get(10));
-				post.setCoordinates(coordinates);
-				
-				if (!postalCodeMap.containsKey(Long.valueOf(post.getPostalCode())))
+
+		return Uni.createFrom().item(() -> {
+			try {
+				//Postal Codes Full Listing
+				Map<Long, List<GeographyPostalCode>> postalCodeMap = new HashMap<>();
+				setCurrentTask(0);
+				setTotalTasks(3921);
+				try (GeoDataFinder finder = new GeoDataFinder(ZAPostalCodes, CSVFormat.TDF, ZAPostalCodes.getHeaderNames()))
 				{
-					postalCodeMap.put(Long.valueOf(post.getPostalCode()), new ArrayList<>());
-				}
-				if (record.size() > 11)
-				{
-					String adminCodeType = record.get(11);
-					if (!Strings.isNullOrEmpty(adminCodeType))
+					int current = 0;
+					for (CSVRecord record : finder.getRecords())
 					{
-						postalCodeMap.get(Long.valueOf(post.getPostalCode()))
-						             .add(post);
+						current++;
+						GeographyPostalCode post = new GeographyPostalCode();
+						String countryCode = record.get(0);
+						GeographyCountry cunt = findCountry(new GeographyCountry().setIso(countryCode), system, identityToken);
+						post.setCountryCode(cunt);
+						post.setPostalCode(record.get(1));
+						post.setPostalCodePlaceName(record.get(2));
+						post.setParentPlaceName(record.get(2));
+						GeographyCoordinates coordinates = new GeographyCoordinates(record.get(9), record.get(10));
+						post.setCoordinates(coordinates);
+
+						if (!postalCodeMap.containsKey(Long.valueOf(post.getPostalCode())))
+						{
+							postalCodeMap.put(Long.valueOf(post.getPostalCode()), new ArrayList<>());
+						}
+						if (record.size() > 11)
+						{
+							String adminCodeType = record.get(11);
+							if (!Strings.isNullOrEmpty(adminCodeType))
+							{
+								postalCodeMap.get(Long.valueOf(post.getPostalCode()))
+										.add(post);
+							}
+						}
+						//create(post, enterpriseName);
+						if (current % 3 == 0)
+						{
+							logProgress("Postal Codes", "Loaded PostalCode - " + post.getPostalCode(), 3);
+						}
 					}
 				}
-				//create(post, enterpriseName);
-				if (current % 3 == 0)
+
+				/*setCurrentTask(0);
+				setTotalTasks(19888);
+				try (GeoDataFinder finder = new GeoDataFinder(ZAPostalCodesUpdates, CSVFormat.TDF))
 				{
-					logProgress("Postal Codes", "Loaded PostalCode - " + post.getPostalCode(), 3);
-				}
-			}
-		}
-		
-		/*setCurrentTask(0);
-		setTotalTasks(19888);
-		try (GeoDataFinder finder = new GeoDataFinder(ZAPostalCodesUpdates, CSVFormat.TDF))
-		{
-			int current = 0;
-			Set<String> completedPostalCodes = new HashSet<>();
-			for (CSVRecord record : finder.getRecords())
-			{
-				current++;
-				GeographyPostalCode post = new GeographyPostalCode();
-				String countryCode = record.get("countryCode");
-				if (countryCode.equals("RSA")) //iso3
+					int current = 0;
+					Set<String> completedPostalCodes = new HashSet<>();
+					for (CSVRecord record : finder.getRecords())
+					{
+						current++;
+						GeographyPostalCode post = new GeographyPostalCode();
+						String countryCode = record.get("countryCode");
+						if (countryCode.equals("RSA")) //iso3
+						{
+							countryCode = "ZA"; //iso2
+						}
+
+						GeographyCountry country = findCountry(new GeographyCountry().setIso(countryCode), system, identityToken);
+						post.setCountryCode(country);
+
+						Long pcFor = Long.parseLong(record.get("postalCode"));
+						//String value = postalCodeFormat.format(pcFor);
+						String value = String.valueOf(pcFor);
+
+						post.setGeonameId(Long.valueOf(record.get("id")));
+
+						post.setPostalCode(value);
+						post.setPostalCodePlaceName(WordUtils.capitalize(StringUtils.lowerCase(record.get("suburb"))));
+						post.setParentPlaceName(WordUtils.capitalize(StringUtils.lowerCase(record.get("city"))));
+
+						String province = record.get("stateProvinceName");
+						if (province.equalsIgnoreCase("Free State"))
+						{
+							province = "Orange Free State";
+						}
+						else if (province.equalsIgnoreCase("KwaZulu Natal"))
+						{
+							province = "KwaZulu-Natal";
+						}
+						else if (province.equalsIgnoreCase("North West Province"))
+						{
+							province = "North-West";
+						}
+
+
+						post.setProvinceName(province);
+
+						if (!postalCodeMap.containsKey(Long.valueOf(post.getPostalCode())))
+						{
+							postalCodeMap.put(Long.valueOf(post.getPostalCode()), new ArrayList<>());
+						}
+						postalCodeMap.get(Long.valueOf(post.getPostalCode()))
+									.add(post);
+
+						if (current % 3 == 0)
+						{
+							logProgress("Postal Codes", "Loaded PostalCode Updates - " + post.getPostalCode(), 3);
+						}
+					}
+				}*/
+
+				DistrictService districtService = get(DistrictService.class);
+				PostalCodeService postalCodeService = get(PostalCodeService.class);
+				int current = 0;
+				setTotalTasks(postalCodeMap.size());
+				setCurrentTask(0);
+				for (Map.Entry<Long, List<GeographyPostalCode>> entry : postalCodeMap.entrySet())
 				{
-					countryCode = "ZA"; //iso2
-				}
-				
-				GeographyCountry country = findCountry(new GeographyCountry().setIso(countryCode), system, identityToken);
-				post.setCountryCode(country);
-				
-				Long pcFor = Long.parseLong(record.get("postalCode"));
-				//String value = postalCodeFormat.format(pcFor);
-				String value = String.valueOf(pcFor);
-				
-				post.setGeonameId(Long.valueOf(record.get("id")));
-				
-				post.setPostalCode(value);
-				post.setPostalCodePlaceName(WordUtils.capitalize(StringUtils.lowerCase(record.get("suburb"))));
-				post.setParentPlaceName(WordUtils.capitalize(StringUtils.lowerCase(record.get("city"))));
-				
-				String province = record.get("stateProvinceName");
-				if (province.equalsIgnoreCase("Free State"))
-				{
-					province = "Orange Free State";
-				}
-				else if (province.equalsIgnoreCase("KwaZulu Natal"))
-				{
-					province = "KwaZulu-Natal";
-				}
-				else if (province.equalsIgnoreCase("North West Province"))
-				{
-					province = "North-West";
-				}
-				
-				
-				post.setProvinceName(province);
-				
-				if (!postalCodeMap.containsKey(Long.valueOf(post.getPostalCode())))
-				{
-					postalCodeMap.put(Long.valueOf(post.getPostalCode()), new ArrayList<>());
-				}
-				postalCodeMap.get(Long.valueOf(post.getPostalCode()))
-				             .add(post);
-				
-				if (current % 3 == 0)
-				{
-					logProgress("Postal Codes", "Loaded PostalCode Updates - " + post.getPostalCode(), 3);
-				}
-			}
-		}*/
-		
-		DistrictService districtService = get(DistrictService.class);
-		PostalCodeService postalCodeService = get(PostalCodeService.class);
-		int current = 0;
-		setTotalTasks(postalCodeMap.size());
-		setCurrentTask(0);
-		for (Map.Entry<Long, List<GeographyPostalCode>> entry : postalCodeMap.entrySet())
-		{
-			Long key = entry.getKey();
-			List<GeographyPostalCode> value = entry.getValue();
-			current++;
-			//Find the town, or the city/district
-			TownService townService = get(TownService.class);
-			if(value.isEmpty())
-			{
-				LogFactory.getLog("Geography Service").log(Level.WARNING,"Unknown Postal Code for district? - " + key);
-				continue;
-			}
-			GeographyPostalCode gp = value.get(0);
-			if (value.size() > 1)
-			{
-				gp.setProvinceName(value.get(1)
-				                        .getProvinceName());
-			}
-			IGeography<?,?> town = null;
-			try
-			{
-				town = townService.findTown(gp.getParentPlaceName(), system, identityToken);
-			}
-			catch (Throwable T)
-			{
-				if (!Strings.isNullOrEmpty(gp.getProvinceName()))
-				{
+					Long key = entry.getKey();
+					List<GeographyPostalCode> value = entry.getValue();
+					current++;
+					//Find the town, or the city/district
+					TownService townService = get(TownService.class);
+					if(value.isEmpty())
+					{
+						LogFactory.getLog("Geography Service").log(Level.WARNING,"Unknown Postal Code for district? - " + key);
+						continue;
+					}
+					GeographyPostalCode gp = value.get(0);
+					if (value.size() > 1)
+					{
+						gp.setProvinceName(value.get(1)
+												.getProvinceName());
+					}
+					IGeography<?,?> town = null;
 					try
 					{
-						IGeography<?,?> firstDistrictInProvince = districtService.findFirstDistrictInProvince(gp.getProvinceName(), system, identityToken);
-						town = townService.createTown((IGeography<Geography, GeographyQueryBuilder>) firstDistrictInProvince,
-								gp.getParentPlaceName(), gp.getParentPlaceName(),
+						town = townService.findTown(gp.getParentPlaceName(), system, identityToken);
+					}
+					catch (Throwable T)
+					{
+						if (!Strings.isNullOrEmpty(gp.getProvinceName()))
+						{
+							try
+							{
+								IGeography<?,?> firstDistrictInProvince = districtService.findFirstDistrictInProvince(gp.getProvinceName(), system, identityToken);
+								town = townService.createTown((IGeography<Geography, GeographyQueryBuilder>) firstDistrictInProvince,
+										gp.getParentPlaceName(), gp.getParentPlaceName(),
+										gp.getGeonameId() == null ? "" : Long.toString(gp.getGeonameId()),
+										system, identityToken);
+								if (gp.getCoordinates() != null)
+								{
+									townService.updateTown(firstDistrictInProvince.getName(),
+											town.getName(),
+											null,
+											gp.getCoordinates()
+											.getLatitude(),
+											gp.getCoordinates()
+											.getLongitude(),
+											null,
+											null,
+											null,
+											null,
+											null,
+											system,
+											identityToken);
+								}
+							}
+							catch (Exception e)
+							{
+								LogFactory.getLog(GeographyService.class)
+										.log(Level.SEVERE, "Whhops? " + gp, e);
+							}
+						}
+						else
+						{
+							System.out.println("Now What? - " + gp);
+						}
+					}
+
+					if (town != null)
+					{
+						IGeography<?,?> postalCode = postalCodeService.createPostalCode((IGeography<Geography, GeographyQueryBuilder>) town,
+								gp.getPostalCode(), gp.getPostalCodePlaceName(),
 								gp.getGeonameId() == null ? "" : Long.toString(gp.getGeonameId()),
 								system, identityToken);
+						for (GeographyPostalCode geographyPostalCode : value)
+						{
+							IGeography<?,?> postalCodeSuburb = postalCodeService.createPostalCodeSuburb((IGeography<Geography, GeographyQueryBuilder>)
+											postalCode, geographyPostalCode.getPostalCode(),
+									geographyPostalCode.getPostalCodePlaceName(),
+									geographyPostalCode.getPostalCode(), system, identityToken
+																									);
+							if (gp.getCoordinates() != null)
+							{
+								postalCodeService.updatePostalCode(null,
+										null,
+										postalCodeSuburb.getName(),
+										null,
+										gp.getCoordinates()
+										.getLatitude(),
+										gp.getCoordinates()
+										.getLongitude(),
+										system,
+										identityToken);
+							}
+						}
 						if (gp.getCoordinates() != null)
 						{
-							townService.updateTown(firstDistrictInProvince.getName(),
-									town.getName(),
+							postalCodeService.updatePostalCodeParent(
+									postalCode.getName(),
 									null,
 									gp.getCoordinates()
-									  .getLatitude(),
+									.getLatitude(),
 									gp.getCoordinates()
-									  .getLongitude(),
-									null,
-									null,
-									null,
-									null,
-									null,
+									.getLongitude(),
 									system,
 									identityToken);
 						}
 					}
-					catch (Exception e)
+					if (current % 10 == 0)
 					{
-						LogFactory.getLog(GeographyService.class)
-						          .log(Level.SEVERE, "Whhops? " + gp, e);
+						logProgress("Postal Codes", "Loaded District->PostalCode Updates - " + gp.getPostalCode(), 10);
 					}
 				}
-				else
-				{
-					System.out.println("Now What? - " + gp);
-				}
+				//postalCodeService.createPostalCode();
+				return null;
+			} catch (Exception e) {
+				log.error("Error loading postal codes", e);
+				throw new RuntimeException("Error loading postal codes", e);
 			}
-			
-			if (town != null)
-			{
-				IGeography<?,?> postalCode = postalCodeService.createPostalCode((IGeography<Geography, GeographyQueryBuilder>) town,
-						gp.getPostalCode(), gp.getPostalCodePlaceName(),
-						gp.getGeonameId() == null ? "" : Long.toString(gp.getGeonameId()),
-						system, identityToken);
-				for (GeographyPostalCode geographyPostalCode : value)
-				{
-					IGeography<?,?> postalCodeSuburb = postalCodeService.createPostalCodeSuburb((IGeography<Geography, GeographyQueryBuilder>)
-									postalCode, geographyPostalCode.getPostalCode(),
-							geographyPostalCode.getPostalCodePlaceName(),
-							geographyPostalCode.getPostalCode(), system, identityToken
-					                                                                         );
-					if (gp.getCoordinates() != null)
-					{
-						postalCodeService.updatePostalCode(null,
-								null,
-								postalCodeSuburb.getName(),
-								null,
-								gp.getCoordinates()
-								  .getLatitude(),
-								gp.getCoordinates()
-								  .getLongitude(),
-								system,
-								identityToken);
-					}
-				}
-				if (gp.getCoordinates() != null)
-				{
-					postalCodeService.updatePostalCodeParent(
-							postalCode.getName(),
-							null,
-							gp.getCoordinates()
-							  .getLatitude(),
-							gp.getCoordinates()
-							  .getLongitude(),
-							system,
-							identityToken);
-				}
-			}
-			if (current % 10 == 0)
-			{
-				logProgress("Postal Codes", "Loaded District->PostalCode Updates - " + gp.getPostalCode(), 10);
-			}
-		}
-		//postalCodeService.createPostalCode();
+		})
+		.onFailure().invoke(error -> log.error("Error loading postal codes: {}", error.getMessage(), error))
+		.map(result -> null); // Convert to Void
 	}
-	
+
 	@Override
 	//@CacheResult(cacheName = "GeographyPostalCodes")
 	public GeographyPostalCode findPostalCode( GeographyPostalCode postalCode,  ISystems<?,?> system, java.util.UUID... identityToken)
@@ -734,8 +795,8 @@ public class GeographyService
 		}
 		return result;
 	}
-	
-	
+
+
 	@Override
 	//@CacheResult(cacheName = "GeographyPostalCodesSuburb")
 	public GeographyPostalCode findPostalCodeSuburb( String code,  String description,  ISystems<?,?> system, java.util.UUID... identityToken)
@@ -758,7 +819,7 @@ public class GeographyService
 		}
 		return result;
 	}
-	
+
 	@Override
 	//@CacheResult(cacheName = "GeographyPostalCodesSuburb")
 	public GeographyPostalCode findOrCreatePostalCodeSuburb( String code,  String description,  ISystems<?,?> system, java.util.UUID... identityToken)
@@ -780,7 +841,7 @@ public class GeographyService
 		}
 		return result;
 	}
-	
+
 	@Override
 	//@CacheResult(cacheName = "GeographyFindGeographyById")
 	public IGeography<?,?> findGeographyById( UUID geographyID,  ISystems<?,?> system,  java.util.UUID... identityToken)
@@ -793,15 +854,15 @@ public class GeographyService
 		                      .get(true)
 		                      .orElse(null);
 	}
-	
-	
+
+
 	//@CacheResult(cacheName = "GeographyFindFeatureClass")
 	public IClassification<?,?> findFeatureClass( GeographyFeatureClassesClassifications key,  ISystems<?,?> system, java.util.UUID... identityToken)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		return classificationService.find(key.toString(), system, identityToken);
 	}
-	
+
 	/**
 	 * Created with everything populated,
 	 *
@@ -817,34 +878,44 @@ public class GeographyService
 		classificationService.create(featureCode.getCode(), featureCode.getDescription(), FeatureCodes.concept(), system,  0, classification, identityToken);
 		return featureCode;
 	}
-	
-	
+
+
 	@Override
-	public void loadFeatureCodes(ISystems<?,?> system, java.util.UUID... identityToken)
+	public Uni<Void> loadFeatureCodes(ISystems<?,?> system, java.util.UUID... identityToken)
 	{
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		setCurrentTask(0);
 		setTotalTasks(681);
-		try (GeoDataFinder finder = new GeoDataFinder(FeatureCodes_en, CSVFormat.TDF, FeatureCodes_en.getHeaderNames()))
-		{
-			for (CSVRecord record : finder.getRecords())
+
+		return Uni.createFrom().item(() -> {
+			try (GeoDataFinder finder = new GeoDataFinder(FeatureCodes_en, CSVFormat.TDF, FeatureCodes_en.getHeaderNames()))
 			{
-				GeographyFeatureCode featureCode = new GeographyFeatureCode();
-				featureCode.setCode(record.get("code"));
-				featureCode.setDescription(record.get("description"));
-				create(featureCode, system, identityToken);
-				
-				Classification clazz
-						= (Classification) classificationService.find(featureCode.getClassClassification()
-						                                                         .toString(), system, identityToken);
-				Classification featureCodeClassification = (Classification) classificationService.find(featureCode.getCode(), FeatureCodes.concept(), system, identityToken);
-				clazz.addChild(featureCodeClassification,NoClassification.toString(),null, system, identityToken);
-				
-				logProgress("Geography Feature Codes", "Loaded Feature Code - " + featureCode.toString(), 1);
+				for (CSVRecord record : finder.getRecords())
+				{
+					GeographyFeatureCode featureCode = new GeographyFeatureCode();
+					featureCode.setCode(record.get("code"));
+					featureCode.setDescription(record.get("description"));
+					create(featureCode, system, identityToken);
+
+					Classification clazz
+							= (Classification) classificationService.find(featureCode.getClassClassification()
+							                                                         .toString(), system, identityToken);
+					Classification featureCodeClassification = (Classification) classificationService.find(featureCode.getCode(), FeatureCodes.concept(), system, identityToken);
+					clazz.addChild(featureCodeClassification,NoClassification.toString(),null, system, identityToken);
+
+					logProgress("Geography Feature Codes", "Loaded Feature Code - " + featureCode.toString(), 1);
+				}
+				return null;
 			}
-		}
+			catch (Exception e) {
+				log.error("Error loading feature codes", e);
+				throw new RuntimeException("Error loading feature codes", e);
+			}
+		})
+		.onFailure().invoke(error -> log.error("Error loading feature codes: {}", error.getMessage(), error))
+		.map(result -> null); // Convert to Void
 	}
-	
+
 	@Override
 	//@CacheResult(cacheName = "GeographyfindFeatureCode")
 	public GeographyFeatureCode findFeatureCode( String featureCode,  ISystems<?,?> system, java.util.UUID... identityToken)
@@ -854,7 +925,7 @@ public class GeographyService
 		                                                       .setDescription(fClass.getDescription());
 		return fCode;
 	}
-	
+
 	@Override
 	//@CacheResult(cacheName = "GeographyfindFeatureCodeClassification")
 	public IClassification<?,?> findFeatureCodeClassification( String featureCode,  ISystems<?,?> system, java.util.UUID... identityToken)
@@ -862,169 +933,179 @@ public class GeographyService
 		IClassificationService<?> classificationService = get(IClassificationService.class);
 		return classificationService.find(featureCode, system, identityToken);
 	}
-	
+
 	@Override
-	public void loadTownsAndCities(ISystems<?,?> system)
+	public Uni<Void> loadTownsAndCities(ISystems<?,?> system)
 	{
 		UUID identityToken = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
-		
-		Map<Long, GeoNameDefaultData<?>> dataMap = new TreeMap<>();
-		Map<Long, List<Long>> hierarchyMap = new ConcurrentHashMap<>();
-		
-		setTotalTasks(102850);
-		try (GeoDataFinder finder = new GeoDataFinder(ZAGeoData, CSVFormat.TDF, ZAGeoData.getHeaderNames()))
-		{
-			int count = 0;
-			for (CSVRecord a : finder.getRecords())
-			{
-				count++;
-				String featureCode = a.get("feature code");
-				if (Strings.isNullOrEmpty(featureCode))
+
+		return Uni.createFrom().item(() -> {
+			try {
+				Map<Long, GeoNameDefaultData<?>> dataMap = new TreeMap<>();
+				Map<Long, List<Long>> hierarchyMap = new ConcurrentHashMap<>();
+
+				setTotalTasks(102850);
+				try (GeoDataFinder finder = new GeoDataFinder(ZAGeoData, CSVFormat.TDF, ZAGeoData.getHeaderNames()))
 				{
-					featureCode = "Z.UKN";
-				}
-				else
-				{
-					featureCode = a.get("feature class") + "." + featureCode;
-				}
-				GeoNameDefaultData<?> data = new GeoNameDefaultData<>();
-				data.setFeatureCode(findFeatureCode(featureCode, system, identityToken));
-				data.setFeatureClass(data.getFeatureCode()
-				                         .getClassClassification());
-				
-				if (!EnumSet.of(GeographyFeatureClassesClassifications.A,
-						GeographyFeatureClassesClassifications.P)
-				            .contains(data.getFeatureClass()))
-				{
-					if (count % 50 == 0)
+					int count = 0;
+					for (CSVRecord a : finder.getRecords())
 					{
-						logProgress("Geography Data", "Skipped Non-Place Location - " + a.get("asciiname") +
-								" (" + getCurrentTask() + "/" + getTotalTasks() + ")", 50);
+						count++;
+						String featureCode = a.get("feature code");
+						if (Strings.isNullOrEmpty(featureCode))
+						{
+							featureCode = "Z.UKN";
+						}
+						else
+						{
+							featureCode = a.get("feature class") + "." + featureCode;
+						}
+						GeoNameDefaultData<?> data = new GeoNameDefaultData<>();
+						data.setFeatureCode(findFeatureCode(featureCode, system, identityToken));
+						data.setFeatureClass(data.getFeatureCode()
+												 .getClassClassification());
+
+						if (!EnumSet.of(GeographyFeatureClassesClassifications.A,
+								GeographyFeatureClassesClassifications.P)
+									.contains(data.getFeatureClass()))
+						{
+							if (count % 50 == 0)
+							{
+								logProgress("Geography Data", "Skipped Non-Place Location - " + a.get("asciiname") +
+										" (" + getCurrentTask() + "/" + getTotalTasks() + ")", 50);
+							}
+							continue;
+						}
+						if (!Strings.isNullOrEmpty(a.get("admin1 code")))
+						{
+							data.setAdmin1Code(new GeographyAsciiCode().setCode(a.get("admin1 code")));
+						}
+						if (!Strings.isNullOrEmpty(a.get("admin2 code")))
+						{
+							data.setAdmin2Code(new GeographyAsciiCode().setCode(a.get("admin2 code")));
+						}
+						if (!Strings.isNullOrEmpty(a.get("admin3 code")))
+						{
+							data.setAdmin3Code(a.get("admin3 code"));
+						}
+						if (!Strings.isNullOrEmpty(a.get("admin4 code")))
+						{
+							data.setAdmin4Code(a.get("admin4 code"));
+						}
+
+						data.setAsciiname(a.get("asciiname"));
+						data.setName(a.get("name"));
+						data.setGeonameId(Long.parseLong(a.get("geonameid")));
+						data.setCountryCode(findCountry(new GeographyCountry().setIso(a.get("country code")), system, identityToken));
+						data.setCoordinates(new GeographyCoordinates(a.get("latitude"), a.get("longitude")));
+
+						if (!Strings.isNullOrEmpty(a.get("dem")))
+						{
+							data.setDem(Integer.parseInt(a.get("dem")));
+						}
+						if (!Strings.isNullOrEmpty(a.get("elevation")))
+						{
+							data.setElevation(Integer.parseInt(a.get("elevation")));
+						}
+						if (!Strings.isNullOrEmpty(a.get("population")))
+						{
+							data.setPopulation(Integer.parseInt(a.get("population")));
+						}
+
+						dataMap.put(data.getGeonameId(), data);
+
+						if (count % 50 == 0)
+						{
+							logProgress("Geography Data", "Loaded - " + a.get("asciiname") +
+									" (" + getCurrentTask() + "/" + getTotalTasks() + ")", 50);
+						}
 					}
-					continue;
 				}
-				if (!Strings.isNullOrEmpty(a.get("admin1 code")))
+
+				setCurrentTask(0);
+				setTotalTasks(488058);
+				try (GeoDataFinder finder = new GeoDataFinder(Hierarchy, CSVFormat.TDF, Hierarchy.getHeaderNames()))
 				{
-					data.setAdmin1Code(new GeographyAsciiCode().setCode(a.get("admin1 code")));
+					int count = 0;
+					for (CSVRecord record : finder.getRecords())
+					{
+						count++;
+						if (!"ADM".equals(record.get("type")))
+						{
+							continue;
+						}
+						addToMap(Long.valueOf(record.get(0)), Long.valueOf(record.get(1)), hierarchyMap);
+						if (count % 50 == 0)
+						{
+							logProgress("Geography Data", "Loaded Hierarchy Data - " + record.get(0) +
+									" (" + getCurrentTask() + "/" + getTotalTasks() + ")", 50);
+						}
+					}
 				}
-				if (!Strings.isNullOrEmpty(a.get("admin2 code")))
-				{
-					data.setAdmin2Code(new GeographyAsciiCode().setCode(a.get("admin2 code")));
-				}
-				if (!Strings.isNullOrEmpty(a.get("admin3 code")))
-				{
-					data.setAdmin3Code(a.get("admin3 code"));
-				}
-				if (!Strings.isNullOrEmpty(a.get("admin4 code")))
-				{
-					data.setAdmin4Code(a.get("admin4 code"));
-				}
-				
-				data.setAsciiname(a.get("asciiname"));
-				data.setName(a.get("name"));
-				data.setGeonameId(Long.parseLong(a.get("geonameid")));
-				data.setCountryCode(findCountry(new GeographyCountry().setIso(a.get("country code")), system, identityToken));
-				data.setCoordinates(new GeographyCoordinates(a.get("latitude"), a.get("longitude")));
-				
-				if (!Strings.isNullOrEmpty(a.get("dem")))
-				{
-					data.setDem(Integer.parseInt(a.get("dem")));
-				}
-				if (!Strings.isNullOrEmpty(a.get("elevation")))
-				{
-					data.setElevation(Integer.parseInt(a.get("elevation")));
-				}
-				if (!Strings.isNullOrEmpty(a.get("population")))
-				{
-					data.setPopulation(Integer.parseInt(a.get("population")));
-				}
-				
-				dataMap.put(data.getGeonameId(), data);
-				
-				if (count % 50 == 0)
-				{
-					logProgress("Geography Data", "Loaded - " + a.get("asciiname") +
-							" (" + getCurrentTask() + "/" + getTotalTasks() + ")", 50);
-				}
-			}
-		}
-		
-		setCurrentTask(0);
-		setTotalTasks(488058);
-		try (GeoDataFinder finder = new GeoDataFinder(Hierarchy, CSVFormat.TDF, Hierarchy.getHeaderNames()))
-		{
-			int count = 0;
-			for (CSVRecord record : finder.getRecords())
-			{
-				count++;
-				if (!"ADM".equals(record.get("type")))
-				{
-					continue;
-				}
-				addToMap(Long.valueOf(record.get(0)), Long.valueOf(record.get(1)), hierarchyMap);
-				if (count % 50 == 0)
-				{
-					logProgress("Geography Data", "Loaded Hierarchy Data - " + record.get(0) +
-							" (" + getCurrentTask() + "/" + getTotalTasks() + ")", 50);
-				}
-			}
-		}
-		
-		logProgress("Geography Data", "Cleaning up hierarchy for data map..." +
-				" (" + getCurrentTask() + "/" + getTotalTasks() + ")", 1);
-		
-		hierarchyMap.entrySet()
-		            .iterator()
-		            .forEachRemaining(a -> {
-			            if (!dataMap.containsKey(a.getKey()))
-			            {
-				            hierarchyMap.remove(a.getKey());
-			            }
-		            });
-		
-		logProgress("Geography Data", "Mapping Districts to Places..." +
-				" (" + getCurrentTask() + "/" + getTotalTasks() + ")", 1);
-		dataMap.forEach((key, value) -> {
-			if (value.getAdmin2Code() != null)
-			{
+
+				logProgress("Geography Data", "Cleaning up hierarchy for data map..." +
+						" (" + getCurrentTask() + "/" + getTotalTasks() + ")", 1);
+
+				hierarchyMap.entrySet()
+							.iterator()
+							.forEachRemaining(a -> {
+								if (!dataMap.containsKey(a.getKey()))
+								{
+									hierarchyMap.remove(a.getKey());
+								}
+							});
+
+				logProgress("Geography Data", "Mapping Districts to Places..." +
+						" (" + getCurrentTask() + "/" + getTotalTasks() + ")", 1);
+				dataMap.forEach((key, value) -> {
+					if (value.getAdmin2Code() != null)
+					{
+						DistrictService districtService = get(DistrictService.class);
+						String dName = value.getCountryCode()
+											.getIso() + "." +
+							   value.getAdmin1Code()
+											.getCode() + "." +
+							   value.getAdmin2Code()
+											.getCode();
+						try
+						{
+							IGeography<?, ?> district = districtService.findDistrict(dName, system, identityToken);
+							if (!hierarchyMap.containsKey(Long.valueOf(district.getOriginalSourceSystemUniqueID())))
+							{
+								hierarchyMap.put(Long.valueOf(district.getOriginalSourceSystemUniqueID()), new ArrayList<>());
+							}
+							if (!hierarchyMap.get(Long.valueOf(district.getOriginalSourceSystemUniqueID()))
+											 .contains(value.getGeonameId()))
+							{
+								hierarchyMap.get(Long.valueOf(district.getOriginalSourceSystemUniqueID()))
+											.add(value.getGeonameId());
+							}
+						}catch (Throwable T)
+						{
+							LogFactory.getLog("Geography Service").log(Level.WARNING,"Cannot find district with code - " + dName);
+						}
+					}
+				});
+
 				DistrictService districtService = get(DistrictService.class);
-				String dName = value.getCountryCode()
-				                    .getIso() + "." +
-				               value.getAdmin1Code()
-				                    .getCode() + "." +
-				               value.getAdmin2Code()
-				                    .getCode();
-				try
-				{
-					IGeography<?, ?> district = districtService.findDistrict(dName, system, identityToken);
-					if (!hierarchyMap.containsKey(Long.valueOf(district.getOriginalSourceSystemUniqueID())))
-					{
-						hierarchyMap.put(Long.valueOf(district.getOriginalSourceSystemUniqueID()), new ArrayList<>());
-					}
-					if (!hierarchyMap.get(Long.valueOf(district.getOriginalSourceSystemUniqueID()))
-					                 .contains(value.getGeonameId()))
-					{
-						hierarchyMap.get(Long.valueOf(district.getOriginalSourceSystemUniqueID()))
-						            .add(value.getGeonameId());
-					}
-				}catch (Throwable T)
-				{
-					LogFactory.getLog("Geography Service").log(Level.WARNING,"Cannot find district with code - " + dName);
-				}
+				ProvinceService provinceService = get(ProvinceService.class);
+				List<Geography> allDistricts = districtService.findAllDistricts(system, identityToken);
+
+				setCurrentTask(0);
+				setTotalTasks(hierarchyMap.size());
+				logProgress("Geo Hierarchy", "Loading Structure... " + hierarchyMap.size() + " in total", 1);
+				loadHierarchyLevel(hierarchyMap, dataMap, allDistricts, system, identityToken);
+
+				return null;
+			} catch (Exception e) {
+				log.error("Error loading towns and cities", e);
+				throw new RuntimeException("Error loading towns and cities", e);
 			}
-		});
-		
-		DistrictService districtService = get(DistrictService.class);
-		ProvinceService provinceService = get(ProvinceService.class);
-		List<Geography> allDistricts = districtService.findAllDistricts(system, identityToken);
-		
-		setCurrentTask(0);
-		setTotalTasks(hierarchyMap.size());
-		logProgress("Geo Hierarchy", "Loading Structure... " + hierarchyMap.size() + " in total", 1);
-		loadHierarchyLevel(hierarchyMap, dataMap, allDistricts, system, identityToken);
-		
+		})
+		.onFailure().invoke(error -> log.error("Error loading towns and cities: {}", error.getMessage(), error))
+		.map(result -> null); // Convert to Void
 	}
-	
+
 	private void loadHierarchyLevel(Map<Long, List<Long>> hierarchyMap, Map<Long, GeoNameDefaultData<?>> dataMap,
 	                                List<Geography> geoList, ISystems<?,?> system,
 	                                java.util.UUID... identityToken)
@@ -1073,11 +1154,11 @@ public class GeographyService
 					}
 				}
 			}
-			
+
 			logProgress("Geo Hierarchy", "Loading Structure... (" + i + "/" + geoList.size() + ")", 1);
 		}
 	}
-	
+
 	private void addToMap(Long id, Long child, Map<Long, List<Long>> map)
 	{
 		if (!map.containsKey(id))
@@ -1087,7 +1168,7 @@ public class GeographyService
 		map.get(id)
 		   .add(child);
 	}
-	
+
 	/**
 	 * Created with everything populated,
 	 *
@@ -1102,7 +1183,7 @@ public class GeographyService
 		{
 			geoData.setGeonameId(-1L);
 		}
-		
+
 		Long exists = new Geography()
 				.builder()
 				.withGeoNameID(geoData.getGeonameId()
@@ -1117,20 +1198,20 @@ public class GeographyService
 			{
 				geo.setOriginalSourceSystemUniqueID(Long.toString(geoData.getGeonameId()));
 			}
-			
+
 			geo.setEnterpriseID(system.getEnterprise());
 			geo.setClassification((Classification) classification);
 			geo.setSystemID(system);
 			geo.setActiveFlagID(system.getActiveFlagID());
 			geo.setOriginalSourceSystemID(system.getId());
-			
+
 			geo.setClassification((Classification) classification);
-			
+
 			geo.persist();
 			geoData.setGeographyId(geo.getId());
-			
+
 				geo.createDefaultSecurity(system, identityToken);
-			
+
 			if (geoData.getCoordinates() != null)
 			{
 				geo.addClassification(Latitude.toString(), geoData.getCoordinates()
@@ -1163,7 +1244,7 @@ public class GeographyService
 					//	System.out.println("No feature code");
 				}
 			}
-			
+
 			if (geoData.getPopulation() != 0)
 			{
 				geo.addClassification(Population.toString(), Integer.toString(geoData.getPopulation()), system, identityToken);
@@ -1179,7 +1260,7 @@ public class GeographyService
 		}
 		return geoData;
 	}
-	
+
 	//@CacheResult(cacheName = "GeographyByGeoNameID")
 	public Geography findGeographyByID( UUID geographyID)
 	{

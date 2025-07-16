@@ -6,13 +6,15 @@ import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.enter
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.systems.ISystems;
 import com.guicedee.activitymaster.fsdm.client.services.systems.*;
 import com.guicedee.activitymaster.geography.services.IGeographyService;
-import io.vertx.core.Future;
+import io.smallrye.mutiny.Uni;
 import jakarta.inject.Named;
+import lombok.extern.log4j.Log4j2;
 
 import static com.guicedee.activitymaster.fsdm.services.ActivityMasterSystemsManager.*;
 import static com.guicedee.activitymaster.geography.services.IGeographyService.*;
 
 @SortedUpdate(sortOrder = 1300, taskCount = 1)
+@Log4j2
 public class GeographyInstallFeatureCodes implements ISystemUpdate
 {
 	@Inject
@@ -23,11 +25,15 @@ public class GeographyInstallFeatureCodes implements ISystemUpdate
 	private IGeographyService<?> geographyService;
 
 	@Override
-	public Future<Boolean> update(IEnterprise<?,?> enterprise)
+	public Uni<Boolean> update(IEnterprise<?,?> enterprise)
 	{
-		geographyService.loadFeatureCodes(system.get());
-		wipeCaches();
-		return Future.succeededFuture(true);
+		log.info("Starting feature codes loading for Geography Master");
+		return geographyService.loadFeatureCodes(system.get())
+			.chain(() -> {
+				wipeCaches();
+				return Uni.createFrom().item(true);
+			})
+			.onFailure().invoke(error -> log.error("Error loading feature codes: {}", error.getMessage(), error));
 	}
 
 }
