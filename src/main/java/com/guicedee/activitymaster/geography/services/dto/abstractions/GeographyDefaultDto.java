@@ -19,13 +19,13 @@ public abstract class GeographyDefaultDto<J extends GeographyDefaultDto<J>>
 	private UUID geographyId;
 	private Long geonameId;
 
-	public J setGeographyId(java.lang.String geographyId)
+	public @org.jspecify.annotations.NonNull J setGeographyId(java.lang.String geographyId)
 	{
 		this.geographyId = geographyId;
 		return (J) this;
 	}
 
-	public J setGeonameId(Long geoNameId)
+	public @org.jspecify.annotations.NonNull J setGeonameId(Long geoNameId)
 	{
 		this.geonameId = geoNameId;
 		return (J) this;
