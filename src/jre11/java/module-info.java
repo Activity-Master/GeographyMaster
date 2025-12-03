@@ -31,8 +31,8 @@ module com.guicedee.activitymaster.geography {
 	
 	
 	provides IActivityMasterSystem with GeographySystem;
-	provides com.guicedee.guicedinjection.interfaces.IGuiceModule with GeographyBinder;
-	provides com.guicedee.guicedinjection.interfaces.IGuiceScanModuleInclusions with GeographerMasterModuleInclusion;
+	provides com.guicedee.client.services.lifecycle.IGuiceModule with GeographyBinder;
+	provides com.guicedee.client.services.config.IGuiceScanModuleInclusions with GeographerMasterModuleInclusion;
 	
 	
 	exports com.guicedee.activitymaster.geography;
