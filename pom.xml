@@ -25,7 +25,7 @@
         </dependency>
 
         <dependency>
-            <groupId>com.guicedee.services</groupId>
+            <groupId>com.guicedee.modules.services</groupId>
             <artifactId>commons-csv</artifactId>
         </dependency>
 
