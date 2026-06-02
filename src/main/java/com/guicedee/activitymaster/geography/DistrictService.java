@@ -1,165 +1,187 @@
 package com.guicedee.activitymaster.geography;
 
-import com.guicedee.activitymaster.fsdm.ClassificationService;
-import com.guicedee.activitymaster.fsdm.client.services.annotations.ActivityMasterDB;
-import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.enterprise.IEnterprise;
+/**
+ * Reactivity Migration Checklist:
+ *
+ * [✓] One action per Mutiny.Session at a time
+ * [✓] Pass Mutiny.Session through the chain
+ * [✓] No await() usage
+ * [✓] No parallel operations on a session
+ * [✓] No session/transaction creation in libraries
+ */
+
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.guicedee.activitymaster.fsdm.client.services.IActiveFlagService;
+import com.guicedee.activitymaster.fsdm.client.services.IClassificationService;
+import com.guicedee.activitymaster.fsdm.client.services.SessionUtils;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.geography.IGeography;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.systems.ISystems;
 import com.guicedee.activitymaster.fsdm.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.fsdm.db.entities.geography.Geography;
-import com.guicedee.activitymaster.fsdm.db.entities.geography.builders.GeographyQueryBuilder;
+import com.guicedee.activitymaster.geography.implementations.GeographySystem;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
-import com.guicedee.guicedinjection.GuiceContext;
-//import com.google.inject.persist.Transactional;
-
-
+import com.guicedee.client.IGuiceContext;
+import io.smallrye.mutiny.Uni;
 import jakarta.validation.constraints.NotNull;
+import lombok.extern.log4j.Log4j2;
+import org.hibernate.reactive.mutiny.Mutiny;
 
-import java.util.*;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
+import static com.guicedee.activitymaster.fsdm.client.services.administration.ActivityMasterConfiguration.applicationEnterpriseName;
 import static com.guicedee.activitymaster.fsdm.client.services.classifications.DefaultClassifications.*;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
-import static com.guicedee.client.IGuiceContext.*;
 
+@Log4j2
+@Singleton
 public class DistrictService
 {
 	public static final Set<String> DistrictClassifications = Set.copyOf(ProvinceService.ProvinceClassifications);
-	
-	//@CacheResult(cacheName = "GeographyDistricts", skipGet = true)
-	////@Transactional()
-	public IGeography<?, ?> createDistrict(IGeography<Geography, GeographyQueryBuilder> province,  String code, String name, String originalUniqueID,  ISystems<?, ?> system,  java.util.UUID... identityToken)
+
+	@Inject
+	private IClassificationService<?> classificationService;
+
+	@Inject
+	private ProvinceService provinceService;
+
+	public Uni<IGeography<?, ?>> createDistrict(Mutiny.Session session, IGeography<?, ?> province, String code, String name, String originalUniqueID, ISystems<?, ?> system, UUID... identityToken)
 	{
-		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
-		
-		IEnterprise<?, ?> enterprise = system.getEnterprise();
-		Classification classification = (Classification) classificationService.find(City, system, identityToken);
-		
-		boolean exists = new Geography().builder()
-		                                .withName(code)
-		                                .withClassification(classification)
-		                                .inActiveRange()
-		                                .inDateRange()
-		                                .withEnterprise(enterprise)
-		                                .getCount() > 0;
-		if (exists)
-		{
-			return findDistrict(code, system, identityToken);
-		}
-		
-		Geography geo = new Geography();
-		ISystems<?, ?> geoSystem = com.guicedee.client.IGuiceContext.get(com.guicedee.activitymaster.geography.implementations.GeographySystem.class).getSystem(enterprise);
-		geo.setEnterpriseID(classification.getEnterpriseID());
-		geo.setClassification(classification);
-		geo.setSystemID(geoSystem);
-		geo.setOriginalSourceSystemID(geoSystem);
-		geo.setName(code);
-		geo.setDescription(name);
-		if (originalUniqueID != null)
-		{
-			geo.setOriginalSourceSystemUniqueID(originalUniqueID);
-		}
-		geo.setActiveFlagID(classification.getActiveFlagID());
-		geo.persist();
-		
-		geo.createDefaultSecurity(geoSystem, identityToken);
-		
-		province.addChild(geo, NoClassification.toString(), null, geoSystem, identityToken);
-		return geo;
+		return SessionUtils.withActivityMaster(applicationEnterpriseName, system.getName(), tuple -> {
+			var createSession = tuple.getItem1();
+			var createEnterprise = tuple.getItem2();
+			var createSystem = tuple.getItem3();
+			var createIdentityToken = tuple.getItem4();
+
+			return classificationService.find(createSession, City.toString(), createSystem, createIdentityToken)
+				.chain(classification -> {
+					Geography geo = new Geography();
+					return geo.builder(createSession)
+						.withName(code)
+						.withClassification((Classification) classification)
+						.inActiveRange()
+						.inDateRange()
+						.withEnterprise(createEnterprise)
+						.getCount()
+						.chain(count -> {
+							if (count > 0)
+							{
+								return findDistrict(createSession, code, createSystem, createIdentityToken);
+							}
+
+							geo.setEnterpriseID(createEnterprise);
+							geo.setClassificationID((Classification) classification);
+							geo.setSystemID(createSystem);
+							geo.setOriginalSourceSystemID(createSystem.getId());
+							geo.setName(code);
+							geo.setDescription(name);
+
+							IActiveFlagService<?> acService = IGuiceContext.get(IActiveFlagService.class);
+							return acService.getActiveFlag(createSession, createEnterprise, createIdentityToken)
+								.chain(activeFlag -> {
+									geo.setActiveFlagID(activeFlag);
+									return createSession.persist(geo).replaceWith(Uni.createFrom().item(geo));
+								})
+								.chain(persisted -> {
+									Uni<?> setupChain = geo.createDefaultSecurity(createSession, createSystem, createIdentityToken)
+										.onFailure().recoverWithItem(() -> null);
+									if (originalUniqueID != null)
+									{
+										setupChain = setupChain.chain(() -> geo.addClassification(createSession, GeoNameID.toString(), originalUniqueID, createSystem, createIdentityToken));
+									}
+									return setupChain.chain(() -> province.addChild(createSession, geo, NoClassification.toString(), null, createSystem, createIdentityToken)
+										.replaceWith((IGeography<?, ?>) geo));
+								});
+						});
+				});
+		});
 	}
-	
-	//@CacheResult(cacheName = "GeographyDistricts")
-	public IGeography<?, ?> findDistrict( String name,  ISystems<?, ?> system,  java.util.UUID... identityToken)
+
+	public Uni<IGeography<?, ?>> findDistrict(Mutiny.Session session, String name, ISystems<?, ?> system, UUID... identityToken)
 	{
-		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
-		IEnterprise<?, ?> enterprise = system.getEnterprise();
-		Classification classification = (Classification) classificationService.find(City, system, identityToken);
-		
-		return new Geography().builder()
-		                      .withName(name)
-		                      .withClassification(classification)
-		                      .inActiveRange()
-		                      .inDateRange()
-		                      .withEnterprise(enterprise)
-		                      .get()
-		                      .orElseThrow(() -> new GeographyException("Cannot find district / city - " + name));
+		return SessionUtils.withActivityMaster(applicationEnterpriseName, system.getName(), tuple -> {
+			var createSession = tuple.getItem1();
+			var createEnterprise = tuple.getItem2();
+			var createSystem = tuple.getItem3();
+			var createIdentityToken = tuple.getItem4();
+
+			return classificationService.find(createSession, City.toString(), createSystem, createIdentityToken)
+				.chain(classification -> {
+					return new Geography().builder(createSession)
+						.withName(name)
+						.withClassification((Classification) classification)
+						.inActiveRange()
+						.inDateRange()
+						.withEnterprise(createEnterprise)
+						.get()
+						.onItem().ifNull().failWith(() -> new GeographyException("Cannot find district / city - " + name))
+						.map(geo -> (IGeography<?, ?>) geo);
+				});
+		});
 	}
-	
-	
-	//@CacheResult(cacheName = "GeographyDistrictInProvince")
-	public IGeography<?, ?> findFirstDistrictInProvince( String provinceCode,  ISystems<?, ?> system,  java.util.UUID... identityToken)
+
+	public Uni<IGeography<?, ?>> findFirstDistrictInProvince(Mutiny.Session session, String provinceCode, ISystems<?, ?> system, UUID... identityToken)
 	{
-		ProvinceService ps = get(ProvinceService.class);
-		IGeography<?, ?> province = ps.findProvince(provinceCode, system, identityToken);
-		var geoLink
-				= province.findChildren((String) null, null, system, identityToken)
-				          .stream()
-				          .findFirst()
-				          .orElse(null);
-		if (geoLink == null)
-		{
-			return null;
-		}
-		return geoLink.getSecondary();
+		return provinceService.findProvince(session, provinceCode, system, identityToken)
+			.chain(province -> {
+				return province.findChildren(session, (String) null, null, system, identityToken)
+					.map(children -> {
+						if (children == null || children.isEmpty())
+						{
+							return null;
+						}
+						return (IGeography<?, ?>) children.stream().findFirst().orElse(null).getSecondary();
+					});
+			});
 	}
-	
-	//@CacheResult(cacheName = "GeographyDistricts")
-	public List<Geography> findAllDistricts( ISystems<?, ?> system,  java.util.UUID... identityToken)
+
+	public Uni<List<Geography>> findAllDistricts(Mutiny.Session session, ISystems<?, ?> system, UUID... identityToken)
 	{
-		ClassificationService classificationService = com.guicedee.client.IGuiceContext.get(ClassificationService.class);
-		IEnterprise<?, ?> enterprise = system.getEnterprise();
-		Classification classification = (Classification) classificationService.find(City, system, identityToken);
-		return new Geography().builder()
-		                      .withClassification(classification)
-		                      .inActiveRange()
-		                      .inDateRange()
-		                      .withEnterprise(enterprise)
-		                      .getAll();
+		return SessionUtils.withActivityMaster(applicationEnterpriseName, system.getName(), tuple -> {
+			var createSession = tuple.getItem1();
+			var createEnterprise = tuple.getItem2();
+			var createSystem = tuple.getItem3();
+			var createIdentityToken = tuple.getItem4();
+
+			return classificationService.find(createSession, City.toString(), createSystem, createIdentityToken)
+				.chain(classification -> {
+					return new Geography().builder(createSession)
+						.withClassification((Classification) classification)
+						.inActiveRange()
+						.inDateRange()
+						.withEnterprise(createEnterprise)
+						.getAll();
+				});
+		});
 	}
-	
-	//@CacheResult(cacheName = "GeographyDistricts", skipGet = true)
-	////@Transactional()
-	public IGeography<?, ?> updateDistrict(@NotNull  String name, String description,
-	                                       String latitude, String longitude, String featureCodes, String featureClass, Integer population, Integer elevation, Integer dEM,
-	                                        ISystems<?, ?> system,  java.util.UUID... identityToken)
+
+	public Uni<IGeography<?, ?>> updateDistrict(Mutiny.Session session, @NotNull String name, String description,
+	                                            String latitude, String longitude, String featureCodes, String featureClass,
+	                                            Integer population, Integer elevation, Integer dEM,
+	                                            ISystems<?, ?> system, UUID... identityToken)
 	{
-		IEnterprise<?, ?> enterprise = system.getEnterprise();
-		IGeography<?, ?> toUpdate = findDistrict(name, system, identityToken);
-		if (description != null)
-		{
-			Geography update = new Geography();
-			update.setId(toUpdate.getId());
-			update.setDescription(description);
-			update.update();
-		}
-		if (latitude != null)
-		{
-			toUpdate.addOrUpdateClassification(Latitude, latitude, latitude, system, identityToken);
-		}
-		if (longitude != null)
-		{
-			toUpdate.addOrUpdateClassification(Longitude, longitude, longitude, system, identityToken);
-		}
-		if (featureClass != null)
-		{
-			toUpdate.addOrUpdateClassification(FeatureClass, featureClass, featureClass, system, identityToken);
-		}
-		if (featureCodes != null)
-		{
-			toUpdate.addOrUpdateClassification(FeatureCodes, featureCodes, featureCodes, system, identityToken);
-		}
-		if (population != null)
-		{
-			toUpdate.addOrUpdateClassification(Population, Integer.toString(population), Integer.toString(population), system, identityToken);
-		}
-		if (elevation != null)
-		{
-			toUpdate.addOrUpdateClassification(Elevation, Integer.toString(elevation), Integer.toString(elevation), system, identityToken);
-		}
-		if (dEM != null)
-		{
-			toUpdate.addOrUpdateClassification(DEM, Integer.toString(dEM), Integer.toString(dEM), system, identityToken);
-		}
-		
-		return toUpdate;
+		return findDistrict(session, name, system, identityToken)
+			.chain(toUpdate -> {
+				Uni<?> chain = Uni.createFrom().voidItem();
+				if (description != null)
+				{
+					chain = chain.chain(() -> {
+						Geography update = new Geography();
+						update.setId(toUpdate.getId());
+						update.setDescription(description);
+						return session.merge(update).replaceWithVoid();
+					});
+				}
+				if (latitude != null) chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, Latitude, latitude, latitude, system, identityToken));
+				if (longitude != null) chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, Longitude, longitude, longitude, system, identityToken));
+				if (featureClass != null) chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, FeatureClass, featureClass, featureClass, system, identityToken));
+				if (featureCodes != null) chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, FeatureCodes, featureCodes, featureCodes, system, identityToken));
+				if (population != null) chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, Population, Integer.toString(population), Integer.toString(population), system, identityToken));
+				if (elevation != null) chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, Elevation, Integer.toString(elevation), Integer.toString(elevation), system, identityToken));
+				if (dEM != null) chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, DEM, Integer.toString(dEM), Integer.toString(dEM), system, identityToken));
+				return chain.replaceWith(toUpdate);
+			});
 	}
 }

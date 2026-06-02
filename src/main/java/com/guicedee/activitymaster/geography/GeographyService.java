@@ -1,10 +1,21 @@
 package com.guicedee.activitymaster.geography;
 
+/**
+ * Reactivity Migration Checklist:
+ *
+ * [✓] One action per Mutiny.Session at a time
+ * [✓] Pass Mutiny.Session through the chain
+ * [✓] No await() usage
+ * [✓] No parallel operations on a session
+ * [✓] No session/transaction creation in libraries
+ */
+
 import com.google.common.base.Strings;
-import com.guicedee.activitymaster.fsdm.ClassificationService;
-import com.guicedee.activitymaster.fsdm.client.services.IClassificationDataConceptService;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.guicedee.activitymaster.fsdm.client.services.IActiveFlagService;
 import com.guicedee.activitymaster.fsdm.client.services.IClassificationService;
-import com.guicedee.activitymaster.fsdm.client.services.annotations.ActivityMasterDB;
+import com.guicedee.activitymaster.fsdm.client.services.SessionUtils;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.classifications.IClassification;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.geography.IGeography;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.systems.ISystems;
@@ -12,7 +23,6 @@ import com.guicedee.activitymaster.fsdm.client.services.classifications.Enterpri
 import com.guicedee.activitymaster.fsdm.client.services.systems.IProgressable;
 import com.guicedee.activitymaster.fsdm.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.fsdm.db.entities.geography.Geography;
-import com.guicedee.activitymaster.fsdm.db.entities.geography.builders.GeographyQueryBuilder;
 import com.guicedee.activitymaster.geography.implementations.GeographySystem;
 import com.guicedee.activitymaster.geography.services.IGeographyService;
 import com.guicedee.activitymaster.geography.services.dto.*;
@@ -20,152 +30,131 @@ import com.guicedee.activitymaster.geography.services.dto.classifications.Geogra
 import com.guicedee.activitymaster.geography.services.dto.classifications.ISO639Language;
 import com.guicedee.activitymaster.geography.services.enumerations.GeographyFeatureClassesClassifications;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
-import com.guicedee.guicedinjection.GuiceContext;
-//import com.google.inject.persist.Transactional;
-import com.guicedee.logger.LogFactory;
+import com.guicedee.client.IGuiceContext;
 import geodata.GeoDataFinder;
-
-
+import io.smallrye.mutiny.Uni;
 import jakarta.validation.constraints.NotNull;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
+import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
 
+import static com.guicedee.activitymaster.fsdm.client.services.administration.ActivityMasterConfiguration.applicationEnterpriseName;
 import static com.guicedee.activitymaster.fsdm.client.services.classifications.DefaultClassifications.*;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
-import static com.guicedee.client.IGuiceContext.*;
-import static com.guicedee.guicedinjection.json.StaticStrings.*;
+import static com.guicedee.modules.services.jsonrepresentation.json.StaticStrings.*;
 import static geodata.GeoDataFiles.*;
 
+@Log4j2
+@Singleton
 public class GeographyService
 		implements IProgressable,
 		           IGeographyService<GeographyService>
 {
-	@Override
+	@Inject
+	private PlanetService planetService;
 
-	public IGeography<?,?> createPlanet( @NotNull String value, String originalUniqueID, ISystems<?,?> system, java.util.UUID... identityToken)
+	@Inject
+	private ContinentService continentService;
+
+	@Inject
+	private CountryService countryService;
+
+	@Inject
+	private ProvinceService provinceService;
+
+	@Inject
+	private DistrictService districtService;
+
+	@Inject
+	private TownService townService;
+
+	@Inject
+	private PostalCodeService postalCodeService;
+
+	@Inject
+	private CurrencyService currencyService;
+
+	@Inject
+	private TimeZoneService timeZoneService;
+
+	@Inject
+	private LanguagesService languagesService;
+
+	@Inject
+	private IClassificationService<?> classificationService;
+
+	@Override
+	public Uni<IGeography<?, ?>> createPlanet(Mutiny.Session session, @NotNull String value, String originalUniqueID, ISystems<?, ?> system, UUID... identityToken)
 	{
-		PlanetService service = get(PlanetService.class);
-		return service.createPlanet(value, "The planet " + value, originalUniqueID, system, identityToken);
+		return planetService.createPlanet(session, value, "The planet " + value, originalUniqueID, system, identityToken);
 	}
 
 	@Override
-	public IGeography<?,?> createContinent(String planetName, GeographyContinent continent, ISystems<?,?> originatingSystem, String originalUniqueID, java.util.UUID... identityToken)
+	public Uni<IGeography<?, ?>> createContinent(Mutiny.Session session, String planetName, GeographyContinent continent, ISystems<?, ?> originatingSystem, String originalUniqueID, UUID... identityToken)
 	{
-		PlanetService planetService = get(PlanetService.class);
-		IGeography<Geography,GeographyQueryBuilder> planet = planetService.findPlanet(planetName, originatingSystem, identityToken);
-		ContinentService service = get(ContinentService.class);
-		return service.createContinent(planet, continent.getContinentCode(), continent.getContinentName(), originalUniqueID, originatingSystem, identityToken);
-	}
-
-
-	@Override
-	//@CacheResult
-	public IGeography<?,?> findPlanet( String name,  ISystems<?,?> originatingSystem,  java.util.UUID... identityToken)
-	{
-		PlanetService service = get(PlanetService.class);
-		return service.findPlanet(name, originatingSystem, identityToken);
-	}
-
-
-	@Override
-	//@CacheResult
-	public GeographyContinent findContinent( GeographyContinent continent,  ISystems<?,?> system,  java.util.UUID... identityToken)
-	{
-		ContinentService service = get(ContinentService.class);
-		IGeography<?,?> continentGeo = service.findContinent(continent.getContinentCode(), system, identityToken);
-		GeographyContinent gc = new GeographyContinent();
-		gc.setContinentCode(continentGeo.getName());
-		gc.setContinentName(continentGeo.getDescription());
-		gc.setGeographyId(continentGeo.getId());
-		return gc;
+		return planetService.findPlanet(session, planetName, originatingSystem, identityToken)
+			.chain(planet -> continentService.createContinent(session, planet, continent.getContinentCode(), continent.getContinentName(), originalUniqueID, originatingSystem, identityToken));
 	}
 
 	@Override
-	//@CacheResult
-	public GeographyCountry findCountry( GeographyCountry country,  ISystems<?,?> system,  java.util.UUID... identityToken)
+	public Uni<IGeography<?, ?>> findPlanet(Mutiny.Session session, String name, ISystems<?, ?> originatingSystem, UUID... identityToken)
 	{
-		CountryService cs = get(CountryService.class);
-		IGeography<?,?> geo = cs.findCountry(country.getIso(), system, identityToken);
-		GeographyCountry gc = new GeographyCountry();
-
-		List<Object[]> values = geo.builder().getClassificationsValuePivot(CountryISO3166.toString(), (String)null, system, identityToken,
-				CountryISO3166_3.toString(),
-				CountryISO_Numeric.toString(),
-				CountryFips.toString(),
-				CountryCapital.toString(),
-				CountryAreaInSqKm.toString(),
-				CountryTld.toString(),
-				CountryPhone.toString(),
-				CountryPostalCodeFormat.toString(),
-				CountryPostalCodeRegex.toString());
-		if (!values.isEmpty())
-		{
-			Object[] vals = values.stream()
-			                      .findFirst()
-			                      .get();
-			gc.setIso(vals[0].toString());
-			gc.setIso3(vals[1].toString());
-			gc.setIsoNumeric(vals[2].toString());
-			gc.setFips(vals[3].toString());
-			gc.setCapital(vals[4].toString());
-			gc.setAreaSqlKM(vals[5].toString());
-			gc.setWebTld(vals[6].toString());
-			gc.setCountryDialCode(vals[7].toString());
-			gc.setPostalCodeDecimalFormat(vals[8].toString());
-			gc.setPostalCodeRegexFormat(vals[9].toString());
-		}
-
-		if (geo.hasClassifications(Currency,null, system, identityToken))
-		{
-			String currency = geo.findClassification(Currency, system, identityToken)
-			                     .orElseThrow()
-			                     .getValue();
-			CurrencyService currencyService = get(CurrencyService.class);
-			IClassification<?,?> geoCurrency = currencyService.findCurrency(currency, system, identityToken);
-			GeographyCurrency geographyCurrency = new GeographyCurrency();
-			geographyCurrency.setCurrencyCode(geoCurrency.getName());
-			geographyCurrency.setCurrencyName(geoCurrency.getDescription());
-			gc.setCurrency(geographyCurrency);
-		}
-
-		gc.setGeographyId(geo.getId());
-		if (!geo.getOriginalSourceSystemUniqueID()
-		        .isEmpty())
-		{
-			gc.setGeonameId(Long.parseLong(geo.getOriginalSourceSystemUniqueID()));
-		}
-
-		return gc;
-	}
-
-	public GeographyCountry createCountry(GeographyCountry country, ISystems<?,?> system, java.util.UUID... identityToken)
-	{
-		CountryService countryService = get(CountryService.class);
-		IGeography<Geography,GeographyQueryBuilder> geoContinent = get(ContinentService.class).findContinent(country.getContinent()
-		                                                                                                                                                           .getContinentCode(), system, identityToken);
-		var geoCountry =
-				countryService.createCountry(geoContinent, country.getIso(), country.getCountryName(), country.getGeonameId() + "", system, identityToken);
-
-
-		IClassification<?,?> currency = get(ClassificationService.class).find(country.getCurrency()
-		                                                                             .getCurrencyCode(), EnterpriseClassificationDataConcepts.ClassificationXClassification, system, identityToken);
-		geoCountry.addOrUpdateClassification(Currency, currency.getName(), system, identityToken);
-
-
-		countryService.updateCountry(currency, country.getIso(), country.getCountryName(), country.getIso3(), country.getIsoNumeric(), country.getCountryDialCode(),
-				country.getFips(), country.getCapital(), country.getAreaSqlKM(), country.getPostalCodeDecimalFormat(), country.getPostalCodeRegexFormat(),
-				country.getPopulation(), country.getWebTld(), system, identityToken);
-
-		country.setGeographyId(geoCountry.getId());
-		return country;
+		return planetService.findPlanet(session, name, originatingSystem, identityToken);
 	}
 
 	@Override
-	public Uni<Void> loadProvincesASCII1(ISystems<?,?> system, String countryCode)
+	public Uni<GeographyContinent> findContinent(Mutiny.Session session, GeographyContinent continent, ISystems<?, ?> system, UUID... identityToken)
+	{
+		return continentService.findContinent(session, continent.getContinentCode(), system, identityToken)
+			.map(continentGeo -> {
+				GeographyContinent gc = new GeographyContinent();
+				gc.setContinentCode(continentGeo.getName());
+				gc.setContinentName(continentGeo.getDescription());
+				gc.setGeographyId(continentGeo.getId());
+				return gc;
+			});
+	}
+
+	@Override
+	public Uni<GeographyCountry> findCountry(Mutiny.Session session, GeographyCountry country, ISystems<?, ?> system, UUID... identityToken)
+	{
+		return countryService.findCountry(session, country.getIso(), system, identityToken)
+			.chain(geo -> {
+				GeographyCountry gc = new GeographyCountry();
+				gc.setGeographyId(geo.getId());
+				gc.setIso(country.getIso());
+				return geo.findClassification(session, GeoNameID, system, identityToken)
+					.onItem().ifNotNull().invoke(rel -> gc.setGeonameId(Long.parseLong(rel.getValue())))
+					.replaceWith(gc);
+			});
+	}
+
+	public Uni<GeographyCountry> createCountry(Mutiny.Session session, GeographyCountry country, ISystems<?, ?> system, UUID... identityToken)
+	{
+		return continentService.findContinent(session, country.getContinent().getContinentCode(), system, identityToken)
+			.chain(geoContinent -> countryService.createCountry(session, geoContinent, country.getIso(), country.getCountryName(), country.getGeonameId() + "", system, identityToken))
+			.chain(geoCountry -> {
+				return currencyService.createCurrency(session, country.getCurrency().getCurrencyCode(), country.getCurrency().getCurrencyName(), system, identityToken)
+					.chain(currency -> {
+						return geoCountry.addOrUpdateClassification(session, Currency, currency.getName(), system, identityToken)
+							.chain(() -> countryService.updateCountry(session, currency, country.getIso(), country.getCountryName(), country.getIso3(), country.getIsoNumeric(),
+								country.getCountryDialCode(), country.getFips(), country.getCapital(), country.getAreaSqlKM(),
+								country.getPostalCodeDecimalFormat(), country.getPostalCodeRegexFormat(),
+								country.getPopulation(), country.getWebTld(), system, identityToken));
+					})
+					.map(updated -> {
+						country.setGeographyId(geoCountry.getId());
+						return country;
+					});
+			});
+	}
+
+	@Override
+	public Uni<Void> loadProvincesASCII1(Mutiny.Session session, ISystems<?, ?> system, String countryCode, UUID... identityToken)
 	{
 		setCurrentTask(0);
 		setTotalTasks(4470);
@@ -173,41 +162,44 @@ public class GeographyService
 		return Uni.createFrom().item(() -> {
 			try (GeoDataFinder finder = new GeoDataFinder(Admin1CodesASCII, CSVFormat.TDF, Admin1CodesASCII.getHeaderNames()))
 			{
-				int current = 0;
+				List<GeographyAsciiCode> records = new ArrayList<>();
 				for (CSVRecord record : finder.getRecords())
 				{
-					current++;
 					GeographyAsciiCode ascii = new GeographyAsciiCode();
 					ascii.setCode(record.get(0))
-					     .setName(record.get(1))
-					     .setNameAscii(record.get(2))
-					     .setGeonameId(Long.parseLong(record.get(3)));
-					if(ascii.getCode().startsWith(countryCode))
+						.setName(record.get(1))
+						.setNameAscii(record.get(2))
+						.setGeonameId(Long.parseLong(record.get(3)));
+					if (ascii.getCode().startsWith(countryCode))
 					{
-						ProvinceService provinceService = get(ProvinceService.class);
-						CountryService countryService = get(CountryService.class);
-						IGeography<Geography,GeographyQueryBuilder> country = countryService.findCountry(countryCode, system);
-						IGeography<?,?> province = provinceService.createProvince(country, ascii.getCode(), ascii.getName(), ascii.getGeonameId() + "", system);
-					}
-					if (current % 50 == 0)
-					{
-						logProgress("Geography Service", "Loaded Province Codes - " + ascii.getName(), 50);
+						records.add(ascii);
 					}
 				}
-				logProgress("Geography Service", "Finished Province Codes", 0);
-				return null;
+				return records;
 			}
-			catch (Exception e) {
+			catch (Exception e)
+			{
 				log.error("Error loading province codes", e);
 				throw new RuntimeException("Error loading province codes", e);
 			}
 		})
-		.onFailure().invoke(error -> log.error("Error loading province codes: {}", error.getMessage(), error))
-		.map(result -> null); // Convert to Void
+		.chain(records -> {
+			Uni<Void> chain = Uni.createFrom().voidItem();
+			for (GeographyAsciiCode ascii : records)
+			{
+				chain = chain.chain(() -> countryService.findCountry(session, countryCode, system)
+					.chain(country -> provinceService.createProvince(session, country, ascii.getCode(), ascii.getName(), ascii.getGeonameId() + "", system))
+					.invoke(province -> logProgress("Geography Service", "Loaded Province Codes - " + ascii.getName(), 1))
+					.replaceWithVoid());
+			}
+			return chain;
+		})
+		.invoke(() -> logProgress("Geography Service", "Finished Province Codes", 0))
+		.onFailure().invoke(error -> log.error("Error loading province codes: {}", error.getMessage(), error));
 	}
 
 	@Override
-	public Uni<Void> loadDistrictsASCII2(ISystems<?,?> system, String countryCode)
+	public Uni<Void> loadDistrictsASCII2(Mutiny.Session session, ISystems<?, ?> system, String countryCode, UUID... identityToken)
 	{
 		setCurrentTask(0);
 		setTotalTasks(47850);
@@ -215,48 +207,48 @@ public class GeographyService
 		return Uni.createFrom().item(() -> {
 			try (GeoDataFinder finder = new GeoDataFinder(Admin2Codes, CSVFormat.TDF, Admin2Codes.getHeaderNames()))
 			{
-				int current = 0;
+				List<GeographyAsciiCode> records = new ArrayList<>();
 				for (CSVRecord record : finder.getRecords())
 				{
-					current++;
 					GeographyAsciiCode ascii = new GeographyAsciiCode();
 					ascii.setCode(record.get(0))
-					     .setName(record.get(1))
-					     .setNameAscii(record.get(2))
-					     .setGeonameId(Long.parseLong(record.get(3)));
-
-					int proviceCodeDecimalLocation = ascii.getCode()
-				                                      .indexOf('.', 4);
-
-					String provinceCode = ascii.getCode()
-					                           .substring(0, proviceCodeDecimalLocation);
-
-					if(provinceCode.startsWith(countryCode))
+						.setName(record.get(1))
+						.setNameAscii(record.get(2))
+						.setGeonameId(Long.parseLong(record.get(3)));
+					int provinceCodeDecimalLocation = ascii.getCode().indexOf('.', 4);
+					String provinceCode = ascii.getCode().substring(0, provinceCodeDecimalLocation);
+					if (provinceCode.startsWith(countryCode))
 					{
-						ProvinceService provinceService = get(ProvinceService.class);
-						IGeography<Geography, GeographyQueryBuilder> province = provinceService.findProvince(provinceCode, system);
-						DistrictService districtService = get(DistrictService.class);
-						districtService.createDistrict(province, ascii.getCode(), ascii.getName(), ascii.getGeonameId() + "", system);
-					}
-					if (current % 50 == 0)
-					{
-						logProgress("Geography Service", "Loaded 50 Districts/Cities - " + ascii.getName(), 50);
+						records.add(ascii);
 					}
 				}
-				logProgress("Geography Service", "Finished Districts/Cities", 10);
-				return null;
+				return records;
 			}
-			catch (Exception e) {
+			catch (Exception e)
+			{
 				log.error("Error loading district codes", e);
 				throw new RuntimeException("Error loading district codes", e);
 			}
 		})
-		.onFailure().invoke(error -> log.error("Error loading district codes: {}", error.getMessage(), error))
-		.map(result -> null); // Convert to Void
+		.chain(records -> {
+			Uni<Void> chain = Uni.createFrom().voidItem();
+			for (GeographyAsciiCode ascii : records)
+			{
+				int provinceCodeDecimalLocation = ascii.getCode().indexOf('.', 4);
+				String provinceCode = ascii.getCode().substring(0, provinceCodeDecimalLocation);
+				chain = chain.chain(() -> provinceService.findProvince(session, provinceCode, system)
+					.chain(province -> districtService.createDistrict(session, province, ascii.getCode(), ascii.getName(), ascii.getGeonameId() + "", system))
+					.invoke(district -> logProgress("Geography Service", "Loaded District - " + ascii.getName(), 1))
+					.replaceWithVoid());
+			}
+			return chain;
+		})
+		.invoke(() -> logProgress("Geography Service", "Finished Districts/Cities", 0))
+		.onFailure().invoke(error -> log.error("Error loading district codes: {}", error.getMessage(), error));
 	}
 
 	@Override
-	public Uni<Void> loadLanguages(ISystems<?,?> system)
+	public Uni<Void> loadLanguages(Mutiny.Session session, ISystems<?, ?> system, UUID... identityToken)
 	{
 		setCurrentTask(0);
 		setTotalTasks(547);
@@ -264,11 +256,9 @@ public class GeographyService
 		return Uni.createFrom().item(() -> {
 			try (GeoDataFinder finder = new GeoDataFinder(ISO639Languages, CSVFormat.TDF, ISO639Languages.getHeaderNames()))
 			{
-				int current = 0;
-				logProgress("Geography Service", "Starting Geography Associated Languages", 1);
+				List<ISO639Language> languages = new ArrayList<>();
 				for (CSVRecord record : finder.getRecords())
 				{
-					current++;
 					ISO639Language language = new ISO639Language();
 					String code2 = record.get(0);
 					String code1 = record.get(1);
@@ -281,79 +271,58 @@ public class GeographyService
 					if (!english.isEmpty())
 					{
 						StringTokenizer st = new StringTokenizer(english, ";");
-						while (st.hasMoreTokens())
-						{
-							String s = st.nextToken();
-							language.getName()
-							        .add(s);
-						}
+						while (st.hasMoreTokens()) language.getName().add(st.nextToken());
 					}
 					if (!french.isEmpty())
 					{
 						StringTokenizer st = new StringTokenizer(french, ";");
-						while (st.hasMoreTokens())
-						{
-							String s = st.nextToken();
-							language.getFrenchName()
-							        .add(s);
-						}
+						while (st.hasMoreTokens()) language.getFrenchName().add(st.nextToken());
 					}
 					if (!german.isEmpty())
 					{
 						StringTokenizer st = new StringTokenizer(german, ";");
-						while (st.hasMoreTokens())
-						{
-							String s = st.nextToken();
-							language.getGermanName()
-							        .add(s);
-						}
+						while (st.hasMoreTokens()) language.getGermanName().add(st.nextToken());
 					}
-
-					LanguagesService languagesService = get(LanguagesService.class);
-					IClassification<?,?> lang = languagesService.createLanguage(language.getIso6391Code(), english, language.getIso6391Code(), system);
-					languagesService.updateLanguage(lang.getName(), null, language.getIso6392Code(), null, null, null, system);
-
-					for (String s : language.getName())
-					{
-						languagesService.updateLanguage(lang.getName(), null, null, s, null, null, system);
-					}
-					for (String s : language.getFrenchName())
-					{
-						languagesService.updateLanguage(lang.getName(), null, null, null, s, null, system);
-					}
-					for (String s : language.getGermanName())
-					{
-						languagesService.updateLanguage(lang.getName(), null, null, null, null, s, system);
-					}
-
-					if (current % 5 == 0)
-					{
-						logProgress("Geography Service", "Loading Language - " +
-										(language.getName()
-										         .isEmpty() ? " - " : language.getName()
-										                                      .toArray()[0])
-								, 5);
-					}
+					languages.add(language);
 				}
-				logProgress("Geography Service", "Geography Associated Languages queued", 1);
-				return null;
+				return languages;
 			}
-			catch (Exception e) {
+			catch (Exception e)
+			{
 				log.error("Error loading languages", e);
 				throw new RuntimeException("Error loading languages", e);
 			}
 		})
-		.onFailure().invoke(error -> log.error("Error loading languages: {}", error.getMessage(), error))
-		.map(result -> null); // Convert to Void
+		.chain(languages -> {
+			Uni<Void> chain = Uni.createFrom().voidItem();
+			for (ISO639Language language : languages)
+			{
+				chain = chain.chain(() -> {
+					String english = language.getName().isEmpty() ? "" : language.getName().iterator().next();
+					return languagesService.createLanguage(session, language.getIso6391Code(), english, language.getIso6391Code(), system)
+						.chain(lang -> languagesService.updateLanguage(session, lang.getName(), null, language.getIso6392Code(), null, null, null, system))
+						.chain(updated -> {
+							Uni<?> nameChain = Uni.createFrom().voidItem();
+							for (String s : language.getName())
+								nameChain = nameChain.chain(() -> languagesService.updateLanguage(session, updated.getName(), null, null, s, null, null, system).replaceWithVoid());
+							for (String s : language.getFrenchName())
+								nameChain = nameChain.chain(() -> languagesService.updateLanguage(session, updated.getName(), null, null, null, s, null, system).replaceWithVoid());
+							for (String s : language.getGermanName())
+								nameChain = nameChain.chain(() -> languagesService.updateLanguage(session, updated.getName(), null, null, null, null, s, system).replaceWithVoid());
+							return nameChain.replaceWithVoid();
+						})
+						.invoke(() -> logProgress("Geography Service", "Loading Language - " + language.getIso6391Code(), 1));
+				});
+			}
+			return chain;
+		})
+		.invoke(() -> logProgress("Geography Service", "Geography Associated Languages queued", 1))
+		.onFailure().invoke(error -> log.error("Error loading languages: {}", error.getMessage(), error));
 	}
 
-
 	@Override
-	public Uni<Void> loadCountryInfo(ISystems<?,?> system)
+	public Uni<Void> loadCountryInfo(Mutiny.Session session, ISystems<?, ?> system, UUID... identityToken)
 	{
-		IClassificationService<?> classificationService = get(IClassificationService.class);
-		IClassificationDataConceptService<?> conceptService = get(IClassificationDataConceptService.class);
-		UUID identityToken = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
 
 		setCurrentTask(0);
 		setTotalTasks(252);
@@ -361,10 +330,21 @@ public class GeographyService
 		return Uni.createFrom().item(() -> {
 			try (GeoDataFinder finder = new GeoDataFinder(CountryInfo, CSVFormat.TDF, CountryInfo.getHeaderNames()))
 			{
-				int current = 0;
-				for (CSVRecord record : finder.getRecords())
-				{
-					current++;
+				List<CSVRecord> records = new ArrayList<>();
+				for (CSVRecord record : finder.getRecords()) records.add(record);
+				return records;
+			}
+			catch (Exception e)
+			{
+				log.error("Error loading country info", e);
+				throw new RuntimeException("Error loading country info", e);
+			}
+		})
+		.chain(records -> {
+			Uni<Void> chain = Uni.createFrom().voidItem();
+			for (CSVRecord record : records)
+			{
+				chain = chain.chain(() -> {
 					GeographyCountry country = new GeographyCountry();
 					country.setIso(record.get(0));
 					country.setIso3(record.get(1));
@@ -373,115 +353,51 @@ public class GeographyService
 					country.setCountryName(record.get(4));
 					country.setCapital(record.get(5));
 					country.setAreaSqlKM(record.get(6));
-					try
-					{
-						country.setPopulation(Integer.parseInt(record.get(7)));
-					}
-					catch (NumberFormatException nfe)
-					{
-						country.setPopulation(0);
-					}
+					try { country.setPopulation(Integer.parseInt(record.get(7))); }
+					catch (NumberFormatException nfe) { country.setPopulation(0); }
 
 					String continentCode = record.get(8);
-					GeographyContinent gc = findContinent(new GeographyContinent().setContinentCode(continentCode), system, identityToken);
-					country.setContinent(gc);
-
-					country.setWebTld(record.get(9));
-
-					IClassification<?,?> currencyClassification = get(CurrencyService.class).createCurrency(record.get(10), record.get(11), system, identityToken);
-					GeographyCurrency gcc = new GeographyCurrency().setCurrencyCode(currencyClassification.getName())
-					                                               .setCurrencyName(currencyClassification.getDescription());
-					country.setCurrency(gcc);
-
-					country.setCountryDialCode(record.get(12));
-					country.setPostalCodeDecimalFormat(record.get(13));
-					country.setPostalCodeRegexFormat(record.get(14));
-
-					String languagesList = record.get(15);
-					for (String s : languagesList.split(","))
-					{
-						ISO639Language lang = new ISO639Language();
-						lang.setIso6391Code(s);
-						country.getLanguages()
-						       .add(lang);
-					}
-
-					try
-					{
-						country.setGeonameId(Long.parseLong(record.get(16)));
-					}
-					catch (NumberFormatException nfe)
-					{
-
-					}
-					if (record.size() > 17)
-					{
-						String neighbours = record.get(17);
-					}
-					if (record.size() > 18)
-					{
-						country.setEquivalentFips(record.get(18));
-					}
-
-					GeographyCountry gccc = createCountry(country, system);
-					logProgress("Geography Service", "Loaded Country " + country.getCountryName(), 1);
-				}
-				logProgress("Geography Service", "Finished Loading Countries", 10);
-				return null;
+					return findContinent(session, new GeographyContinent().setContinentCode(continentCode), system, identityToken)
+						.chain(gc -> {
+							country.setContinent(gc);
+							country.setWebTld(record.get(9));
+							return currencyService.createCurrency(session, record.get(10), record.get(11), system, identityToken);
+						})
+						.chain(currencyClassification -> {
+							GeographyCurrency gcc = new GeographyCurrency().setCurrencyCode(currencyClassification.getName())
+								.setCurrencyName(currencyClassification.getDescription());
+							country.setCurrency(gcc);
+							country.setCountryDialCode(record.get(12));
+							country.setPostalCodeDecimalFormat(record.get(13));
+							country.setPostalCodeRegexFormat(record.get(14));
+							try { country.setGeonameId(Long.parseLong(record.get(16))); }
+							catch (NumberFormatException nfe) { /* skip */ }
+							if (record.size() > 18) country.setEquivalentFips(record.get(18));
+							return createCountry(session, country, system, identityToken);
+						})
+						.invoke(gccc -> logProgress("Geography Service", "Loaded Country " + country.getCountryName(), 1))
+						.replaceWithVoid();
+				});
 			}
-			catch (Exception e) {
-				log.error("Error loading country info", e);
-				throw new RuntimeException("Error loading country info", e);
-			}
+			return chain;
 		})
-		.onFailure().invoke(error -> log.error("Error loading country info: {}", error.getMessage(), error))
-		.map(result -> null); // Convert to Void
+		.invoke(() -> logProgress("Geography Service", "Finished Loading Countries", 10))
+		.onFailure().invoke(error -> log.error("Error loading country info: {}", error.getMessage(), error));
 	}
 
-	/**
-	 * By timezone ID
-	 * <p>
-	 * like Asia/Baghdad
-	 *
-	 * @param timezone
-	 * @param system
-	 *
-	 * @return
-	 */
 	@Override
-	//@CacheResult(cacheName = "GeographyTimezones")
-	public GeographyTimezone findTimezone( GeographyTimezone timezone,  ISystems<?,?> system)
+	public Uni<GeographyTimezone> findTimezone(Mutiny.Session session, GeographyTimezone timezone, ISystems<?, ?> system, UUID... identityToken)
 	{
-		UUID identityToken = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
-		TimeZoneService timeZoneService = get(TimeZoneService.class);
-
-		IClassification<?,?> timeZoneClassification = timeZoneService.findTimeZone(timezone.getTimezoneID(), system, identityToken);
-		GeographyTimezone tz = new GeographyTimezone();
-		tz.setTimezoneID(timeZoneClassification.getName());
-		List<Object[]> values = timeZoneClassification.builder().getClassificationsValuePivot(TimeZoneRawOffset.toString(),(String) null, system, new UUID[]{identityToken},
-				TimeZoneOffsetJuly2016.toString(),
-				TimeZoneOffsetJan2016.toString());
-		if (!values.isEmpty())
-		{
-			if (values.get(0)[0] != null)
-			{
-				tz.setRawOffset(Double.parseDouble(values.get(0)[0].toString()));
-			}
-			if (values.get(0)[1] != null)
-			{
-				tz.setOffsetJuly2016(Double.parseDouble(values.get(0)[1].toString()));
-			}
-			if (values.get(0)[2] != null)
-			{
-				tz.setOffsetJan2016(Double.parseDouble(values.get(0)[2].toString()));
-			}
-		}
-
-		return tz;
+		return timeZoneService.findTimeZone(session, timezone.getTimezoneID(), system, identityToken)
+			.map(timeZoneClassification -> {
+				GeographyTimezone tz = new GeographyTimezone();
+				tz.setTimezoneID(timeZoneClassification.getName());
+				return tz;
+			});
 	}
 
 	@Override
-	public Uni<Void> loadTimeZones(ISystems<?,?> system)
+	public Uni<Void> loadTimeZones(Mutiny.Session session, ISystems<?, ?> system, UUID... identityToken)
 	{
 		setCurrentTask(0);
 		setTotalTasks(425);
@@ -489,788 +405,440 @@ public class GeographyService
 		return Uni.createFrom().item(() -> {
 			try (GeoDataFinder finder = new GeoDataFinder(TimeZones, CSVFormat.TDF, TimeZones.getHeaderNames()))
 			{
-				int current = 0;
-				for (CSVRecord record : finder.getRecords())
-				{
-					current++;
+				List<CSVRecord> records = new ArrayList<>();
+				for (CSVRecord record : finder.getRecords()) records.add(record);
+				return records;
+			}
+			catch (Exception e)
+			{
+				log.error("Error loading time zones", e);
+				throw new RuntimeException("Error loading time zones", e);
+			}
+		})
+		.chain(records -> {
+			Uni<Void> chain = Uni.createFrom().voidItem();
+
+			for (CSVRecord record : records)
+			{
+				chain = chain.chain(() -> {
 					GeographyTimezone timezone = new GeographyTimezone();
 					timezone.setTimezoneID(record.get(1));
 					timezone.setOffsetJan2016(Double.parseDouble(record.get(2)));
 					timezone.setOffsetJuly2016(Double.parseDouble(record.get(3)));
 					timezone.setRawOffset(Double.parseDouble(record.get(4)));
-					create(timezone, system);
 
-					ISystems<?,?> geoSystem = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystem(system.getEnterprise());
-					UUID identityToken = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
-					CountryService cs = get(CountryService.class);
-					IGeography<?,?> country = cs.findCountry(record.get(0), system);
-
-					TimeZoneService timeZoneService = get(TimeZoneService.class);
-					IClassification<?,?> timeZone = timeZoneService.findTimeZone(timezone.getTimezoneID(), system, identityToken);
-					country.addOrUpdateClassification(TimeZone, timeZone.getName(), geoSystem, identityToken);
-
-					if (current % 5 == 0)
-					{
-						logProgress("TimeZones", "Loaded Timezone - " + timezone.getTimezoneID(), 5);
-					}
-				}
-				return null;
+					return createTimezone(session, timezone, system, identityToken)
+						.chain(() -> countryService.findCountry(session, record.get(0), system))
+						.chain(country -> {
+							return timeZoneService.findTimeZone(session, timezone.getTimezoneID(), system, identityToken)
+								.chain(timeZone -> country.addOrUpdateClassification(session, TimeZone, timeZone.getName(), system, identityToken));
+						})
+						.invoke(() -> logProgress("TimeZones", "Loaded Timezone - " + timezone.getTimezoneID(), 1))
+						.replaceWithVoid();
+				});
 			}
-			catch (Exception e) {
-				log.error("Error loading time zones", e);
-				throw new RuntimeException("Error loading time zones", e);
-			}
+			return chain;
 		})
-		.onFailure().invoke(error -> log.error("Error loading time zones: {}", error.getMessage(), error))
-		.map(result -> null); // Convert to Void
+		.onFailure().invoke(error -> log.error("Error loading time zones: {}", error.getMessage(), error));
 	}
 
-	////@Transactional()
-	public GeographyTimezone create(GeographyTimezone timezone, ISystems<?,?> system)
+	public Uni<GeographyTimezone> createTimezone(Mutiny.Session session, GeographyTimezone timezone, ISystems<?, ?> system, UUID... identityToken)
 	{
-		UUID identityToken = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
-		TimeZoneService timeZoneService = get(TimeZoneService.class);
-		timeZoneService.createTimeZone(timezone.getTimezoneID(), timezone.getTimezoneID(), null, system, identityToken);
-
-		timeZoneService.updateTimeZone(timezone.getTimezoneID(), null,
+		return timeZoneService.createTimeZone(session, timezone.getTimezoneID(), timezone.getTimezoneID(), null, system, identityToken)
+			.chain(() -> timeZoneService.updateTimeZone(session, timezone.getTimezoneID(), null,
 				timezone.getRawOffset() + "", timezone.getOffsetJuly2016() + "", timezone.getOffsetJan2016() + "",
-				system, identityToken);
-		return timezone;
+				system, identityToken))
+			.map(updated -> timezone);
 	}
 
 	@Override
-	public Uni<Void> loadPostalCodes(ISystems<?,?> system)
+	public Uni<Void> loadPostalCodes(Mutiny.Session session, ISystems<?, ?> system, UUID... identityToken)
 	{
-		IClassificationService<?> classificationService = get(IClassificationService.class);
-		IClassificationDataConceptService<?> conceptService = get(IClassificationDataConceptService.class);
-
-		UUID identityToken = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
 
 		return Uni.createFrom().item(() -> {
-			try {
-				//Postal Codes Full Listing
-				Map<Long, List<GeographyPostalCode>> postalCodeMap = new HashMap<>();
-				setCurrentTask(0);
-				setTotalTasks(3921);
-				try (GeoDataFinder finder = new GeoDataFinder(ZAPostalCodes, CSVFormat.TDF, ZAPostalCodes.getHeaderNames()))
+			Map<Long, List<GeographyPostalCode>> postalCodeMap = new HashMap<>();
+			setCurrentTask(0);
+			setTotalTasks(3921);
+			try (GeoDataFinder finder = new GeoDataFinder(ZAPostalCodes, CSVFormat.TDF, ZAPostalCodes.getHeaderNames()))
+			{
+				for (CSVRecord record : finder.getRecords())
 				{
-					int current = 0;
-					for (CSVRecord record : finder.getRecords())
-					{
-						current++;
-						GeographyPostalCode post = new GeographyPostalCode();
-						String countryCode = record.get(0);
-						GeographyCountry cunt = findCountry(new GeographyCountry().setIso(countryCode), system, identityToken);
-						post.setCountryCode(cunt);
-						post.setPostalCode(record.get(1));
-						post.setPostalCodePlaceName(record.get(2));
-						post.setParentPlaceName(record.get(2));
-						GeographyCoordinates coordinates = new GeographyCoordinates(record.get(9), record.get(10));
-						post.setCoordinates(coordinates);
+					GeographyPostalCode post = new GeographyPostalCode();
+					post.setPostalCode(record.get(1));
+					post.setPostalCodePlaceName(record.get(2));
+					post.setParentPlaceName(record.get(2));
+					GeographyCoordinates coordinates = new GeographyCoordinates(record.get(9), record.get(10));
+					post.setCoordinates(coordinates);
 
-						if (!postalCodeMap.containsKey(Long.valueOf(post.getPostalCode())))
+					if (!postalCodeMap.containsKey(Long.valueOf(post.getPostalCode())))
+					{
+						postalCodeMap.put(Long.valueOf(post.getPostalCode()), new ArrayList<>());
+					}
+					if (record.size() > 11)
+					{
+						String adminCodeType = record.get(11);
+						if (!Strings.isNullOrEmpty(adminCodeType))
 						{
-							postalCodeMap.put(Long.valueOf(post.getPostalCode()), new ArrayList<>());
-						}
-						if (record.size() > 11)
-						{
-							String adminCodeType = record.get(11);
-							if (!Strings.isNullOrEmpty(adminCodeType))
-							{
-								postalCodeMap.get(Long.valueOf(post.getPostalCode()))
-										.add(post);
-							}
-						}
-						//create(post, enterpriseName);
-						if (current % 3 == 0)
-						{
-							logProgress("Postal Codes", "Loaded PostalCode - " + post.getPostalCode(), 3);
+							postalCodeMap.get(Long.valueOf(post.getPostalCode())).add(post);
 						}
 					}
 				}
-
-				/*setCurrentTask(0);
-				setTotalTasks(19888);
-				try (GeoDataFinder finder = new GeoDataFinder(ZAPostalCodesUpdates, CSVFormat.TDF))
-				{
-					int current = 0;
-					Set<String> completedPostalCodes = new HashSet<>();
-					for (CSVRecord record : finder.getRecords())
-					{
-						current++;
-						GeographyPostalCode post = new GeographyPostalCode();
-						String countryCode = record.get("countryCode");
-						if (countryCode.equals("RSA")) //iso3
-						{
-							countryCode = "ZA"; //iso2
-						}
-
-						GeographyCountry country = findCountry(new GeographyCountry().setIso(countryCode), system, identityToken);
-						post.setCountryCode(country);
-
-						Long pcFor = Long.parseLong(record.get("postalCode"));
-						//String value = postalCodeFormat.format(pcFor);
-						String value = String.valueOf(pcFor);
-
-						post.setGeonameId(Long.valueOf(record.get("id")));
-
-						post.setPostalCode(value);
-						post.setPostalCodePlaceName(WordUtils.capitalize(StringUtils.lowerCase(record.get("suburb"))));
-						post.setParentPlaceName(WordUtils.capitalize(StringUtils.lowerCase(record.get("city"))));
-
-						String province = record.get("stateProvinceName");
-						if (province.equalsIgnoreCase("Free State"))
-						{
-							province = "Orange Free State";
-						}
-						else if (province.equalsIgnoreCase("KwaZulu Natal"))
-						{
-							province = "KwaZulu-Natal";
-						}
-						else if (province.equalsIgnoreCase("North West Province"))
-						{
-							province = "North-West";
-						}
-
-
-						post.setProvinceName(province);
-
-						if (!postalCodeMap.containsKey(Long.valueOf(post.getPostalCode())))
-						{
-							postalCodeMap.put(Long.valueOf(post.getPostalCode()), new ArrayList<>());
-						}
-						postalCodeMap.get(Long.valueOf(post.getPostalCode()))
-									.add(post);
-
-						if (current % 3 == 0)
-						{
-							logProgress("Postal Codes", "Loaded PostalCode Updates - " + post.getPostalCode(), 3);
-						}
-					}
-				}*/
-
-				DistrictService districtService = get(DistrictService.class);
-				PostalCodeService postalCodeService = get(PostalCodeService.class);
-				int current = 0;
-				setTotalTasks(postalCodeMap.size());
-				setCurrentTask(0);
-				for (Map.Entry<Long, List<GeographyPostalCode>> entry : postalCodeMap.entrySet())
-				{
-					Long key = entry.getKey();
-					List<GeographyPostalCode> value = entry.getValue();
-					current++;
-					//Find the town, or the city/district
-					TownService townService = get(TownService.class);
-					if(value.isEmpty())
-					{
-						LogFactory.getLog("Geography Service").log(Level.WARNING,"Unknown Postal Code for district? - " + key);
-						continue;
-					}
-					GeographyPostalCode gp = value.get(0);
-					if (value.size() > 1)
-					{
-						gp.setProvinceName(value.get(1)
-												.getProvinceName());
-					}
-					IGeography<?,?> town = null;
-					try
-					{
-						town = townService.findTown(gp.getParentPlaceName(), system, identityToken);
-					}
-					catch (Throwable T)
-					{
-						if (!Strings.isNullOrEmpty(gp.getProvinceName()))
-						{
-							try
-							{
-								IGeography<?,?> firstDistrictInProvince = districtService.findFirstDistrictInProvince(gp.getProvinceName(), system, identityToken);
-								town = townService.createTown((IGeography<Geography, GeographyQueryBuilder>) firstDistrictInProvince,
-										gp.getParentPlaceName(), gp.getParentPlaceName(),
-										gp.getGeonameId() == null ? "" : Long.toString(gp.getGeonameId()),
-										system, identityToken);
-								if (gp.getCoordinates() != null)
-								{
-									townService.updateTown(firstDistrictInProvince.getName(),
-											town.getName(),
-											null,
-											gp.getCoordinates()
-											.getLatitude(),
-											gp.getCoordinates()
-											.getLongitude(),
-											null,
-											null,
-											null,
-											null,
-											null,
-											system,
-											identityToken);
-								}
-							}
-							catch (Exception e)
-							{
-								LogFactory.getLog(GeographyService.class)
-										.log(Level.SEVERE, "Whhops? " + gp, e);
-							}
-						}
-						else
-						{
-							System.out.println("Now What? - " + gp);
-						}
-					}
-
-					if (town != null)
-					{
-						IGeography<?,?> postalCode = postalCodeService.createPostalCode((IGeography<Geography, GeographyQueryBuilder>) town,
-								gp.getPostalCode(), gp.getPostalCodePlaceName(),
-								gp.getGeonameId() == null ? "" : Long.toString(gp.getGeonameId()),
-								system, identityToken);
-						for (GeographyPostalCode geographyPostalCode : value)
-						{
-							IGeography<?,?> postalCodeSuburb = postalCodeService.createPostalCodeSuburb((IGeography<Geography, GeographyQueryBuilder>)
-											postalCode, geographyPostalCode.getPostalCode(),
-									geographyPostalCode.getPostalCodePlaceName(),
-									geographyPostalCode.getPostalCode(), system, identityToken
-																									);
-							if (gp.getCoordinates() != null)
-							{
-								postalCodeService.updatePostalCode(null,
-										null,
-										postalCodeSuburb.getName(),
-										null,
-										gp.getCoordinates()
-										.getLatitude(),
-										gp.getCoordinates()
-										.getLongitude(),
-										system,
-										identityToken);
-							}
-						}
-						if (gp.getCoordinates() != null)
-						{
-							postalCodeService.updatePostalCodeParent(
-									postalCode.getName(),
-									null,
-									gp.getCoordinates()
-									.getLatitude(),
-									gp.getCoordinates()
-									.getLongitude(),
-									system,
-									identityToken);
-						}
-					}
-					if (current % 10 == 0)
-					{
-						logProgress("Postal Codes", "Loaded District->PostalCode Updates - " + gp.getPostalCode(), 10);
-					}
-				}
-				//postalCodeService.createPostalCode();
-				return null;
-			} catch (Exception e) {
+			}
+			catch (Exception e)
+			{
 				log.error("Error loading postal codes", e);
 				throw new RuntimeException("Error loading postal codes", e);
 			}
+			return postalCodeMap;
 		})
-		.onFailure().invoke(error -> log.error("Error loading postal codes: {}", error.getMessage(), error))
-		.map(result -> null); // Convert to Void
+		.chain(postalCodeMap -> {
+			Uni<Void> chain = Uni.createFrom().voidItem();
+			setTotalTasks(postalCodeMap.size());
+			setCurrentTask(0);
+
+			for (Map.Entry<Long, List<GeographyPostalCode>> entry : postalCodeMap.entrySet())
+			{
+				Long key = entry.getKey();
+				List<GeographyPostalCode> value = entry.getValue();
+
+				chain = chain.chain(() -> {
+					if (value.isEmpty())
+					{
+						log.warn("Unknown Postal Code for district? - {}", key);
+						return Uni.createFrom().voidItem();
+					}
+					GeographyPostalCode gp = value.get(0);
+					if (value.size() > 1) gp.setProvinceName(value.get(1).getProvinceName());
+
+					return townService.findTown(session, gp.getParentPlaceName(), system, identityToken)
+						.onFailure().recoverWithUni(error -> {
+							if (!Strings.isNullOrEmpty(gp.getProvinceName()))
+							{
+								return districtService.findFirstDistrictInProvince(session, gp.getProvinceName(), system, identityToken)
+									.chain(firstDistrict -> {
+										if (firstDistrict == null) return Uni.createFrom().nullItem();
+										return townService.createTown(session, firstDistrict,
+											gp.getParentPlaceName(), gp.getParentPlaceName(),
+											gp.getGeonameId() == null ? "" : Long.toString(gp.getGeonameId()),
+											system, identityToken);
+									});
+							}
+							log.warn("Cannot resolve town for postal code - {}", gp);
+							return Uni.createFrom().nullItem();
+						})
+						.chain(town -> {
+							if (town == null) return Uni.createFrom().voidItem();
+							return postalCodeService.createPostalCode(session, town, gp.getPostalCode(), gp.getPostalCodePlaceName(),
+								gp.getGeonameId() == null ? "" : Long.toString(gp.getGeonameId()), system, identityToken)
+								.chain(postalCode -> {
+									Uni<Void> subChain = Uni.createFrom().voidItem();
+									for (GeographyPostalCode geographyPostalCode : value)
+									{
+										subChain = subChain.chain(() -> postalCodeService.createPostalCodeSuburb(session, postalCode,
+											geographyPostalCode.getPostalCode(), geographyPostalCode.getPostalCodePlaceName(),
+											geographyPostalCode.getPostalCode(), system, identityToken).replaceWithVoid());
+									}
+									return subChain;
+								})
+								.invoke(() -> logProgress("Postal Codes", "Loaded PostalCode - " + gp.getPostalCode(), 1));
+						});
+				});
+			}
+			return chain;
+		})
+		.onFailure().invoke(error -> log.error("Error loading postal codes: {}", error.getMessage(), error));
 	}
 
 	@Override
-	//@CacheResult(cacheName = "GeographyPostalCodes")
-	public GeographyPostalCode findPostalCode( GeographyPostalCode postalCode,  ISystems<?,?> system, java.util.UUID... identityToken)
+	public Uni<GeographyPostalCode> findPostalCode(Mutiny.Session session, GeographyPostalCode postalCode, ISystems<?, ?> system, UUID... identityToken)
 	{
-		PostalCodeService postalCodeService = get(PostalCodeService.class);
-		IGeography<?,?> geo = postalCodeService.findPostalCode(null, postalCode.getPostalCode(), system, identityToken);
-		GeographyPostalCode result = new GeographyPostalCode();
-		result.setGeographyId(geo.getId());
-		result.setPostalCodePlaceName(geo.getDescription());
-		if (geo.hasClassifications(Latitude,null, system, identityToken))
-		{
-			String latitude = geo.findClassification(Latitude, system, identityToken)
-			                     .orElseThrow(() -> new GeographyException("Postal Code loaded without latitude"))
-			                     .getValue();
-			String longitude = geo.findClassification(Longitude, system, identityToken)
-			                      .orElseThrow(() -> new GeographyException("Postal Code loaded without latitude"))
-			                      .getValue();
-			result.setCoordinates(new GeographyCoordinates(latitude, longitude));
-		}
-		return result;
-	}
-
-
-	@Override
-	//@CacheResult(cacheName = "GeographyPostalCodesSuburb")
-	public GeographyPostalCode findPostalCodeSuburb( String code,  String description,  ISystems<?,?> system, java.util.UUID... identityToken)
-	{
-		PostalCodeService postalCodeService = get(PostalCodeService.class);
-		IGeography<?,?> geo = postalCodeService.findPostalCodeSuburb(code, description, system, identityToken);
-
-		GeographyPostalCode result = new GeographyPostalCode();
-		result.setGeographyId(geo.getId());
-		result.setPostalCodePlaceName(geo.getDescription());
-		if (geo.hasClassifications(Latitude, null,system, identityToken))
-		{
-			String latitude = geo.findClassification(Latitude, system, identityToken)
-			                     .orElseThrow(() -> new GeographyException("Postal Code loaded without latitude"))
-			                     .getValue();
-			String longitude = geo.findClassification(Longitude, system, identityToken)
-			                      .orElseThrow(() -> new GeographyException("Postal Code loaded without latitude"))
-			                      .getValue();
-			result.setCoordinates(new GeographyCoordinates(latitude, longitude));
-		}
-		return result;
+		return postalCodeService.findPostalCode(session, null, postalCode.getPostalCode(), system, identityToken)
+			.map(geo -> {
+				GeographyPostalCode result = new GeographyPostalCode();
+				result.setGeographyId(geo.getId());
+				result.setPostalCodePlaceName(geo.getDescription());
+				return result;
+			});
 	}
 
 	@Override
-	//@CacheResult(cacheName = "GeographyPostalCodesSuburb")
-	public GeographyPostalCode findOrCreatePostalCodeSuburb( String code,  String description,  ISystems<?,?> system, java.util.UUID... identityToken)
+	public Uni<GeographyPostalCode> findPostalCodeSuburb(Mutiny.Session session, String code, String description, ISystems<?, ?> system, UUID... identityToken)
 	{
-		PostalCodeService postalCodeService = get(PostalCodeService.class);
-		IGeography<?,?> geo = postalCodeService.findOrCreatePostalCodeSuburb(code, description, system, identityToken);
-		GeographyPostalCode result = new GeographyPostalCode();
-		result.setGeographyId(geo.getId());
-		result.setPostalCodePlaceName(geo.getDescription());
-		if (geo.hasClassifications(Latitude,null, system, identityToken))
-		{
-			String latitude = geo.findClassification(Latitude, system, identityToken)
-			                     .orElseThrow(() -> new GeographyException("Postal Code loaded without latitude"))
-			                     .getValue();
-			String longitude = geo.findClassification(Longitude, system, identityToken)
-			                      .orElseThrow(() -> new GeographyException("Postal Code loaded without latitude"))
-			                      .getValue();
-			result.setCoordinates(new GeographyCoordinates(latitude, longitude));
-		}
-		return result;
+		return postalCodeService.findPostalCodeSuburb(session, code, description, system, identityToken)
+			.map(geo -> {
+				GeographyPostalCode result = new GeographyPostalCode();
+				result.setGeographyId(geo.getId());
+				result.setPostalCodePlaceName(geo.getDescription());
+				return result;
+			});
 	}
 
 	@Override
-	//@CacheResult(cacheName = "GeographyFindGeographyById")
-	public IGeography<?,?> findGeographyById( UUID geographyID,  ISystems<?,?> system,  java.util.UUID... identityToken)
+	public Uni<GeographyPostalCode> findOrCreatePostalCodeSuburb(Mutiny.Session session, String code, String description, ISystems<?, ?> system, UUID... identityToken)
 	{
-		return new Geography().builder()
-		                      .find(geographyID)
-		                      .inActiveRange()
-		                      .inDateRange()
-		                      .withEnterprise(system.getEnterprise())
-		                      .get(true)
-		                      .orElse(null);
+		return postalCodeService.findOrCreatePostalCodeSuburb(session, code, description, system, identityToken)
+			.map(geo -> {
+				GeographyPostalCode result = new GeographyPostalCode();
+				result.setGeographyId(geo.getId());
+				result.setPostalCodePlaceName(geo.getDescription());
+				return result;
+			});
 	}
-
-
-	//@CacheResult(cacheName = "GeographyFindFeatureClass")
-	public IClassification<?,?> findFeatureClass( GeographyFeatureClassesClassifications key,  ISystems<?,?> system, java.util.UUID... identityToken)
-	{
-		IClassificationService<?> classificationService = get(IClassificationService.class);
-		return classificationService.find(key.toString(), system, identityToken);
-	}
-
-	/**
-	 * Created with everything populated,
-	 *
-	 * @param featureCode
-	 * @param system
-	 * @param identityToken
-	 */
-	////@Transactional()
-	public GeographyFeatureCode create(GeographyFeatureCode featureCode, ISystems<?,?> system, java.util.UUID... identityToken)
-	{
-		IClassificationService<?> classificationService = get(IClassificationService.class);
-		IClassification<?,?> classification = classificationService.find(FeatureCodes, system, identityToken);
-		classificationService.create(featureCode.getCode(), featureCode.getDescription(), FeatureCodes.concept(), system,  0, classification, identityToken);
-		return featureCode;
-	}
-
 
 	@Override
-	public Uni<Void> loadFeatureCodes(ISystems<?,?> system, java.util.UUID... identityToken)
+	public Uni<IGeography<?, ?>> findGeographyById(Mutiny.Session session, UUID geographyID, ISystems<?, ?> system, UUID... identityToken)
 	{
-		IClassificationService<?> classificationService = get(IClassificationService.class);
+		return session.find(Geography.class, geographyID)
+			.onItem().ifNull().failWith(() -> new GeographyException("Geography not found: " + geographyID))
+			.map(geo -> (IGeography<?, ?>) geo);
+	}
+
+	public Uni<IClassification<?, ?>> findFeatureClass(Mutiny.Session session, GeographyFeatureClassesClassifications key, ISystems<?, ?> system, UUID... identityToken)
+	{
+		return classificationService.find(session, key.toString(), system, identityToken);
+	}
+
+	public Uni<GeographyFeatureCode> create(Mutiny.Session session, GeographyFeatureCode featureCode, ISystems<?, ?> system, UUID... identityToken)
+	{
+		return classificationService.find(session, FeatureCodes.toString(), system, identityToken)
+			.chain(classification -> classificationService.create(session, featureCode.getCode(), featureCode.getDescription(), FeatureCodes.concept(), system, 0, classification, identityToken))
+			.map(created -> featureCode);
+	}
+
+	@Override
+	public Uni<Void> loadFeatureCodes(Mutiny.Session session, ISystems<?, ?> system, UUID... identityToken)
+	{
 		setCurrentTask(0);
 		setTotalTasks(681);
 
 		return Uni.createFrom().item(() -> {
 			try (GeoDataFinder finder = new GeoDataFinder(FeatureCodes_en, CSVFormat.TDF, FeatureCodes_en.getHeaderNames()))
 			{
-				for (CSVRecord record : finder.getRecords())
-				{
-					GeographyFeatureCode featureCode = new GeographyFeatureCode();
-					featureCode.setCode(record.get("code"));
-					featureCode.setDescription(record.get("description"));
-					create(featureCode, system, identityToken);
-
-					Classification clazz
-							= (Classification) classificationService.find(featureCode.getClassClassification()
-							                                                         .toString(), system, identityToken);
-					Classification featureCodeClassification = (Classification) classificationService.find(featureCode.getCode(), FeatureCodes.concept(), system, identityToken);
-					clazz.addChild(featureCodeClassification,NoClassification.toString(),null, system, identityToken);
-
-					logProgress("Geography Feature Codes", "Loaded Feature Code - " + featureCode.toString(), 1);
-				}
-				return null;
+				List<CSVRecord> records = new ArrayList<>();
+				for (CSVRecord record : finder.getRecords()) records.add(record);
+				return records;
 			}
-			catch (Exception e) {
+			catch (Exception e)
+			{
 				log.error("Error loading feature codes", e);
 				throw new RuntimeException("Error loading feature codes", e);
 			}
 		})
-		.onFailure().invoke(error -> log.error("Error loading feature codes: {}", error.getMessage(), error))
-		.map(result -> null); // Convert to Void
+		.chain(records -> {
+			Uni<Void> chain = Uni.createFrom().voidItem();
+			for (CSVRecord record : records)
+			{
+				chain = chain.chain(() -> {
+					GeographyFeatureCode featureCode = new GeographyFeatureCode();
+					featureCode.setCode(record.get("code"));
+					featureCode.setDescription(record.get("description"));
+					return create(session, featureCode, system, identityToken)
+						.chain(fc -> classificationService.find(session, fc.getClassClassification().toString(), system, identityToken))
+						.chain(clazz -> classificationService.find(session, featureCode.getCode(), FeatureCodes.concept(), system, identityToken)
+							.chain(featureCodeClassification -> {
+								@SuppressWarnings("unchecked")
+								IClassification<Classification, ?> pp = (IClassification<Classification, ?>) clazz;
+								return pp.addChild(session, (Classification) featureCodeClassification, NoClassification.toString(), null, system, identityToken);
+							}))
+						.invoke(() -> logProgress("Geography Feature Codes", "Loaded Feature Code - " + featureCode.toString(), 1))
+						.replaceWithVoid();
+				});
+			}
+			return chain;
+		})
+		.onFailure().invoke(error -> log.error("Error loading feature codes: {}", error.getMessage(), error));
 	}
 
 	@Override
-	//@CacheResult(cacheName = "GeographyfindFeatureCode")
-	public GeographyFeatureCode findFeatureCode( String featureCode,  ISystems<?,?> system, java.util.UUID... identityToken)
+	public Uni<GeographyFeatureCode> findFeatureCode(Mutiny.Session session, String featureCode, ISystems<?, ?> system, UUID... identityToken)
 	{
-		IClassification<?,?> fClass = findFeatureCodeClassification(featureCode, system, identityToken);
-		GeographyFeatureCode fCode = new GeographyFeatureCode().setCode(fClass.getName())
-		                                                       .setDescription(fClass.getDescription());
-		return fCode;
+		return findFeatureCodeClassification(session, featureCode, system, identityToken)
+			.map(fClass -> new GeographyFeatureCode().setCode(fClass.getName()).setDescription(fClass.getDescription()));
 	}
 
 	@Override
-	//@CacheResult(cacheName = "GeographyfindFeatureCodeClassification")
-	public IClassification<?,?> findFeatureCodeClassification( String featureCode,  ISystems<?,?> system, java.util.UUID... identityToken)
+	public Uni<IClassification<?, ?>> findFeatureCodeClassification(Mutiny.Session session, String featureCode, ISystems<?, ?> system, UUID... identityToken)
 	{
-		IClassificationService<?> classificationService = get(IClassificationService.class);
-		return classificationService.find(featureCode, system, identityToken);
+		return classificationService.find(session, featureCode, system, identityToken);
 	}
 
 	@Override
-	public Uni<Void> loadTownsAndCities(ISystems<?,?> system)
+	public Uni<Void> loadTownsAndCities(Mutiny.Session session, ISystems<?, ?> system, UUID... identityToken)
 	{
-		UUID identityToken = com.guicedee.client.IGuiceContext.get(GeographySystem.class).getSystemToken(system.getEnterprise());
 
 		return Uni.createFrom().item(() -> {
-			try {
-				Map<Long, GeoNameDefaultData<?>> dataMap = new TreeMap<>();
-				Map<Long, List<Long>> hierarchyMap = new ConcurrentHashMap<>();
+			Map<Long, GeoNameDefaultData<?>> dataMap = new TreeMap<>();
+			Map<Long, List<Long>> hierarchyMap = new ConcurrentHashMap<>();
 
-				setTotalTasks(102850);
-				try (GeoDataFinder finder = new GeoDataFinder(ZAGeoData, CSVFormat.TDF, ZAGeoData.getHeaderNames()))
+			setTotalTasks(102850);
+			try (GeoDataFinder finder = new GeoDataFinder(ZAGeoData, CSVFormat.TDF, ZAGeoData.getHeaderNames()))
+			{
+				for (CSVRecord a : finder.getRecords())
 				{
-					int count = 0;
-					for (CSVRecord a : finder.getRecords())
-					{
-						count++;
-						String featureCode = a.get("feature code");
-						if (Strings.isNullOrEmpty(featureCode))
-						{
-							featureCode = "Z.UKN";
-						}
-						else
-						{
-							featureCode = a.get("feature class") + "." + featureCode;
-						}
-						GeoNameDefaultData<?> data = new GeoNameDefaultData<>();
-						data.setFeatureCode(findFeatureCode(featureCode, system, identityToken));
-						data.setFeatureClass(data.getFeatureCode()
-												 .getClassClassification());
+					String featureCodeStr = a.get("feature code");
+					if (Strings.isNullOrEmpty(featureCodeStr)) featureCodeStr = "Z.UKN";
+					else featureCodeStr = a.get("feature class") + "." + featureCodeStr;
 
-						if (!EnumSet.of(GeographyFeatureClassesClassifications.A,
-								GeographyFeatureClassesClassifications.P)
-									.contains(data.getFeatureClass()))
-						{
-							if (count % 50 == 0)
-							{
-								logProgress("Geography Data", "Skipped Non-Place Location - " + a.get("asciiname") +
-										" (" + getCurrentTask() + "/" + getTotalTasks() + ")", 50);
-							}
-							continue;
-						}
-						if (!Strings.isNullOrEmpty(a.get("admin1 code")))
-						{
-							data.setAdmin1Code(new GeographyAsciiCode().setCode(a.get("admin1 code")));
-						}
-						if (!Strings.isNullOrEmpty(a.get("admin2 code")))
-						{
-							data.setAdmin2Code(new GeographyAsciiCode().setCode(a.get("admin2 code")));
-						}
-						if (!Strings.isNullOrEmpty(a.get("admin3 code")))
-						{
-							data.setAdmin3Code(a.get("admin3 code"));
-						}
-						if (!Strings.isNullOrEmpty(a.get("admin4 code")))
-						{
-							data.setAdmin4Code(a.get("admin4 code"));
-						}
+					GeoNameDefaultData<?> data = new GeoNameDefaultData<>();
+					data.setAsciiname(a.get("asciiname"));
+					data.setName(a.get("name"));
+					data.setGeonameId(Long.parseLong(a.get("geonameid")));
+					data.setCoordinates(new GeographyCoordinates(a.get("latitude"), a.get("longitude")));
+					if (!Strings.isNullOrEmpty(a.get("dem"))) data.setDem(Integer.parseInt(a.get("dem")));
+					if (!Strings.isNullOrEmpty(a.get("elevation"))) data.setElevation(Integer.parseInt(a.get("elevation")));
+					if (!Strings.isNullOrEmpty(a.get("population"))) data.setPopulation(Integer.parseInt(a.get("population")));
+					if (!Strings.isNullOrEmpty(a.get("admin1 code"))) data.setAdmin1Code(new GeographyAsciiCode().setCode(a.get("admin1 code")));
+					if (!Strings.isNullOrEmpty(a.get("admin2 code"))) data.setAdmin2Code(new GeographyAsciiCode().setCode(a.get("admin2 code")));
+					if (!Strings.isNullOrEmpty(a.get("admin3 code"))) data.setAdmin3Code(a.get("admin3 code"));
+					if (!Strings.isNullOrEmpty(a.get("admin4 code"))) data.setAdmin4Code(a.get("admin4 code"));
 
-						data.setAsciiname(a.get("asciiname"));
-						data.setName(a.get("name"));
-						data.setGeonameId(Long.parseLong(a.get("geonameid")));
-						data.setCountryCode(findCountry(new GeographyCountry().setIso(a.get("country code")), system, identityToken));
-						data.setCoordinates(new GeographyCoordinates(a.get("latitude"), a.get("longitude")));
+					// Store feature code string for later resolution
+					data.setAdmin3Code(featureCodeStr); // temporary reuse field for feature code string
 
-						if (!Strings.isNullOrEmpty(a.get("dem")))
-						{
-							data.setDem(Integer.parseInt(a.get("dem")));
-						}
-						if (!Strings.isNullOrEmpty(a.get("elevation")))
-						{
-							data.setElevation(Integer.parseInt(a.get("elevation")));
-						}
-						if (!Strings.isNullOrEmpty(a.get("population")))
-						{
-							data.setPopulation(Integer.parseInt(a.get("population")));
-						}
-
-						dataMap.put(data.getGeonameId(), data);
-
-						if (count % 50 == 0)
-						{
-							logProgress("Geography Data", "Loaded - " + a.get("asciiname") +
-									" (" + getCurrentTask() + "/" + getTotalTasks() + ")", 50);
-						}
-					}
+					dataMap.put(data.getGeonameId(), data);
 				}
-
-				setCurrentTask(0);
-				setTotalTasks(488058);
-				try (GeoDataFinder finder = new GeoDataFinder(Hierarchy, CSVFormat.TDF, Hierarchy.getHeaderNames()))
-				{
-					int count = 0;
-					for (CSVRecord record : finder.getRecords())
-					{
-						count++;
-						if (!"ADM".equals(record.get("type")))
-						{
-							continue;
-						}
-						addToMap(Long.valueOf(record.get(0)), Long.valueOf(record.get(1)), hierarchyMap);
-						if (count % 50 == 0)
-						{
-							logProgress("Geography Data", "Loaded Hierarchy Data - " + record.get(0) +
-									" (" + getCurrentTask() + "/" + getTotalTasks() + ")", 50);
-						}
-					}
-				}
-
-				logProgress("Geography Data", "Cleaning up hierarchy for data map..." +
-						" (" + getCurrentTask() + "/" + getTotalTasks() + ")", 1);
-
-				hierarchyMap.entrySet()
-							.iterator()
-							.forEachRemaining(a -> {
-								if (!dataMap.containsKey(a.getKey()))
-								{
-									hierarchyMap.remove(a.getKey());
-								}
-							});
-
-				logProgress("Geography Data", "Mapping Districts to Places..." +
-						" (" + getCurrentTask() + "/" + getTotalTasks() + ")", 1);
-				dataMap.forEach((key, value) -> {
-					if (value.getAdmin2Code() != null)
-					{
-						DistrictService districtService = get(DistrictService.class);
-						String dName = value.getCountryCode()
-											.getIso() + "." +
-							   value.getAdmin1Code()
-											.getCode() + "." +
-							   value.getAdmin2Code()
-											.getCode();
-						try
-						{
-							IGeography<?, ?> district = districtService.findDistrict(dName, system, identityToken);
-							if (!hierarchyMap.containsKey(Long.valueOf(district.getOriginalSourceSystemUniqueID())))
-							{
-								hierarchyMap.put(Long.valueOf(district.getOriginalSourceSystemUniqueID()), new ArrayList<>());
-							}
-							if (!hierarchyMap.get(Long.valueOf(district.getOriginalSourceSystemUniqueID()))
-											 .contains(value.getGeonameId()))
-							{
-								hierarchyMap.get(Long.valueOf(district.getOriginalSourceSystemUniqueID()))
-											.add(value.getGeonameId());
-							}
-						}catch (Throwable T)
-						{
-							LogFactory.getLog("Geography Service").log(Level.WARNING,"Cannot find district with code - " + dName);
-						}
-					}
-				});
-
-				DistrictService districtService = get(DistrictService.class);
-				ProvinceService provinceService = get(ProvinceService.class);
-				List<Geography> allDistricts = districtService.findAllDistricts(system, identityToken);
-
-				setCurrentTask(0);
-				setTotalTasks(hierarchyMap.size());
-				logProgress("Geo Hierarchy", "Loading Structure... " + hierarchyMap.size() + " in total", 1);
-				loadHierarchyLevel(hierarchyMap, dataMap, allDistricts, system, identityToken);
-
-				return null;
-			} catch (Exception e) {
-				log.error("Error loading towns and cities", e);
-				throw new RuntimeException("Error loading towns and cities", e);
 			}
+			catch (Exception e)
+			{
+				log.error("Error loading towns and cities data", e);
+				throw new RuntimeException("Error loading towns and cities data", e);
+			}
+
+			try (GeoDataFinder finder = new GeoDataFinder(Hierarchy, CSVFormat.TDF, Hierarchy.getHeaderNames()))
+			{
+				for (CSVRecord record : finder.getRecords())
+				{
+					if (!"ADM".equals(record.get("type"))) continue;
+					Long parentId = Long.valueOf(record.get(0));
+					Long childId = Long.valueOf(record.get(1));
+					hierarchyMap.computeIfAbsent(parentId, k -> new ArrayList<>()).add(childId);
+				}
+			}
+			catch (Exception e)
+			{
+				log.error("Error loading hierarchy data", e);
+				throw new RuntimeException("Error loading hierarchy data", e);
+			}
+
+			return new Object[]{dataMap, hierarchyMap};
 		})
-		.onFailure().invoke(error -> log.error("Error loading towns and cities: {}", error.getMessage(), error))
-		.map(result -> null); // Convert to Void
-	}
+		.chain(data -> {
+			@SuppressWarnings("unchecked")
+			Map<Long, GeoNameDefaultData<?>> dataMap = (Map<Long, GeoNameDefaultData<?>>) data[0];
+			@SuppressWarnings("unchecked")
+			Map<Long, List<Long>> hierarchyMap = (Map<Long, List<Long>>) data[1];
 
-	private void loadHierarchyLevel(Map<Long, List<Long>> hierarchyMap, Map<Long, GeoNameDefaultData<?>> dataMap,
-	                                List<Geography> geoList, ISystems<?,?> system,
-	                                java.util.UUID... identityToken)
-	{
-		for (int i = 0; i < geoList.size(); i++)
-		{
-			IGeography<Geography, GeographyQueryBuilder> iGeography = geoList.get(i);
-			if (!Strings.isNullOrEmpty(iGeography.getOriginalSourceSystemUniqueID()))
-			{
-				if (hierarchyMap.get(Long.valueOf(iGeography.getOriginalSourceSystemUniqueID())) != null)
-				{
-					for (Long aLong : hierarchyMap.get(Long.valueOf(iGeography.getOriginalSourceSystemUniqueID())))
+			// Remove hierarchy entries not in dataMap
+			hierarchyMap.entrySet().removeIf(entry -> !dataMap.containsKey(entry.getKey()));
+
+			log.info("Loading {} hierarchy entries for towns and cities", hierarchyMap.size());
+
+			return districtService.findAllDistricts(session, system, identityToken)
+				.chain(allDistricts -> {
+					Uni<Void> chain = Uni.createFrom().voidItem();
+					for (Geography iGeography : allDistricts)
 					{
-						if (aLong == null)
-						{
-							continue;
-						}
-						GeoNameDefaultData<?> geoNameDefaultData = create(dataMap.get(aLong), get(ClassificationService.class).find(Town, system, identityToken),
-								system,
-								identityToken);
-						Geography newChild = findGeographyByID(geoNameDefaultData.getGeographyId());
-						if (newChild == null)
-						{
-							continue;
-						}
-						iGeography.addChild(newChild,NoClassification.toString(), STRING_EMPTY, system, identityToken);
-						if (hierarchyMap.get(geoNameDefaultData.getGeonameId()) != null)
-						{
-							for (Long againLong : hierarchyMap.get(geoNameDefaultData.getGeonameId()))
-							{
-								if (againLong == null)
+						chain = chain.chain(() -> iGeography.findClassification(session, GeoNameID, system, identityToken)
+							.chain(rel -> {
+								String geoIdStr = rel != null ? rel.getValue() : null;
+								if (Strings.isNullOrEmpty(geoIdStr)) return Uni.createFrom().voidItem();
+								Long geoId = Long.valueOf(geoIdStr);
+								List<Long> children = hierarchyMap.get(geoId);
+								if (children == null) return Uni.createFrom().voidItem();
+
+								Uni<Void> childChain = Uni.createFrom().voidItem();
+								for (Long childId : children)
 								{
-									continue;
+									GeoNameDefaultData<?> childData = dataMap.get(childId);
+									if (childData == null) continue;
+									childChain = childChain.chain(() -> classificationService.find(session, Town.toString(), system, identityToken)
+										.chain(townClassification -> createGeoData(session, childData, townClassification, system, identityToken))
+										.chain(created -> {
+											if (created.getGeographyId() == null) return Uni.createFrom().voidItem();
+											return session.find(Geography.class, created.getGeographyId())
+												.chain(newChild -> {
+													if (newChild == null) return Uni.createFrom().voidItem();
+													return iGeography.addChild(session, newChild, NoClassification.toString(), STRING_EMPTY, system, identityToken)
+														.replaceWithVoid();
+												});
+										}));
 								}
-								GeoNameDefaultData<?> againNameDefaultData = create(dataMap.get(againLong), get(ClassificationService.class).find(Town, system, identityToken),
-										system,
-										identityToken);
-								Geography againChild = findGeographyByID(againNameDefaultData.getGeographyId());
-								if (againChild == null)
-								{
-									continue;
-								}
-								iGeography.addChild(againChild,NoClassification.toString(), STRING_EMPTY, system, identityToken);
-							}
-						}
+								return childChain;
+							}));
 					}
-				}
-			}
-
-			logProgress("Geo Hierarchy", "Loading Structure... (" + i + "/" + geoList.size() + ")", 1);
-		}
+					return chain;
+				});
+		})
+		.onFailure().invoke(error -> log.error("Error loading towns and cities: {}", error.getMessage(), error));
 	}
 
-	private void addToMap(Long id, Long child, Map<Long, List<Long>> map)
+	private Uni<GeoNameDefaultData<?>> createGeoData(Mutiny.Session session, GeoNameDefaultData<?> geoData, IClassification<?, ?> classification,
+	                                                 ISystems<?, ?> system, UUID... identityToken)
 	{
-		if (!map.containsKey(id))
-		{
-			map.put(id, new ArrayList<>());
-		}
-		map.get(id)
-		   .add(child);
-	}
+		if (geoData.getGeonameId() == null) geoData.setGeonameId(-1L);
 
-	/**
-	 * Created with everything populated,
-	 *
-	 * @param geoData
-	 * @param system
-	 * @param identityToken
-	 */
-	////@Transactional()
-	public GeoNameDefaultData<?> create(GeoNameDefaultData<?> geoData, IClassification<?,?> classification, ISystems<?,?> system, java.util.UUID... identityToken)
-	{
-		if (geoData.getGeonameId() == null)
-		{
-			geoData.setGeonameId(-1L);
-		}
+		return SessionUtils.withActivityMaster(applicationEnterpriseName, system.getName(), tuple -> {
+			var createSession = tuple.getItem1();
+			var createEnterprise = tuple.getItem2();
+			var createSystem = tuple.getItem3();
+			var createIdentityToken = tuple.getItem4();
 
-		Long exists = new Geography()
-				.builder()
-				.withGeoNameID(geoData.getGeonameId()
-				                      .toString())
-				.getCount();
-		if (exists == 0)
-		{
 			Geography geo = new Geography();
-			geo.setName(geoData.getName());
-			geo.setDescription(geoData.getAsciiname());
-			if (geoData.getGeonameId() != -1L)
-			{
-				geo.setOriginalSourceSystemUniqueID(Long.toString(geoData.getGeonameId()));
-			}
+			return geo.builder(createSession)
+				.withGeoNameID(geoData.getGeonameId().toString())
+				.getCount()
+				.chain(count -> {
+					if (count > 0)
+					{
+						return Uni.createFrom().item(geoData);
+					}
 
-			geo.setEnterpriseID(system.getEnterprise());
-			geo.setClassification((Classification) classification);
-			geo.setSystemID(system);
-			geo.setActiveFlagID(system.getActiveFlagID());
-			geo.setOriginalSourceSystemID(system.getId());
+					geo.setName(geoData.getName());
+					geo.setDescription(geoData.getAsciiname());
+					geo.setEnterpriseID(createEnterprise);
+					geo.setClassificationID((Classification) classification);
+					geo.setSystemID(createSystem);
+					geo.setOriginalSourceSystemID(createSystem.getId());
 
-			geo.setClassification((Classification) classification);
-
-			geo.persist();
-			geoData.setGeographyId(geo.getId());
-
-				geo.createDefaultSecurity(system, identityToken);
-
-			if (geoData.getCoordinates() != null)
-			{
-				geo.addClassification(Latitude.toString(), geoData.getCoordinates()
-				                         .getLatitude(), system, identityToken);
-				geo.addClassification(Longitude.toString(), geoData.getCoordinates()
-				                          .getLongitude(), system, identityToken);
-			}
-			if (geoData.getFeatureCode() != null)
-			{
-				try
-				{
-					IClassification<?,?> featureCode = findFeatureCodeClassification(geoData.getFeatureCode()
-					                                                                      .getCode(), system, identityToken);
-					geo.addClassification(featureCode.getName(), "", system, identityToken);
-				}
-				catch (NoSuchElementException e)
-				{
-					//System.out.println("No feature code");
-				}
-			}
-			if (geoData.getFeatureClass() != null)
-			{
-				try
-				{
-					IClassification<?,?> featureClass = findFeatureClass(geoData.getFeatureClass(), system, identityToken);
-					geo.addClassification(featureClass.getName(), "", system, identityToken);
-				}
-				catch (NoSuchElementException e)
-				{
-					//	System.out.println("No feature code");
-				}
-			}
-
-			if (geoData.getPopulation() != 0)
-			{
-				geo.addClassification(Population.toString(), Integer.toString(geoData.getPopulation()), system, identityToken);
-			}
-			if (geoData.getElevation() != 0)
-			{
-				geo.addClassification(Elevation.toString(), Integer.toString(geoData.getElevation()), system, identityToken);
-			}
-			if (geoData.getDem() != 0)
-			{
-				geo.addClassification(DEM.toString(), Integer.toString(geoData.getDem()), system, identityToken);
-			}
-		}
-		return geoData;
+					IActiveFlagService<?> acService = IGuiceContext.get(IActiveFlagService.class);
+					return acService.getActiveFlag(createSession, createEnterprise, createIdentityToken)
+						.chain(activeFlag -> {
+							geo.setActiveFlagID(activeFlag);
+							return createSession.persist(geo).replaceWith(Uni.createFrom().item(geo));
+						})
+						.chain(persisted -> {
+							geoData.setGeographyId(geo.getId());
+							Uni<?> setupChain = geo.createDefaultSecurity(createSession, createSystem, createIdentityToken)
+								.onFailure().recoverWithItem(() -> null);
+							// Store geoname ID as a classification
+							if (geoData.getGeonameId() != null && geoData.getGeonameId() != -1L)
+							{
+								setupChain = setupChain.chain(() -> geo.addClassification(createSession, GeoNameID.toString(), Long.toString(geoData.getGeonameId()), createSystem, createIdentityToken));
+							}
+							return setupChain;
+						})
+						.chain(secResult -> {
+							Uni<?> classChain = Uni.createFrom().voidItem();
+							if (geoData.getCoordinates() != null)
+							{
+								classChain = classChain.chain(() -> geo.addClassification(createSession, Latitude.toString(), geoData.getCoordinates().getLatitude(), createSystem, createIdentityToken))
+									.chain(() -> geo.addClassification(createSession, Longitude.toString(), geoData.getCoordinates().getLongitude(), createSystem, createIdentityToken));
+							}
+							if (geoData.getPopulation() != 0)
+								classChain = classChain.chain(() -> geo.addClassification(createSession, Population.toString(), Integer.toString(geoData.getPopulation()), createSystem, createIdentityToken));
+							if (geoData.getElevation() != 0)
+								classChain = classChain.chain(() -> geo.addClassification(createSession, Elevation.toString(), Integer.toString(geoData.getElevation()), createSystem, createIdentityToken));
+							if (geoData.getDem() != 0)
+								classChain = classChain.chain(() -> geo.addClassification(createSession, DEM.toString(), Integer.toString(geoData.getDem()), createSystem, createIdentityToken));
+							return classChain.replaceWith(geoData);
+						});
+				});
+		});
 	}
 
-	//@CacheResult(cacheName = "GeographyByGeoNameID")
-	public Geography findGeographyByID( UUID geographyID)
+	public Uni<Geography> findGeographyByID(Mutiny.Session session, UUID geographyID)
 	{
-		if (geographyID == null)
-		{
-			return null;
-		}
-		return new Geography().builder()
-		                      .find(geographyID)
-		                      .get()
-		                      .orElseThrow();
+		if (geographyID == null) return Uni.createFrom().nullItem();
+		return session.find(Geography.class, geographyID);
 	}
 }

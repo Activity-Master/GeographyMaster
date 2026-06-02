@@ -8,6 +8,7 @@ import com.guicedee.activitymaster.fsdm.client.services.systems.*;
 import com.guicedee.activitymaster.geography.services.IGeographyService;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Named;
+import org.hibernate.reactive.mutiny.Mutiny;
 import lombok.extern.log4j.Log4j2;
 
 import static com.guicedee.activitymaster.fsdm.services.ActivityMasterSystemsManager.*;
@@ -25,10 +26,10 @@ public class GeographyInstallFeatureCodes implements ISystemUpdate
 	private IGeographyService<?> geographyService;
 
 	@Override
-	public Uni<Boolean> update(IEnterprise<?,?> enterprise)
+	public Uni<Boolean> update(Mutiny.Session session, IEnterprise<?,?> enterprise)
 	{
 		log.info("Starting feature codes loading for Geography Master");
-		return geographyService.loadFeatureCodes(system.get())
+		return geographyService.loadFeatureCodes(session, system.get())
 			.chain(() -> {
 				wipeCaches();
 				return Uni.createFrom().item(true);

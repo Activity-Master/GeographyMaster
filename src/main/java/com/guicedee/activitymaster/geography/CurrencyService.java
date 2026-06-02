@@ -1,75 +1,102 @@
 package com.guicedee.activitymaster.geography;
 
+/**
+ * Reactivity Migration Checklist:
+ *
+ * [✓] One action per Mutiny.Session at a time
+ * [✓] Pass Mutiny.Session through the chain
+ * [✓] No await() usage
+ * [✓] No parallel operations on a session
+ * [✓] No session/transaction creation in libraries
+ */
+
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.guicedee.activitymaster.fsdm.client.services.IClassificationService;
-import com.guicedee.activitymaster.fsdm.client.services.annotations.ActivityMasterDB;
+import com.guicedee.activitymaster.fsdm.client.services.SessionUtils;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.classifications.IClassification;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.systems.ISystems;
 import com.guicedee.activitymaster.fsdm.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
-//import com.google.inject.persist.Transactional;
+import io.smallrye.mutiny.Uni;
+import lombok.extern.log4j.Log4j2;
+import org.hibernate.reactive.mutiny.Mutiny;
 
+import java.util.UUID;
 
-
-
-
+import static com.guicedee.activitymaster.fsdm.client.services.administration.ActivityMasterConfiguration.applicationEnterpriseName;
 import static com.guicedee.activitymaster.fsdm.client.services.classifications.EnterpriseClassificationDataConcepts.*;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
-import static com.guicedee.client.IGuiceContext.*;
 
 
+@Log4j2
+@Singleton
 public class CurrencyService
 {
-	//@CacheResult(cacheName = "GeographyCurrencies", skipGet = true)
-	////@Transactional()
-	public IClassification<?,?> createCurrency( String code, String description,  ISystems<?,?> system,  java.util.UUID... identityToken)
+	@Inject
+	private IClassificationService<?> classificationService;
+
+	public Uni<IClassification<?, ?>> createCurrency(Mutiny.Session session, String code, String description, ISystems<?, ?> system, UUID... identityToken)
 	{
-		IClassificationService<?> classificationService = get(IClassificationService.class);
-		
-		boolean exists = new Classification().builder()
-		                                     .withName(code)
-		                                     .withConcept(Currency.concept(),system,identityToken)
-		                                     .inActiveRange()
-		                                     .inDateRange()
-		                                     .withEnterprise(system)
-		                                     .getCount() > 0;
-		if (exists)
-		{
-			return findCurrency(code, system, identityToken);
-		}
-		
-		return classificationService.create(code, description,
-				ClassificationXClassification,
-				system, 0,
-				Currency.toString(),
-				identityToken);
+		return SessionUtils.withActivityMaster(applicationEnterpriseName, system.getName(), tuple -> {
+			var createSession = tuple.getItem1();
+			var createEnterprise = tuple.getItem2();
+			var createSystem = tuple.getItem3();
+			var createIdentityToken = tuple.getItem4();
+
+			return new Classification().builder(createSession)
+				.withName(code)
+				.withConcept(Currency.concept(), createSystem, createIdentityToken)
+				.inActiveRange()
+				.inDateRange()
+				.withEnterprise(createEnterprise)
+				.getCount()
+				.chain(count -> {
+					if (count > 0)
+					{
+						return findCurrency(createSession, code, createSystem, createIdentityToken);
+					}
+					return classificationService.create(createSession, code, description,
+						ClassificationXClassification,
+						createSystem, 0,
+						Currency.toString(),
+						createIdentityToken);
+				});
+		});
 	}
-	
-	//@CacheResult(cacheName = "GeographyCurrencies")
-	public IClassification<?,?> findCurrency( String code,  ISystems<?,?> system,  java.util.UUID... identityToken)
+
+	public Uni<IClassification<?, ?>> findCurrency(Mutiny.Session session, String code, ISystems<?, ?> system, UUID... identityToken)
 	{
-		return new Classification().builder()
-		                           .withName(code)
-		                           .withConcept(Currency.concept(),system,identityToken)
-		                           .inActiveRange()
-		                           .inDateRange()
-		                           .withEnterprise(system)
-		                           .get()
-		                           .orElseThrow(() -> new GeographyException("Cannot find currency with code : " + code));
+		return SessionUtils.withActivityMaster(applicationEnterpriseName, system.getName(), tuple -> {
+			var createSession = tuple.getItem1();
+			var createEnterprise = tuple.getItem2();
+			var createSystem = tuple.getItem3();
+			var createIdentityToken = tuple.getItem4();
+
+			return new Classification().builder(createSession)
+				.withName(code)
+				.withConcept(Currency.concept(), createSystem, createIdentityToken)
+				.inActiveRange()
+				.inDateRange()
+				.withEnterprise(createEnterprise)
+				.get()
+				.onItem().ifNull().failWith(() -> new GeographyException("Cannot find currency with code : " + code))
+				.map(c -> (IClassification<?, ?>) c);
+		});
 	}
-	
-	//@CacheResult(cacheName = "GeographyCurrencies", skipGet = true)
-	////@Transactional()
-	public IClassification<?,?> updateCurrency( String code, String description,  ISystems<?,?> system,  java.util.UUID... identityToken)
+
+	public Uni<IClassification<?, ?>> updateCurrency(Mutiny.Session session, String code, String description, ISystems<?, ?> system, UUID... identityToken)
 	{
-		IClassification<?,?> toUpdate = findCurrency(code, system, identityToken);
-		if (description != null)
-		{
-			com.guicedee.activitymaster.fsdm.db.entities.classifications.Classification update = new Classification();
-			update.setId(toUpdate.getId());
-			update.setDescription(description);
-			update.update();
-		}
-		
-		return toUpdate;
+		return findCurrency(session, code, system, identityToken)
+			.chain(toUpdate -> {
+				if (description != null)
+				{
+					Classification update = new Classification();
+					update.setId(toUpdate.getId());
+					update.setDescription(description);
+					return session.merge(update).replaceWith(toUpdate);
+				}
+				return Uni.createFrom().item(toUpdate);
+			});
 	}
 }

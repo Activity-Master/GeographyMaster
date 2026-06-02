@@ -1,91 +1,114 @@
 package com.guicedee.activitymaster.geography;
 
+/**
+ * Reactivity Migration Checklist:
+ *
+ * [✓] One action per Mutiny.Session at a time
+ * [✓] Pass Mutiny.Session through the chain
+ * [✓] No await() usage
+ * [✓] No parallel operations on a session
+ * [✓] No session/transaction creation in libraries
+ */
+
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.guicedee.activitymaster.fsdm.client.services.IClassificationService;
-import com.guicedee.activitymaster.fsdm.client.services.annotations.ActivityMasterDB;
+import com.guicedee.activitymaster.fsdm.client.services.SessionUtils;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.classifications.IClassification;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.systems.ISystems;
 import com.guicedee.activitymaster.fsdm.client.services.classifications.EnterpriseClassificationDataConcepts;
 import com.guicedee.activitymaster.fsdm.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
-//import com.google.inject.persist.Transactional;
-
-
+import io.smallrye.mutiny.Uni;
+import lombok.extern.log4j.Log4j2;
+import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.util.Set;
+import java.util.UUID;
 
-
+import static com.guicedee.activitymaster.fsdm.client.services.administration.ActivityMasterConfiguration.applicationEnterpriseName;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
-import static com.guicedee.client.IGuiceContext.*;
 
+@Log4j2
+@Singleton
 public class TimeZoneService
 {
 	public static final Set<String> TimeZoneClassifications = Set.of(TimeZone.toString(),
 			TimeZoneRawOffset.toString(),
 			TimeZoneOffsetJuly2016.toString(),
 			TimeZoneOffsetJan2016.toString());
-	
-	//@CacheResult(cacheName = "GeographyTimezones", skipGet = true)
-	////@Transactional()
-	public IClassification<?,?> createTimeZone( String code, String description, String originalUniqueID,  ISystems<?,?> system,  java.util.UUID... identityToken)
+
+	@Inject
+	private IClassificationService<?> classificationService;
+
+	public Uni<IClassification<?, ?>> createTimeZone(Mutiny.Session session, String code, String description, String originalUniqueID, ISystems<?, ?> system, UUID... identityToken)
 	{
-		IClassificationService<?> classificationService = get(IClassificationService.class);
-		boolean exists = new Classification().builder()
-		                                     .withName(code)
-		                                     .withConcept(TimeZone.concept(),system,identityToken)
-		                                     .inActiveRange()
-		                                     .inDateRange()
-		                                     .withEnterprise(system)
-		                                     .getCount() > 0;
-		if(exists)
-		{
-			return findTimeZone(code, system, identityToken);
-		}
-		return classificationService.create(code, description,
-				EnterpriseClassificationDataConcepts.Classification,
-		                                    system, 0,
-		                                    identityToken);
+		return SessionUtils.withActivityMaster(applicationEnterpriseName, system.getName(), tuple -> {
+			var createSession = tuple.getItem1();
+			var createEnterprise = tuple.getItem2();
+			var createSystem = tuple.getItem3();
+			var createIdentityToken = tuple.getItem4();
+
+			return new Classification().builder(createSession)
+				.withName(code)
+				.withConcept(TimeZone.concept(), createSystem, createIdentityToken)
+				.inActiveRange()
+				.inDateRange()
+				.withEnterprise(createEnterprise)
+				.getCount()
+				.chain(count -> {
+					if (count > 0)
+					{
+						return findTimeZone(createSession, code, createSystem, createIdentityToken);
+					}
+					return classificationService.create(createSession, code, description,
+						EnterpriseClassificationDataConcepts.Classification,
+						createSystem, 0,
+						createIdentityToken);
+				});
+		});
 	}
-	
-	//@CacheResult(cacheName = "GeographyTimezones")
-	public IClassification<?,?> findTimeZone( String code,  ISystems<?,?> system,  java.util.UUID... identityToken)
+
+	public Uni<IClassification<?, ?>> findTimeZone(Mutiny.Session session, String code, ISystems<?, ?> system, UUID... identityToken)
 	{
-		return new Classification().builder()
-		                           .withName(code)
-		                           .withConcept(TimeZone.concept(),system,identityToken)
-		                           .inActiveRange()
-		                           .inDateRange()
-		                           .withEnterprise(system)
-		                           .get()
-		                           .orElseThrow(() -> new GeographyException("Unable to find timezone with code - " + code));
+		return SessionUtils.withActivityMaster(applicationEnterpriseName, system.getName(), tuple -> {
+			var createSession = tuple.getItem1();
+			var createEnterprise = tuple.getItem2();
+			var createSystem = tuple.getItem3();
+			var createIdentityToken = tuple.getItem4();
+
+			return new Classification().builder(createSession)
+				.withName(code)
+				.withConcept(TimeZone.concept(), createSystem, createIdentityToken)
+				.inActiveRange()
+				.inDateRange()
+				.withEnterprise(createEnterprise)
+				.get()
+				.onItem().ifNull().failWith(() -> new GeographyException("Unable to find timezone with code - " + code))
+				.map(c -> (IClassification<?, ?>) c);
+		});
 	}
-	
-	//@CacheResult(cacheName = "GeographyTimezones", skipGet = true)
-	////@Transactional()
-	public IClassification<?,?> updateTimeZone( String code, String description,
-	                                         String timeZoneRawOffset, String timeZoneOffsetJuly2016, String timeZoneOffsetJan2016,
-	                                          ISystems<?,?> system,  java.util.UUID... identityToken)
+
+	public Uni<IClassification<?, ?>> updateTimeZone(Mutiny.Session session, String code, String description,
+	                                                 String timeZoneRawOffset, String timeZoneOffsetJuly2016, String timeZoneOffsetJan2016,
+	                                                 ISystems<?, ?> system, UUID... identityToken)
 	{
-		IClassification<?,?> toUpdate = findTimeZone(code, system, identityToken);
-		if (description != null)
-		{
-			Classification update = new Classification();
-			update.setId(toUpdate.getId());
-			update.setDescription(description);
-			update.update();
-		}
-		if (timeZoneRawOffset != null)
-		{
-			toUpdate.addOrUpdateClassification(TimeZoneRawOffset, timeZoneRawOffset, system, identityToken);
-		}
-		if (timeZoneOffsetJuly2016 != null)
-		{
-			toUpdate.addOrUpdateClassification(TimeZoneOffsetJuly2016, timeZoneOffsetJuly2016, system, identityToken);
-		}
-		if (timeZoneOffsetJan2016 != null)
-		{
-			toUpdate.addOrUpdateClassification(TimeZoneOffsetJan2016, timeZoneOffsetJan2016, system, identityToken);
-		}
-		
-		return toUpdate;
+		return findTimeZone(session, code, system, identityToken)
+			.chain(toUpdate -> {
+				Uni<?> chain = Uni.createFrom().voidItem();
+				if (description != null)
+				{
+					chain = chain.chain(() -> {
+						Classification update = new Classification();
+						update.setId(toUpdate.getId());
+						update.setDescription(description);
+						return session.merge(update).replaceWithVoid();
+					});
+				}
+				if (timeZoneRawOffset != null) chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, TimeZoneRawOffset, timeZoneRawOffset, system, identityToken));
+				if (timeZoneOffsetJuly2016 != null) chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, TimeZoneOffsetJuly2016, timeZoneOffsetJuly2016, system, identityToken));
+				if (timeZoneOffsetJan2016 != null) chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, TimeZoneOffsetJan2016, timeZoneOffsetJan2016, system, identityToken));
+				return chain.replaceWith(toUpdate);
+			});
 	}
 }
