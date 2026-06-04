@@ -122,6 +122,9 @@ public class CountryService
 						.inActiveRange()
 						.inDateRange()
 						.withEnterprise(createEnterprise)
+						// Read-only lookup of immutable country reference data: skips dirty-check
+						// snapshots and pre-query auto-flush, and (with 2LC) is served from the cache.
+						.setReadOnly(true)
 						.get()
 						.onItem().ifNull().failWith(() -> new GeographyException("Cannot find country - " + iso))
 						.map(geo -> (IGeography<?, ?>) geo);

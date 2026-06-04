@@ -102,7 +102,7 @@ public class GeographyGraphQLSchemaProvider implements IGraphQLSchemaProvider<Ge
             String system = env.getArgument("system");
             String iso = env.getArgument("iso");
 
-            Uni<GeographyCountry> uni = SessionUtils.withActivityMaster(enterprise, system, tuple -> {
+            Uni<GeographyCountry> uni = SessionUtils.withActivityMasterReadOnly(enterprise, system, tuple -> {
                 Mutiny.Session session = tuple.getItem1();
                 ISystems<?, ?> sys = tuple.getItem3();
                 IGeographyService<?> service = IGuiceContext.get(IGeographyService.class);
