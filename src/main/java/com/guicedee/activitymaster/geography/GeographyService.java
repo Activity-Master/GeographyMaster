@@ -23,7 +23,6 @@ import com.guicedee.activitymaster.fsdm.client.services.classifications.Enterpri
 import com.guicedee.activitymaster.fsdm.client.services.systems.IProgressable;
 import com.guicedee.activitymaster.fsdm.db.entities.classifications.Classification;
 import com.guicedee.activitymaster.fsdm.db.entities.geography.Geography;
-import com.guicedee.activitymaster.geography.implementations.GeographySystem;
 import com.guicedee.activitymaster.geography.services.IGeographyService;
 import com.guicedee.activitymaster.geography.services.dto.*;
 import com.guicedee.activitymaster.geography.services.dto.classifications.GeographyAsciiCode;
@@ -32,13 +31,19 @@ import com.guicedee.activitymaster.geography.services.enumerations.GeographyFeat
 import com.guicedee.activitymaster.geography.services.exceptions.GeographyException;
 import com.guicedee.client.IGuiceContext;
 import geodata.GeoDataFinder;
+import geodata.GeoDataLocation;
+import geodata.GeoNamesDownloader;
 import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.infrastructure.Infrastructure;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.hibernate.reactive.mutiny.Mutiny;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -151,6 +156,54 @@ public class GeographyService
 						return country;
 					});
 			});
+	}
+
+	@Override
+	public Uni<GeographyCountry> findCountryDetailed(Mutiny.Session session, String iso, ISystems<?, ?> system, UUID... identityToken)
+	{
+		return countryService.findCountry(session, iso, system, identityToken)
+			.chain(geo -> {
+				GeographyCountry gc = new GeographyCountry();
+				gc.setGeographyId(geo.getId());
+				gc.setIso(geo.getName());
+				gc.setCountryName(geo.getDescription());
+				return classificationValue(session, geo, GeoNameID, system, identityToken)
+					.invoke(v -> {
+						if (v != null && !v.isBlank())
+						{
+							try { gc.setGeonameId(Long.parseLong(v.trim())); }
+							catch (NumberFormatException ignored) { /* leave null */ }
+						}
+					})
+					.chain(() -> classificationValue(session, geo, CountryISO3166_3, system, identityToken).invoke(gc::setIso3))
+					.chain(() -> classificationValue(session, geo, CountryISO_Numeric, system, identityToken).invoke(gc::setIsoNumeric))
+					.chain(() -> classificationValue(session, geo, CountryFips, system, identityToken).invoke(gc::setFips))
+					.chain(() -> classificationValue(session, geo, CountryCapital, system, identityToken).invoke(gc::setCapital))
+					.chain(() -> classificationValue(session, geo, CountryAreaInSqKm, system, identityToken).invoke(gc::setAreaSqlKM))
+					.chain(() -> classificationValue(session, geo, CountryTld, system, identityToken).invoke(gc::setWebTld))
+					.chain(() -> classificationValue(session, geo, CountryPhone, system, identityToken).invoke(gc::setCountryDialCode))
+					.chain(() -> classificationValue(session, geo, CountryPostalCodeFormat, system, identityToken).invoke(gc::setPostalCodeDecimalFormat))
+					.chain(() -> classificationValue(session, geo, CountryPostalCodeRegex, system, identityToken).invoke(gc::setPostalCodeRegexFormat))
+					.chain(() -> classificationValue(session, geo, Population, system, identityToken).invoke(v -> {
+						if (v != null && !v.isBlank())
+						{
+							try { gc.setPopulation(Integer.parseInt(v.trim())); }
+							catch (NumberFormatException ignored) { /* leave 0 */ }
+						}
+					}))
+					.replaceWith(gc);
+			});
+	}
+
+	/**
+	 * Reads a single classification value attached to the given geography row, returning {@code null}
+	 * when the relationship is absent (rather than failing the chain).
+	 */
+	private Uni<String> classificationValue(Mutiny.Session session, IGeography<?, ?> geo, com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications classification, ISystems<?, ?> system, UUID... identityToken)
+	{
+		return geo.findClassification(session, classification, system, identityToken)
+			.map(rel -> rel != null ? rel.getValue() : null)
+			.onFailure().recoverWithItem((String) null);
 	}
 
 	@Override
@@ -840,5 +893,320 @@ public class GeographyService
 	{
 		if (geographyID == null) return Uni.createFrom().nullItem();
 		return session.find(Geography.class, geographyID);
+	}
+
+	// ---------------------------------------------------------------------------------------------
+	//  GeoNames download + per-country installation
+	// ---------------------------------------------------------------------------------------------
+
+	@Override
+	public Uni<Void> downloadCountryData(String countryCode, UUID... identityToken)
+	{
+		String cc = countryCode.toUpperCase();
+		return Uni.createFrom().<Void>item(() -> {
+				try
+				{
+					GeoNamesDownloader downloader = new GeoNamesDownloader();
+					logProgress("Geography Download", "Downloading GeoNames reference data");
+					downloader.downloadReferenceData();
+					logProgress("Geography Download", "Downloading GeoNames data for " + cc);
+					downloader.downloadCountry(cc);
+					log.info("GeoNames data for {} downloaded into {}", cc, GeoDataLocation.getBaseDirectory().toAbsolutePath());
+					return null;
+				}
+				catch (IOException e)
+				{
+					log.error("Failed to download GeoNames data for {}: {}", cc, e.getMessage(), e);
+					throw new RuntimeException("Failed to download GeoNames data for " + cc, e);
+				}
+			})
+			.runSubscriptionOn(Infrastructure.getDefaultWorkerPool());
+	}
+
+	@Override
+	public Uni<Void> installCountry(Mutiny.Session session, ISystems<?, ?> system, String countryCode, UUID... identityToken)
+	{
+		String cc = countryCode.toUpperCase();
+		log.info("Installing country {} into ActivityMaster", cc);
+		return ensureCountryFilesDownloaded(cc)
+			.chain(() -> loadProvincesASCII1(session, system, cc, identityToken))
+			.chain(() -> loadDistrictsASCII2(session, system, cc, identityToken))
+			.chain(() -> loadCountryGeoData(session, system, cc, identityToken))
+			.chain(() -> loadCountryPostalCodes(session, system, cc, identityToken))
+			.invoke(() -> log.info("Finished installing country {}", cc))
+			.onFailure().invoke(error -> log.error("Error installing country {}: {}", cc, error.getMessage(), error));
+	}
+
+	/**
+	 * Ensures the per-country GeoNames files exist on disk, downloading them on a worker thread when absent.
+	 */
+	private Uni<Void> ensureCountryFilesDownloaded(String cc)
+	{
+		Path geoData = GeoDataLocation.countryGeoDataFile(cc);
+		Path postalCodes = GeoDataLocation.countryPostalCodeFile(cc);
+		if (Files.exists(geoData) && Files.exists(postalCodes))
+		{
+			log.info("GeoNames files for {} already present in {}", cc, GeoDataLocation.getBaseDirectory().toAbsolutePath());
+			return Uni.createFrom().voidItem();
+		}
+		return downloadCountryData(cc);
+	}
+
+	@Override
+	public Uni<Void> loadCountryGeoData(Mutiny.Session session, ISystems<?, ?> system, String countryCode, UUID... identityToken)
+	{
+		String cc = countryCode.toUpperCase();
+		Path geoDataFile = GeoDataLocation.countryGeoDataFile(cc);
+
+		return Uni.createFrom().item(() -> {
+			Map<Long, GeoNameDefaultData<?>> dataMap = new TreeMap<>();
+			Map<Long, List<Long>> hierarchyMap = new ConcurrentHashMap<>();
+
+			if (!Files.exists(geoDataFile))
+			{
+				throw new GeographyException("GeoNames geo-data file not found for " + cc + " at " + geoDataFile.toAbsolutePath()
+					+ " - download it first via downloadCountryData(\"" + cc + "\")");
+			}
+
+			try (GeoDataFinder finder = new GeoDataFinder(geoDataFile, CSVFormat.TDF, ZAGeoData.getHeaderNames()))
+			{
+				for (CSVRecord a : finder.getRecords())
+				{
+					String featureCodeStr = a.get("feature code");
+					if (Strings.isNullOrEmpty(featureCodeStr)) featureCodeStr = "Z.UKN";
+					else featureCodeStr = a.get("feature class") + "." + featureCodeStr;
+
+					GeoNameDefaultData<?> data = new GeoNameDefaultData<>();
+					data.setAsciiname(a.get("asciiname"));
+					data.setName(a.get("name"));
+					data.setGeonameId(Long.parseLong(a.get("geonameid")));
+					data.setCoordinates(new GeographyCoordinates(a.get("latitude"), a.get("longitude")));
+					if (!Strings.isNullOrEmpty(a.get("dem"))) data.setDem(Integer.parseInt(a.get("dem")));
+					if (!Strings.isNullOrEmpty(a.get("elevation"))) data.setElevation(Integer.parseInt(a.get("elevation")));
+					if (!Strings.isNullOrEmpty(a.get("population"))) data.setPopulation(Integer.parseInt(a.get("population")));
+					if (!Strings.isNullOrEmpty(a.get("admin1 code"))) data.setAdmin1Code(new GeographyAsciiCode().setCode(a.get("admin1 code")));
+					if (!Strings.isNullOrEmpty(a.get("admin2 code"))) data.setAdmin2Code(new GeographyAsciiCode().setCode(a.get("admin2 code")));
+					if (!Strings.isNullOrEmpty(a.get("admin3 code"))) data.setAdmin3Code(a.get("admin3 code"));
+					if (!Strings.isNullOrEmpty(a.get("admin4 code"))) data.setAdmin4Code(a.get("admin4 code"));
+
+					// Store feature code string for later resolution
+					data.setAdmin3Code(featureCodeStr);
+
+					dataMap.put(data.getGeonameId(), data);
+				}
+			}
+			catch (GeographyException ge)
+			{
+				throw ge;
+			}
+			catch (Exception e)
+			{
+				log.error("Error loading geo-data for {}", cc, e);
+				throw new RuntimeException("Error loading geo-data for " + cc, e);
+			}
+
+			loadHierarchyInto(hierarchyMap);
+
+			setTotalTasks(dataMap.size());
+			return new Object[]{dataMap, hierarchyMap};
+		})
+		.chain(data -> {
+			@SuppressWarnings("unchecked")
+			Map<Long, GeoNameDefaultData<?>> dataMap = (Map<Long, GeoNameDefaultData<?>>) data[0];
+			@SuppressWarnings("unchecked")
+			Map<Long, List<Long>> hierarchyMap = (Map<Long, List<Long>>) data[1];
+
+			hierarchyMap.entrySet().removeIf(entry -> !dataMap.containsKey(entry.getKey()));
+			log.info("Loading {} geo-data hierarchy entries for {}", hierarchyMap.size(), cc);
+
+			return districtService.findAllDistricts(session, system, identityToken)
+				.chain(allDistricts -> {
+					Uni<Void> chain = Uni.createFrom().voidItem();
+					for (Geography iGeography : allDistricts)
+					{
+						chain = chain.chain(() -> iGeography.findClassification(session, GeoNameID, system, identityToken)
+							.chain(rel -> {
+								String geoIdStr = rel != null ? rel.getValue() : null;
+								if (Strings.isNullOrEmpty(geoIdStr)) return Uni.createFrom().voidItem();
+								Long geoId = Long.valueOf(geoIdStr);
+								List<Long> children = hierarchyMap.get(geoId);
+								if (children == null) return Uni.createFrom().voidItem();
+
+								Uni<Void> childChain = Uni.createFrom().voidItem();
+								for (Long childId : children)
+								{
+									GeoNameDefaultData<?> childData = dataMap.get(childId);
+									if (childData == null) continue;
+									childChain = childChain.chain(() -> classificationService.find(session, Town.toString(), system, identityToken)
+										.chain(townClassification -> createGeoData(session, childData, townClassification, system, identityToken))
+										.chain(created -> {
+											if (created.getGeographyId() == null) return Uni.createFrom().voidItem();
+											return session.find(Geography.class, created.getGeographyId())
+												.chain(newChild -> {
+													if (newChild == null) return Uni.createFrom().voidItem();
+													return iGeography.addChild(session, newChild, NoClassification.toString(), STRING_EMPTY, system, identityToken)
+														.replaceWithVoid();
+												});
+										})
+										.invoke(() -> logProgress("Geography Geo-Data", "Loaded place - " + childData.getName(), 1)));
+								}
+								return childChain;
+							}));
+					}
+					return chain;
+				});
+		})
+		.invoke(() -> logProgress("Geography Geo-Data", "Finished loading geo-data for " + cc, 0))
+		.onFailure().invoke(error -> log.error("Error loading geo-data for {}: {}", cc, error.getMessage(), error));
+	}
+
+	/**
+	 * Loads the hierarchy entries (ADM only) into the supplied map, preferring the downloaded
+	 * {@code hierarchy.txt} and falling back to the bundled {@code hierarchy.csv} resource.
+	 */
+	private void loadHierarchyInto(Map<Long, List<Long>> hierarchyMap)
+	{
+		Path downloadedHierarchy = GeoDataLocation.dumpDirectory().resolve("hierarchy.txt");
+		if (Files.exists(downloadedHierarchy))
+		{
+			try (GeoDataFinder finder = new GeoDataFinder(downloadedHierarchy, CSVFormat.TDF, Hierarchy.getHeaderNames()))
+			{
+				collectHierarchy(finder, hierarchyMap);
+				return;
+			}
+			catch (Exception e)
+			{
+				log.warn("Failed to read downloaded hierarchy file, falling back to bundled resource: {}", e.getMessage());
+			}
+		}
+		try (GeoDataFinder finder = new GeoDataFinder(Hierarchy, CSVFormat.TDF, Hierarchy.getHeaderNames()))
+		{
+			collectHierarchy(finder, hierarchyMap);
+		}
+		catch (Exception e)
+		{
+			log.error("Error loading hierarchy data", e);
+			throw new RuntimeException("Error loading hierarchy data", e);
+		}
+	}
+
+	private void collectHierarchy(GeoDataFinder finder, Map<Long, List<Long>> hierarchyMap)
+	{
+		for (CSVRecord record : finder.getRecords())
+		{
+			if (!"ADM".equals(record.get("type"))) continue;
+			Long parentId = Long.valueOf(record.get(0));
+			Long childId = Long.valueOf(record.get(1));
+			hierarchyMap.computeIfAbsent(parentId, k -> new ArrayList<>()).add(childId);
+		}
+	}
+
+	@Override
+	public Uni<Void> loadCountryPostalCodes(Mutiny.Session session, ISystems<?, ?> system, String countryCode, UUID... identityToken)
+	{
+		String cc = countryCode.toUpperCase();
+		Path postalCodeFile = GeoDataLocation.countryPostalCodeFile(cc);
+
+		return Uni.createFrom().item(() -> {
+			Map<Long, List<GeographyPostalCode>> postalCodeMap = new HashMap<>();
+			setCurrentTask(0);
+
+			if (!Files.exists(postalCodeFile))
+			{
+				throw new GeographyException("GeoNames postal-code file not found for " + cc + " at " + postalCodeFile.toAbsolutePath()
+					+ " - download it first via downloadCountryData(\"" + cc + "\")");
+			}
+
+			try (GeoDataFinder finder = new GeoDataFinder(postalCodeFile, CSVFormat.TDF, ZAPostalCodes.getHeaderNames()))
+			{
+				for (CSVRecord record : finder.getRecords())
+				{
+					String postalCodeValue = record.get(1);
+					if (Strings.isNullOrEmpty(postalCodeValue)) continue;
+					Long key;
+					try { key = Long.valueOf(postalCodeValue); }
+					catch (NumberFormatException nfe) { continue; }
+
+					GeographyPostalCode post = new GeographyPostalCode();
+					post.setPostalCode(postalCodeValue);
+					post.setPostalCodePlaceName(record.get(2));
+					post.setParentPlaceName(record.get(2));
+					post.setCoordinates(new GeographyCoordinates(record.get(9), record.get(10)));
+					if (record.size() > 3 && !Strings.isNullOrEmpty(record.get(3)))
+					{
+						post.setProvinceName(record.get(3));
+					}
+
+					postalCodeMap.computeIfAbsent(key, k -> new ArrayList<>()).add(post);
+				}
+			}
+			catch (GeographyException ge)
+			{
+				throw ge;
+			}
+			catch (Exception e)
+			{
+				log.error("Error loading postal codes for {}", cc, e);
+				throw new RuntimeException("Error loading postal codes for " + cc, e);
+			}
+			return postalCodeMap;
+		})
+		.chain(postalCodeMap -> {
+			Uni<Void> chain = Uni.createFrom().voidItem();
+			setTotalTasks(postalCodeMap.size());
+			setCurrentTask(0);
+
+			for (Map.Entry<Long, List<GeographyPostalCode>> entry : postalCodeMap.entrySet())
+			{
+				Long key = entry.getKey();
+				List<GeographyPostalCode> value = entry.getValue();
+
+				chain = chain.chain(() -> {
+					if (value.isEmpty())
+					{
+						log.warn("Unknown Postal Code for district? - {}", key);
+						return Uni.createFrom().voidItem();
+					}
+					GeographyPostalCode gp = value.get(0);
+					if (value.size() > 1) gp.setProvinceName(value.get(1).getProvinceName());
+
+					return townService.findTown(session, gp.getParentPlaceName(), system, identityToken)
+						.onFailure().recoverWithUni(error -> {
+							if (!Strings.isNullOrEmpty(gp.getProvinceName()))
+							{
+								return districtService.findFirstDistrictInProvince(session, gp.getProvinceName(), system, identityToken)
+									.chain(firstDistrict -> {
+										if (firstDistrict == null) return Uni.createFrom().nullItem();
+										return townService.createTown(session, firstDistrict,
+											gp.getParentPlaceName(), gp.getParentPlaceName(),
+											gp.getGeonameId() == null ? "" : Long.toString(gp.getGeonameId()),
+											system, identityToken);
+									});
+							}
+							log.warn("Cannot resolve town for postal code - {}", gp);
+							return Uni.createFrom().nullItem();
+						})
+						.chain(town -> {
+							if (town == null) return Uni.createFrom().voidItem();
+							return postalCodeService.createPostalCode(session, town, gp.getPostalCode(), gp.getPostalCodePlaceName(),
+								gp.getGeonameId() == null ? "" : Long.toString(gp.getGeonameId()), system, identityToken)
+								.chain(postalCode -> {
+									Uni<Void> subChain = Uni.createFrom().voidItem();
+									for (GeographyPostalCode geographyPostalCode : value)
+									{
+										subChain = subChain.chain(() -> postalCodeService.createPostalCodeSuburb(session, postalCode,
+											geographyPostalCode.getPostalCode(), geographyPostalCode.getPostalCodePlaceName(),
+											geographyPostalCode.getPostalCode(), system, identityToken).replaceWithVoid());
+									}
+									return subChain;
+								})
+								.invoke(() -> logProgress("Postal Codes", "Loaded PostalCode - " + gp.getPostalCode(), 1));
+						});
+				});
+			}
+			return chain;
+		})
+		.invoke(() -> logProgress("Postal Codes", "Finished loading postal codes for " + cc, 0))
+		.onFailure().invoke(error -> log.error("Error loading postal codes for {}: {}", cc, error.getMessage(), error));
 	}
 }
