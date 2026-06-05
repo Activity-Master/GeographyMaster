@@ -20,6 +20,9 @@ module com.guicedee.activitymaster.geography {
 	requires io.vertx.core;
 	requires jakarta.ws.rs;
 
+	// OpenAPI 3.1 (Swagger) annotation support
+	requires com.guicedee.openapi;
+
 	requires com.fasterxml.jackson.databind;
 
 	requires jakarta.validation;

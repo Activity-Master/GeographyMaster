@@ -33,6 +33,12 @@
             <artifactId>graphql</artifactId>
         </dependency>
 
+        <!-- OpenAPI 3.1 annotations for the Geography REST resources -->
+        <dependency>
+            <groupId>com.guicedee</groupId>
+            <artifactId>openapi</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>com.guicedee.modules.services</groupId>
             <artifactId>commons-csv</artifactId>
