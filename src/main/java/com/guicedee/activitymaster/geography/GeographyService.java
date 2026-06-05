@@ -167,30 +167,34 @@ public class GeographyService
 				gc.setGeographyId(geo.getId());
 				gc.setIso(geo.getName());
 				gc.setCountryName(geo.getDescription());
-				return classificationValue(session, geo, GeoNameID, system, identityToken)
-					.invoke(v -> {
-						if (v != null && !v.isBlank())
+				// Read-only hydration: fetch every classification for this country in a single
+				// security-checked query rather than chaining a round-trip per field. Hibernate
+				// Reactive forbids parallel operations on a shared session, so batching (one query)
+				// is the safe equivalent of "doing them in parallel".
+				return geo.findClassificationValues(session, system, identityToken)
+					.invoke(values -> {
+						String geoName = values.get(GeoNameID.toString());
+						if (geoName != null && !geoName.isBlank())
 						{
-							try { gc.setGeonameId(Long.parseLong(v.trim())); }
+							try { gc.setGeonameId(Long.parseLong(geoName.trim())); }
 							catch (NumberFormatException ignored) { /* leave null */ }
 						}
-					})
-					.chain(() -> classificationValue(session, geo, CountryISO3166_3, system, identityToken).invoke(gc::setIso3))
-					.chain(() -> classificationValue(session, geo, CountryISO_Numeric, system, identityToken).invoke(gc::setIsoNumeric))
-					.chain(() -> classificationValue(session, geo, CountryFips, system, identityToken).invoke(gc::setFips))
-					.chain(() -> classificationValue(session, geo, CountryCapital, system, identityToken).invoke(gc::setCapital))
-					.chain(() -> classificationValue(session, geo, CountryAreaInSqKm, system, identityToken).invoke(gc::setAreaSqlKM))
-					.chain(() -> classificationValue(session, geo, CountryTld, system, identityToken).invoke(gc::setWebTld))
-					.chain(() -> classificationValue(session, geo, CountryPhone, system, identityToken).invoke(gc::setCountryDialCode))
-					.chain(() -> classificationValue(session, geo, CountryPostalCodeFormat, system, identityToken).invoke(gc::setPostalCodeDecimalFormat))
-					.chain(() -> classificationValue(session, geo, CountryPostalCodeRegex, system, identityToken).invoke(gc::setPostalCodeRegexFormat))
-					.chain(() -> classificationValue(session, geo, Population, system, identityToken).invoke(v -> {
-						if (v != null && !v.isBlank())
+						gc.setIso3(values.get(CountryISO3166_3.toString()));
+						gc.setIsoNumeric(values.get(CountryISO_Numeric.toString()));
+						gc.setFips(values.get(CountryFips.toString()));
+						gc.setCapital(values.get(CountryCapital.toString()));
+						gc.setAreaSqlKM(values.get(CountryAreaInSqKm.toString()));
+						gc.setWebTld(values.get(CountryTld.toString()));
+						gc.setCountryDialCode(values.get(CountryPhone.toString()));
+						gc.setPostalCodeDecimalFormat(values.get(CountryPostalCodeFormat.toString()));
+						gc.setPostalCodeRegexFormat(values.get(CountryPostalCodeRegex.toString()));
+						String population = values.get(Population.toString());
+						if (population != null && !population.isBlank())
 						{
-							try { gc.setPopulation(Integer.parseInt(v.trim())); }
+							try { gc.setPopulation(Integer.parseInt(population.trim())); }
 							catch (NumberFormatException ignored) { /* leave 0 */ }
 						}
-					}))
+					})
 					.replaceWith(gc);
 			});
 	}
@@ -199,12 +203,6 @@ public class GeographyService
 	 * Reads a single classification value attached to the given geography row, returning {@code null}
 	 * when the relationship is absent (rather than failing the chain).
 	 */
-	private Uni<String> classificationValue(Mutiny.Session session, IGeography<?, ?> geo, com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications classification, ISystems<?, ?> system, UUID... identityToken)
-	{
-		return geo.findClassification(session, classification, system, identityToken)
-			.map(rel -> rel != null ? rel.getValue() : null)
-			.onFailure().recoverWithItem((String) null);
-	}
 
 	@Override
 	public Uni<Void> loadProvincesASCII1(Mutiny.Session session, ISystems<?, ?> system, String countryCode, UUID... identityToken)
