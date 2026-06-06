@@ -41,6 +41,9 @@ public class ContinentService
 	@Inject
 	private GeographySecurityCollector securityCollector;
 
+	@Inject
+	private GeographyScopeTokenService scopeTokenService;
+
 
 	public Uni<IGeography<?, ?>> createContinent(Mutiny.Session session, IGeography<?, ?> planet, String code, String description, String originalUniqueID, ISystems<?, ?> system, UUID... identityToken)
 	{
@@ -82,7 +85,8 @@ public class ContinentService
 								})
 								.chain(persisted -> {
 									securityCollector.record(createSession, geo);
-									Uni<?> setupChain = Uni.createFrom().voidItem();
+									// Shadow this node into the token graph under its planet's scope token.
+									Uni<?> setupChain = scopeTokenService.ensureScope(createSession, geo, planet, description, createSystem, createIdentityToken);
 									if (originalUniqueID != null)
 									{
 										setupChain = setupChain.chain(() -> geo.addClassification(createSession, GeoNameID.toString(), originalUniqueID, createSystem, createIdentityToken));

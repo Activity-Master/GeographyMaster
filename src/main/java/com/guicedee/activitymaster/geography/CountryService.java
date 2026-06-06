@@ -56,6 +56,9 @@ public class CountryService
 	@Inject
 	private GeographySecurityCollector securityCollector;
 
+	@Inject
+	private GeographyScopeTokenService scopeTokenService;
+
 	public Uni<IGeography<?, ?>> createCountry(Mutiny.Session session, IGeography<?, ?> continent, @NotNull String iso, @NotNull String description, String originalUniqueID,
 	                                           ISystems<?, ?> system, UUID... identityToken)
 	{
@@ -98,7 +101,8 @@ public class CountryService
 									// Record for batched default-security at the end of the load phase
 									// instead of paying the per-row security cost here.
 									securityCollector.record(createSession, geo);
-									Uni<?> setupChain = Uni.createFrom().voidItem();
+									// Shadow this node into the token graph under its continent's scope token.
+									Uni<?> setupChain = scopeTokenService.ensureScope(createSession, geo, continent, description, createSystem, createIdentityToken);
 									if (originalUniqueID != null)
 									{
 										setupChain = setupChain.chain(() -> geo.addClassification(createSession, GeoNameID.toString(), originalUniqueID, createSystem, createIdentityToken));

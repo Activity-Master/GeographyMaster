@@ -40,6 +40,9 @@ public class PlanetService
 	@Inject
 	private GeographySecurityCollector securityCollector;
 
+	@Inject
+	private GeographyScopeTokenService scopeTokenService;
+
 
 	public Uni<IGeography<?, ?>> createPlanet(Mutiny.Session session, String code, String description, String originalUniqueID, ISystems<?, ?> system, UUID... identityToken)
 	{
@@ -83,7 +86,9 @@ public class PlanetService
 								})
 								.chain(persisted -> {
 									securityCollector.record(createSession, geo);
-									Uni<?> setupChain = Uni.createFrom().voidItem();
+									// Shadow this root node into the token graph: a scope token nested
+									// directly under the canonical Everywhere group (parentGeo == null).
+									Uni<?> setupChain = scopeTokenService.ensureScope(createSession, geo, null, code, createSystem, createIdentityToken);
 									if (originalUniqueID != null)
 									{
 										setupChain = setupChain.chain(() -> geo.addClassification(createSession, GeoNameID.toString(), originalUniqueID, createSystem, createIdentityToken));
