@@ -45,17 +45,21 @@ public class DistrictService
 	private IClassificationService<?> classificationService;
 
 	@Inject
+	private GeographySecurityCollector securityCollector;
+
+
+	@Inject
 	private ProvinceService provinceService;
 
 	public Uni<IGeography<?, ?>> createDistrict(Mutiny.Session session, IGeography<?, ?> province, String code, String name, String originalUniqueID, ISystems<?, ?> system, UUID... identityToken)
 	{
-		return SessionUtils.withActivityMaster(applicationEnterpriseName, system.getName(), tuple -> {
-			var createSession = tuple.getItem1();
-			var createEnterprise = tuple.getItem2();
-			var createSystem = tuple.getItem3();
-			var createIdentityToken = tuple.getItem4();
+		// Operate on the caller's session/transaction (no nested withActivityMaster).
+		var createSession = session;
+		var createEnterprise = system.getEnterprise();
+		var createSystem = system;
+		var createIdentityToken = identityToken;
 
-			return classificationService.find(createSession, City.toString(), createSystem, createIdentityToken)
+		return classificationService.find(createSession, City.toString(), createSystem, createIdentityToken)
 				.chain(classification -> {
 					Geography geo = new Geography();
 					return geo.builder(createSession)
@@ -85,8 +89,8 @@ public class DistrictService
 									return createSession.persist(geo).replaceWith(Uni.createFrom().item(geo));
 								})
 								.chain(persisted -> {
-									Uni<?> setupChain = geo.createDefaultSecurity(createSession, createSystem, createIdentityToken)
-										.onFailure().recoverWithItem(() -> null);
+									securityCollector.record(createSession, geo);
+									Uni<?> setupChain = Uni.createFrom().voidItem();
 									if (originalUniqueID != null)
 									{
 										setupChain = setupChain.chain(() -> geo.addClassification(createSession, GeoNameID.toString(), originalUniqueID, createSystem, createIdentityToken));
@@ -96,18 +100,16 @@ public class DistrictService
 								});
 						});
 				});
-		});
 	}
 
 	public Uni<IGeography<?, ?>> findDistrict(Mutiny.Session session, String name, ISystems<?, ?> system, UUID... identityToken)
 	{
-		return SessionUtils.withActivityMaster(applicationEnterpriseName, system.getName(), tuple -> {
-			var createSession = tuple.getItem1();
-			var createEnterprise = tuple.getItem2();
-			var createSystem = tuple.getItem3();
-			var createIdentityToken = tuple.getItem4();
+		var createSession = session;
+		var createEnterprise = system.getEnterprise();
+		var createSystem = system;
+		var createIdentityToken = identityToken;
 
-			return classificationService.find(createSession, City.toString(), createSystem, createIdentityToken)
+		return classificationService.find(createSession, City.toString(), createSystem, createIdentityToken)
 				.chain(classification -> {
 					return new Geography().builder(createSession)
 						.withName(name)
@@ -119,7 +121,6 @@ public class DistrictService
 						.onItem().ifNull().failWith(() -> new GeographyException("Cannot find district / city - " + name))
 						.map(geo -> (IGeography<?, ?>) geo);
 				});
-		});
 	}
 
 	public Uni<IGeography<?, ?>> findFirstDistrictInProvince(Mutiny.Session session, String provinceCode, ISystems<?, ?> system, UUID... identityToken)
@@ -139,13 +140,12 @@ public class DistrictService
 
 	public Uni<List<Geography>> findAllDistricts(Mutiny.Session session, ISystems<?, ?> system, UUID... identityToken)
 	{
-		return SessionUtils.withActivityMaster(applicationEnterpriseName, system.getName(), tuple -> {
-			var createSession = tuple.getItem1();
-			var createEnterprise = tuple.getItem2();
-			var createSystem = tuple.getItem3();
-			var createIdentityToken = tuple.getItem4();
+		var createSession = session;
+		var createEnterprise = system.getEnterprise();
+		var createSystem = system;
+		var createIdentityToken = identityToken;
 
-			return classificationService.find(createSession, City.toString(), createSystem, createIdentityToken)
+		return classificationService.find(createSession, City.toString(), createSystem, createIdentityToken)
 				.chain(classification -> {
 					return new Geography().builder(createSession)
 						.withClassification((Classification) classification)
@@ -154,7 +154,6 @@ public class DistrictService
 						.withEnterprise(createEnterprise)
 						.getAll();
 				});
-		});
 	}
 
 	public Uni<IGeography<?, ?>> updateDistrict(Mutiny.Session session, @NotNull String name, String description,

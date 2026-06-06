@@ -7,6 +7,7 @@ import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.syste
 import com.guicedee.activitymaster.fsdm.client.services.classifications.EnterpriseClassificationDataConcepts;
 import com.guicedee.activitymaster.fsdm.client.services.systems.*;
 import com.guicedee.activitymaster.geography.services.IGeographyService;
+import com.guicedee.activitymaster.geography.GeographySecurityCollector;
 import io.smallrye.mutiny.Uni;
 import com.guicedee.activitymaster.geography.services.dto.GeographyContinent;
 import com.guicedee.activitymaster.geography.services.enumerations.GeographyFeatureClassesClassifications;
@@ -18,6 +19,11 @@ import java.util.UUID;
 
 import static com.guicedee.client.IGuiceContext.*;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
+import static com.guicedee.activitymaster.fsdm.client.services.classifications.InvolvedPartyClassifications.ISO639_1;
+import static com.guicedee.activitymaster.fsdm.client.services.classifications.InvolvedPartyClassifications.ISO639_2;
+import static com.guicedee.activitymaster.fsdm.client.services.classifications.InvolvedPartyClassifications.ISO6392EnglishName;
+import static com.guicedee.activitymaster.fsdm.client.services.classifications.InvolvedPartyClassifications.ISO6392FrenchName;
+import static com.guicedee.activitymaster.fsdm.client.services.classifications.InvolvedPartyClassifications.ISO6392GermanName;
 
 @SortedUpdate(sortOrder = 1000, taskCount = 12)
 @Log4j2
@@ -38,9 +44,23 @@ public class GeographySystemInstall
 
 			logProgress("Geography Master", "Creating Regional Areas");
 
+			// Batch default security for the planet/continent rows (and any classification links) created
+			// during this taxonomy install; flushed once below.
+			get(GeographySecurityCollector.class).activate(amSession);
+
 			// Create base classifications sequentially
 			return classificationService.create(amSession, Planet, amSystem, (Enum<?>) null, amToken)
 				.chain(() -> classificationService.create(amSession, Languages, amSystem, Planet, amToken))
+				// Language-attribute classifications used by LanguagesService.updateLanguage (ISO 639 codes/names).
+				// These are normally created by core's ClassificationBaseSetup, but geography loads languages
+				// on demand and must be self-sufficient, so create them here as children of Languages. The
+				// create() existence-check (name + concept + enterprise scoped) makes this idempotent when the
+				// core base setup has already run.
+				.chain(() -> classificationService.create(amSession, ISO639_1, amSystem, Languages, amToken))
+				.chain(() -> classificationService.create(amSession, ISO639_2, amSystem, Languages, amToken))
+				.chain(() -> classificationService.create(amSession, ISO6392EnglishName, amSystem, Languages, amToken))
+				.chain(() -> classificationService.create(amSession, ISO6392FrenchName, amSystem, Languages, amToken))
+				.chain(() -> classificationService.create(amSession, ISO6392GermanName, amSystem, Languages, amToken))
 				.chain(() -> classificationService.create(amSession, Continent, amSystem, Planet, amToken))
 				.chain(() -> classificationService.create(amSession, Currency, amSystem, Planet, amToken))
 				.chain(() -> classificationService.create(amSession, TimeZone, amSystem, Planet, amToken))
@@ -139,6 +159,8 @@ public class GeographySystemInstall
 					logProgress("Geography Master", "Creating Feature Classes");
 					return geonamesClassifications(amSession, amSystem, amToken);
 				})
+				// Secure the planet/continent geographies recorded during this taxonomy install in one batch.
+				.chain(() -> get(GeographySecurityCollector.class).flush(amSession, amSystem, amToken))
 				.map(v -> true);
 		}).onFailure().invoke(error -> log.error("Error during geography system installation: {}", error.getMessage(), error))
 		  .onItem().invoke(() -> log.info("Geography system installation completed successfully"));

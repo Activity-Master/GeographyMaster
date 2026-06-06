@@ -46,13 +46,13 @@ public class LanguagesService
 	public Uni<IClassification<?, ?>> createLanguage(Mutiny.Session session, @NotNull String code, String description, String originalUniqueID,
 	                                                 ISystems<?, ?> system, UUID... identityToken)
 	{
-		return SessionUtils.withActivityMaster(applicationEnterpriseName, system.getName(), tuple -> {
-			var createSession = tuple.getItem1();
-			var createEnterprise = tuple.getItem2();
-			var createSystem = tuple.getItem3();
-			var createIdentityToken = tuple.getItem4();
+		// Operate on the caller's session/transaction (no nested withActivityMaster).
+		var createSession = session;
+		var createEnterprise = system.getEnterprise();
+		var createSystem = system;
+		var createIdentityToken = identityToken;
 
-			return new Classification().builder(createSession)
+		return new Classification().builder(createSession)
 				.withName(code)
 				.withConcept(Languages.concept(), createSystem, createIdentityToken)
 				.inActiveRange()
@@ -67,18 +67,16 @@ public class LanguagesService
 					return classificationService.find(createSession, Languages.toString(), createSystem, createIdentityToken)
 						.chain(classification -> classificationService.create(createSession, code, description, Languages.concept(), createSystem, 0, classification, createIdentityToken));
 				});
-		});
 	}
 
 	public Uni<IClassification<?, ?>> findLanguage(Mutiny.Session session, @NotNull String code, ISystems<?, ?> system, UUID... identityToken)
 	{
-		return SessionUtils.withActivityMaster(applicationEnterpriseName, system.getName(), tuple -> {
-			var createSession = tuple.getItem1();
-			var createEnterprise = tuple.getItem2();
-			var createSystem = tuple.getItem3();
-			var createIdentityToken = tuple.getItem4();
+		var createSession = session;
+		var createEnterprise = system.getEnterprise();
+		var createSystem = system;
+		var createIdentityToken = identityToken;
 
-			return new Classification().builder(createSession)
+		return new Classification().builder(createSession)
 				.withName(code)
 				.withConcept(Languages.concept(), createSystem, createIdentityToken)
 				.inActiveRange()
@@ -87,7 +85,6 @@ public class LanguagesService
 				.get()
 				.onItem().ifNull().failWith(() -> new GeographyException("Cannot find language - " + code))
 				.map(c -> (IClassification<?, ?>) c);
-		});
 	}
 
 	public Uni<IClassification<?, ?>> updateLanguage(Mutiny.Session session, @NotNull String code, String description,

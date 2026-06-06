@@ -38,15 +38,20 @@ public class ContinentService
 	@Inject
 	private IClassificationService<?> classificationService;
 
+	@Inject
+	private GeographySecurityCollector securityCollector;
+
+
 	public Uni<IGeography<?, ?>> createContinent(Mutiny.Session session, IGeography<?, ?> planet, String code, String description, String originalUniqueID, ISystems<?, ?> system, UUID... identityToken)
 	{
-		return SessionUtils.withActivityMaster(applicationEnterpriseName, system.getName(), tuple -> {
-			var createSession = tuple.getItem1();
-			var createEnterprise = tuple.getItem2();
-			var createSystem = tuple.getItem3();
-			var createIdentityToken = tuple.getItem4();
+		// Use the caller's session/transaction so earlier writes in the same install
+		// transaction remain visible (a nested withActivityMaster would not see them).
+		var createSession = session;
+		var createEnterprise = system.getEnterprise();
+		var createSystem = system;
+		var createIdentityToken = identityToken;
 
-			return classificationService.find(createSession, Continent.toString(), createSystem, createIdentityToken)
+		return classificationService.find(createSession, Continent.toString(), createSystem, createIdentityToken)
 				.chain(classification -> {
 					Geography geo = new Geography();
 					return geo.builder(createSession)
@@ -76,8 +81,8 @@ public class ContinentService
 									return createSession.persist(geo).replaceWith(Uni.createFrom().item(geo));
 								})
 								.chain(persisted -> {
-									Uni<?> setupChain = geo.createDefaultSecurity(createSession, createSystem, createIdentityToken)
-										.onFailure().recoverWithItem(() -> null);
+									securityCollector.record(createSession, geo);
+									Uni<?> setupChain = Uni.createFrom().voidItem();
 									if (originalUniqueID != null)
 									{
 										setupChain = setupChain.chain(() -> geo.addClassification(createSession, GeoNameID.toString(), originalUniqueID, createSystem, createIdentityToken));
@@ -87,18 +92,16 @@ public class ContinentService
 								});
 						});
 				});
-		});
 	}
 
 	public Uni<IGeography<?, ?>> findContinent(Mutiny.Session session, String code, ISystems<?, ?> system, UUID... identityToken)
 	{
-		return SessionUtils.withActivityMaster(applicationEnterpriseName, system.getName(), tuple -> {
-			var createSession = tuple.getItem1();
-			var createEnterprise = tuple.getItem2();
-			var createSystem = tuple.getItem3();
-			var createIdentityToken = tuple.getItem4();
+		var createSession = session;
+		var createEnterprise = system.getEnterprise();
+		var createSystem = system;
+		var createIdentityToken = identityToken;
 
-			return classificationService.find(createSession, Continent.toString(), createSystem, createIdentityToken)
+		return classificationService.find(createSession, Continent.toString(), createSystem, createIdentityToken)
 				.chain(classification -> {
 					return new Geography().builder(createSession)
 						.withClassification((Classification) classification)
@@ -110,6 +113,5 @@ public class ContinentService
 						.onItem().ifNull().failWith(() -> new GeographyException("Cannot find continent"))
 						.map(geo -> (IGeography<?, ?>) geo);
 				});
-		});
 	}
 }

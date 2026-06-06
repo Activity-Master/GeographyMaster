@@ -2,7 +2,7 @@ package com.guicedee.activitymaster.geography;
 
 /**
  * Reactivity Migration Checklist:
- *
+ * <p>
  * [✓] One action per Mutiny.Session at a time
  * [✓] Pass Mutiny.Session through the chain
  * [✓] No await() usage
@@ -37,120 +37,121 @@ import static com.guicedee.activitymaster.geography.services.enumerations.Geogra
 
 @Log4j2
 @Singleton
-public class ProvinceService
-{
-	public static final Set<String> ProvinceClassifications = Set.of(Latitude.toString(),
-			Longitude.toString(),
-			FeatureCodes.toString(),
-			FeatureClass.toString(),
-			Population.toString(),
-			Elevation.toString(),
-			DEM.toString());
+public class ProvinceService {
+    public static final Set<String> ProvinceClassifications = Set.of(Latitude.toString(),
+            Longitude.toString(),
+            FeatureCodes.toString(),
+            FeatureClass.toString(),
+            Population.toString(),
+            Elevation.toString(),
+            DEM.toString());
 
-	@Inject
-	private IClassificationService<?> classificationService;
+    @Inject
+    private IClassificationService<?> classificationService;
 
-	public Uni<IGeography<?, ?>> createProvince(Mutiny.Session session, IGeography<?, ?> country, String code, String name, String originalUniqueID, ISystems<?, ?> system, UUID... identityToken)
-	{
-		return SessionUtils.withActivityMaster(applicationEnterpriseName, system.getName(), tuple -> {
-			var createSession = tuple.getItem1();
-			var createEnterprise = tuple.getItem2();
-			var createSystem = tuple.getItem3();
-			var createIdentityToken = tuple.getItem4();
+    @Inject
+    private GeographySecurityCollector securityCollector;
 
-			return classificationService.find(createSession, Province.toString(), createSystem, createIdentityToken)
-				.chain(classification -> {
-					Geography geo = new Geography();
-					return geo.builder(createSession)
-						.withName(code)
-						.withClassification((Classification) classification)
-						.inActiveRange()
-						.inDateRange()
-						.withEnterprise(createEnterprise)
-						.getCount()
-						.chain(count -> {
-							if (count > 0)
-							{
-								return findProvince(createSession, code, createSystem, createIdentityToken);
-							}
 
-							geo.setEnterpriseID(createEnterprise);
-							geo.setClassificationID((Classification) classification);
-							geo.setSystemID(createSystem);
-							geo.setOriginalSourceSystemID(createSystem.getId());
-							geo.setName(code);
-							geo.setDescription(name);
+    public Uni<IGeography<?, ?>> createProvince(Mutiny.Session session, IGeography<?, ?> country, String code, String name, String originalUniqueID, ISystems<?, ?> system, UUID... identityToken) {
+        // Operate on the caller's session/transaction (no nested withActivityMaster).
+        var createSession = session;
+        var createEnterprise = system.getEnterprise();
+        var createSystem = system;
+        var createIdentityToken = identityToken;
 
-							IActiveFlagService<?> acService = IGuiceContext.get(IActiveFlagService.class);
-							return acService.getActiveFlag(createSession, createEnterprise, createIdentityToken)
-								.chain(activeFlag -> {
-									geo.setActiveFlagID(activeFlag);
-									return createSession.persist(geo).replaceWith(Uni.createFrom().item(geo));
-								})
-								.chain(persisted -> {
-									Uni<?> setupChain = geo.createDefaultSecurity(createSession, createSystem, createIdentityToken)
-										.onFailure().recoverWithItem(() -> null);
-									if (originalUniqueID != null)
-									{
-										setupChain = setupChain.chain(() -> geo.addClassification(createSession, GeoNameID.toString(), originalUniqueID, createSystem, createIdentityToken));
-									}
-									return setupChain.chain(() -> country.addChild(createSession, geo, NoClassification.toString(), null, createSystem, createIdentityToken)
-										.replaceWith((IGeography<?, ?>) geo));
-								});
-						});
-				});
-		});
-	}
+        return classificationService.find(createSession, Province.toString(), createSystem, createIdentityToken)
+                .chain(classification -> {
+                    Geography geo = new Geography();
+                    return geo.builder(createSession)
+                            .withName(code)
+                            .withClassification((Classification) classification)
+                            .inActiveRange()
+                            .inDateRange()
+                            .withEnterprise(createEnterprise)
+                            .getCount()
+                            .chain(count -> {
+                                if (count > 0) {
+                                    return findProvince(createSession, code, createSystem, createIdentityToken);
+                                }
 
-	public Uni<IGeography<?, ?>> findProvince(Mutiny.Session session, String code, ISystems<?, ?> system, UUID... identityToken)
-	{
-		return SessionUtils.withActivityMaster(applicationEnterpriseName, system.getName(), tuple -> {
-			var createSession = tuple.getItem1();
-			var createEnterprise = tuple.getItem2();
-			var createSystem = tuple.getItem3();
-			var createIdentityToken = tuple.getItem4();
+                                geo.setEnterpriseID(createEnterprise);
+                                geo.setClassificationID((Classification) classification);
+                                geo.setSystemID(createSystem);
+                                geo.setOriginalSourceSystemID(createSystem.getId());
+                                geo.setName(code);
+                                geo.setDescription(name);
 
-			return classificationService.find(createSession, Province.toString(), createSystem, createIdentityToken)
-				.chain(classification -> {
-					return new Geography().builder(createSession)
-						.withClassification((Classification) classification)
-						.inActiveRange()
-						.inDateRange()
-						.withEnterprise(createEnterprise)
-						.withName(code)
-						.or(Geography_.description, Equals, code)
-						.get()
-						.onItem().ifNull().failWith(() -> new GeographyException("Cannot find province - " + code))
-						.map(geo -> (IGeography<?, ?>) geo);
-				});
-		});
-	}
+                                IActiveFlagService<?> acService = IGuiceContext.get(IActiveFlagService.class);
+                                return acService.getActiveFlag(createSession, createEnterprise, createIdentityToken)
+                                        .chain(activeFlag -> {
+                                            geo.setActiveFlagID(activeFlag);
+                                            return createSession.persist(geo).replaceWith(Uni.createFrom().item(geo));
+                                        })
+                                        .chain(persisted -> {
+                                            securityCollector.record(createSession, geo);
+                                            Uni<?> setupChain = Uni.createFrom().voidItem();
+                                            if (originalUniqueID != null) {
+                                                setupChain = setupChain.chain(() -> geo.addClassification(createSession, GeoNameID.toString(), originalUniqueID, createSystem, createIdentityToken));
+                                            }
+                                            return setupChain.chain(() -> country.addChild(createSession, geo, NoClassification.toString(), null, createSystem, createIdentityToken)
+                                                    .replaceWith((IGeography<?, ?>) geo));
+                                        });
+                            });
+                });
+    }
 
-	public Uni<IGeography<?, ?>> updateProvince(Mutiny.Session session, @NotNull String name, String description,
-	                                            String latitude, String longitude, String featureCodes, String featureClass,
-	                                            Integer population, Integer elevation, Integer dEM,
-	                                            ISystems<?, ?> system, UUID... identityToken)
-	{
-		return findProvince(session, name, system, identityToken)
-			.chain(toUpdate -> {
-				Uni<?> chain = Uni.createFrom().voidItem();
-				if (description != null)
-				{
-					chain = chain.chain(() -> {
-						Geography update = new Geography();
-						update.setId(toUpdate.getId());
-						update.setDescription(description);
-						return session.merge(update).replaceWithVoid();
-					});
-				}
-				if (latitude != null) chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, Latitude, latitude, system, identityToken));
-				if (longitude != null) chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, Longitude, longitude, system, identityToken));
-				if (featureClass != null) chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, FeatureClass, featureClass, system, identityToken));
-				if (featureCodes != null) chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, FeatureCodes, featureCodes, system, identityToken));
-				if (population != null) chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, Population, Integer.toString(population), system, identityToken));
-				if (elevation != null) chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, Elevation, Integer.toString(elevation), system, identityToken));
-				if (dEM != null) chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, DEM, Integer.toString(dEM), system, identityToken));
-				return chain.replaceWith(toUpdate);
-			});
-	}
+    public Uni<IGeography<?, ?>> findProvince(Mutiny.Session session, String code, ISystems<?, ?> system, UUID... identityToken) {
+        var createSession = session;
+        var createEnterprise = system.getEnterprise();
+        var createSystem = system;
+        var createIdentityToken = identityToken;
+
+        return classificationService.find(createSession, Province.toString(), createSystem, createIdentityToken)
+                .chain(classification -> {
+                    return new Geography().builder(createSession)
+                            .withClassification((Classification) classification)
+                            .inActiveRange()
+                            .inDateRange()
+                            .withEnterprise(createEnterprise)
+                            .withName(code)
+                            .or(Geography_.description, Equals, code)
+                            .get()
+                            .onItem().ifNull().failWith(() -> new GeographyException("Cannot find province - " + code))
+                            .map(geo -> (IGeography<?, ?>) geo);
+                });
+    }
+
+    public Uni<IGeography<?, ?>> updateProvince(Mutiny.Session session, @NotNull String name, String description,
+                                                String latitude, String longitude, String featureCodes, String featureClass,
+                                                Integer population, Integer elevation, Integer dEM,
+                                                ISystems<?, ?> system, UUID... identityToken) {
+        return findProvince(session, name, system, identityToken)
+                .chain(toUpdate -> {
+                    Uni<?> chain = Uni.createFrom().voidItem();
+                    if (description != null) {
+                        chain = chain.chain(() -> {
+                            Geography update = new Geography();
+                            update.setId(toUpdate.getId());
+                            update.setDescription(description);
+                            return session.merge(update).replaceWithVoid();
+                        });
+                    }
+                    if (latitude != null)
+                        chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, Latitude, latitude, system, identityToken));
+                    if (longitude != null)
+                        chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, Longitude, longitude, system, identityToken));
+                    if (featureClass != null)
+                        chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, FeatureClass, featureClass, system, identityToken));
+                    if (featureCodes != null)
+                        chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, FeatureCodes, featureCodes, system, identityToken));
+                    if (population != null)
+                        chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, Population, Integer.toString(population), system, identityToken));
+                    if (elevation != null)
+                        chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, Elevation, Integer.toString(elevation), system, identityToken));
+                    if (dEM != null)
+                        chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, DEM, Integer.toString(dEM), system, identityToken));
+                    return chain.replaceWith(toUpdate);
+                });
+    }
 }

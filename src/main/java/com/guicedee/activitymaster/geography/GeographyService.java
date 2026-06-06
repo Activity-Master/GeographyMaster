@@ -92,6 +92,9 @@ public class GeographyService
 	@Inject
 	private IClassificationService<?> classificationService;
 
+	@Inject
+	private GeographySecurityCollector securityCollector;
+
 	@Override
 	public Uni<IGeography<?, ?>> createPlanet(Mutiny.Session session, @NotNull String value, String originalUniqueID, ISystems<?, ?> system, UUID... identityToken)
 	{
@@ -209,6 +212,8 @@ public class GeographyService
 	{
 		setCurrentTask(0);
 		setTotalTasks(4470);
+		// Batch default security for every row (and classification link) created in this phase.
+		securityCollector.activate(session);
 
 		return Uni.createFrom().item(() -> {
 			try (GeoDataFinder finder = new GeoDataFinder(Admin1CodesASCII, CSVFormat.TDF, Admin1CodesASCII.getHeaderNames()))
@@ -245,6 +250,7 @@ public class GeographyService
 			}
 			return chain;
 		})
+		.chain(() -> securityCollector.flush(session, system, identityToken))
 		.invoke(() -> logProgress("Geography Service", "Finished Province Codes", 0))
 		.onFailure().invoke(error -> log.error("Error loading province codes: {}", error.getMessage(), error));
 	}
@@ -254,6 +260,8 @@ public class GeographyService
 	{
 		setCurrentTask(0);
 		setTotalTasks(47850);
+		// Batch default security for every row (and classification link) created in this phase.
+		securityCollector.activate(session);
 
 		return Uni.createFrom().item(() -> {
 			try (GeoDataFinder finder = new GeoDataFinder(Admin2Codes, CSVFormat.TDF, Admin2Codes.getHeaderNames()))
@@ -294,6 +302,7 @@ public class GeographyService
 			}
 			return chain;
 		})
+		.chain(() -> securityCollector.flush(session, system, identityToken))
 		.invoke(() -> logProgress("Geography Service", "Finished Districts/Cities", 0))
 		.onFailure().invoke(error -> log.error("Error loading district codes: {}", error.getMessage(), error));
 	}
@@ -377,6 +386,8 @@ public class GeographyService
 
 		setCurrentTask(0);
 		setTotalTasks(252);
+		// Batch default security for every row (and classification link) created in this phase.
+		securityCollector.activate(session);
 
 		return Uni.createFrom().item(() -> {
 			try (GeoDataFinder finder = new GeoDataFinder(CountryInfo, CSVFormat.TDF, CountryInfo.getHeaderNames()))
@@ -432,6 +443,7 @@ public class GeographyService
 			}
 			return chain;
 		})
+		.chain(() -> securityCollector.flush(session, system, identityToken))
 		.invoke(() -> logProgress("Geography Service", "Finished Loading Countries", 10))
 		.onFailure().invoke(error -> log.error("Error loading country info: {}", error.getMessage(), error));
 	}
@@ -828,14 +840,14 @@ public class GeographyService
 	{
 		if (geoData.getGeonameId() == null) geoData.setGeonameId(-1L);
 
-		return SessionUtils.withActivityMaster(applicationEnterpriseName, system.getName(), tuple -> {
-			var createSession = tuple.getItem1();
-			var createEnterprise = tuple.getItem2();
-			var createSystem = tuple.getItem3();
-			var createIdentityToken = tuple.getItem4();
+		// Operate on the caller's session/transaction (no nested withActivityMaster).
+		var createSession = session;
+		var createEnterprise = system.getEnterprise();
+		var createSystem = system;
+		var createIdentityToken = identityToken;
 
-			Geography geo = new Geography();
-			return geo.builder(createSession)
+		Geography geo = new Geography();
+		return geo.builder(createSession)
 				.withGeoNameID(geoData.getGeonameId().toString())
 				.getCount()
 				.chain(count -> {
@@ -859,8 +871,9 @@ public class GeographyService
 						})
 						.chain(persisted -> {
 							geoData.setGeographyId(geo.getId());
-							Uni<?> setupChain = geo.createDefaultSecurity(createSession, createSystem, createIdentityToken)
-								.onFailure().recoverWithItem(() -> null);
+							// Record for batched default-security at the end of the load phase.
+							securityCollector.record(createSession, geo);
+							Uni<?> setupChain = Uni.createFrom().voidItem();
 							// Store geoname ID as a classification
 							if (geoData.getGeonameId() != null && geoData.getGeonameId() != -1L)
 							{
@@ -884,7 +897,6 @@ public class GeographyService
 							return classChain.replaceWith(geoData);
 						});
 				});
-		});
 	}
 
 	public Uni<Geography> findGeographyByID(Mutiny.Session session, UUID geographyID)
@@ -955,6 +967,8 @@ public class GeographyService
 	{
 		String cc = countryCode.toUpperCase();
 		Path geoDataFile = GeoDataLocation.countryGeoDataFile(cc);
+		// Batch default security for every row (and classification link) created in this phase.
+		securityCollector.activate(session);
 
 		return Uni.createFrom().item(() -> {
 			Map<Long, GeoNameDefaultData<?>> dataMap = new TreeMap<>();
@@ -1054,6 +1068,7 @@ public class GeographyService
 					return chain;
 				});
 		})
+		.chain(() -> securityCollector.flush(session, system, identityToken))
 		.invoke(() -> logProgress("Geography Geo-Data", "Finished loading geo-data for " + cc, 0))
 		.onFailure().invoke(error -> log.error("Error loading geo-data for {}: {}", cc, error.getMessage(), error));
 	}
@@ -1104,6 +1119,8 @@ public class GeographyService
 	{
 		String cc = countryCode.toUpperCase();
 		Path postalCodeFile = GeoDataLocation.countryPostalCodeFile(cc);
+		// Batch default security for every row (and classification link) created in this phase.
+		securityCollector.activate(session);
 
 		return Uni.createFrom().item(() -> {
 			Map<Long, List<GeographyPostalCode>> postalCodeMap = new HashMap<>();
@@ -1204,6 +1221,7 @@ public class GeographyService
 			}
 			return chain;
 		})
+		.chain(() -> securityCollector.flush(session, system, identityToken))
 		.invoke(() -> logProgress("Postal Codes", "Finished loading postal codes for " + cc, 0))
 		.onFailure().invoke(error -> log.error("Error loading postal codes for {}: {}", cc, error.getMessage(), error));
 	}

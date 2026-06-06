@@ -38,13 +38,13 @@ public class CurrencyService
 
 	public Uni<IClassification<?, ?>> createCurrency(Mutiny.Session session, String code, String description, ISystems<?, ?> system, UUID... identityToken)
 	{
-		return SessionUtils.withActivityMaster(applicationEnterpriseName, system.getName(), tuple -> {
-			var createSession = tuple.getItem1();
-			var createEnterprise = tuple.getItem2();
-			var createSystem = tuple.getItem3();
-			var createIdentityToken = tuple.getItem4();
+		// Operate on the caller's session/transaction (no nested withActivityMaster).
+		var createSession = session;
+		var createEnterprise = system.getEnterprise();
+		var createSystem = system;
+		var createIdentityToken = identityToken;
 
-			return new Classification().builder(createSession)
+		return new Classification().builder(createSession)
 				.withName(code)
 				.withConcept(Currency.concept(), createSystem, createIdentityToken)
 				.inActiveRange()
@@ -62,18 +62,16 @@ public class CurrencyService
 						Currency.toString(),
 						createIdentityToken);
 				});
-		});
 	}
 
 	public Uni<IClassification<?, ?>> findCurrency(Mutiny.Session session, String code, ISystems<?, ?> system, UUID... identityToken)
 	{
-		return SessionUtils.withActivityMaster(applicationEnterpriseName, system.getName(), tuple -> {
-			var createSession = tuple.getItem1();
-			var createEnterprise = tuple.getItem2();
-			var createSystem = tuple.getItem3();
-			var createIdentityToken = tuple.getItem4();
+		var createSession = session;
+		var createEnterprise = system.getEnterprise();
+		var createSystem = system;
+		var createIdentityToken = identityToken;
 
-			return new Classification().builder(createSession)
+		return new Classification().builder(createSession)
 				.withName(code)
 				.withConcept(Currency.concept(), createSystem, createIdentityToken)
 				.inActiveRange()
@@ -82,7 +80,6 @@ public class CurrencyService
 				.get()
 				.onItem().ifNull().failWith(() -> new GeographyException("Cannot find currency with code : " + code))
 				.map(c -> (IClassification<?, ?>) c);
-		});
 	}
 
 	public Uni<IClassification<?, ?>> updateCurrency(Mutiny.Session session, String code, String description, ISystems<?, ?> system, UUID... identityToken)

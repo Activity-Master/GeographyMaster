@@ -53,16 +53,19 @@ public class CountryService
 	@Inject
 	private IClassificationService<?> classificationService;
 
+	@Inject
+	private GeographySecurityCollector securityCollector;
+
 	public Uni<IGeography<?, ?>> createCountry(Mutiny.Session session, IGeography<?, ?> continent, @NotNull String iso, @NotNull String description, String originalUniqueID,
 	                                           ISystems<?, ?> system, UUID... identityToken)
 	{
-		return SessionUtils.withActivityMaster(applicationEnterpriseName, system.getName(), tuple -> {
-			var createSession = tuple.getItem1();
-			var createEnterprise = tuple.getItem2();
-			var createSystem = tuple.getItem3();
-			var createIdentityToken = tuple.getItem4();
+		// Use the caller's session/transaction so prior writes in the same transaction remain visible.
+		var createSession = session;
+		var createEnterprise = system.getEnterprise();
+		var createSystem = system;
+		var createIdentityToken = identityToken;
 
-			return classificationService.find(createSession, Country.toString(), createSystem, createIdentityToken)
+		return classificationService.find(createSession, Country.toString(), createSystem, createIdentityToken)
 				.chain(classification -> {
 					Geography geo = new Geography();
 					return geo.builder(createSession)
@@ -92,8 +95,10 @@ public class CountryService
 									return createSession.persist(geo).replaceWith(Uni.createFrom().item(geo));
 								})
 								.chain(persisted -> {
-									Uni<?> setupChain = geo.createDefaultSecurity(createSession, createSystem, createIdentityToken)
-										.onFailure().recoverWithItem(() -> null);
+									// Record for batched default-security at the end of the load phase
+									// instead of paying the per-row security cost here.
+									securityCollector.record(createSession, geo);
+									Uni<?> setupChain = Uni.createFrom().voidItem();
 									if (originalUniqueID != null)
 									{
 										setupChain = setupChain.chain(() -> geo.addClassification(createSession, GeoNameID.toString(), originalUniqueID, createSystem, createIdentityToken));
@@ -103,18 +108,16 @@ public class CountryService
 								});
 						});
 				});
-		});
 	}
 
 	public Uni<IGeography<?, ?>> findCountry(Mutiny.Session session, @NotNull String iso, ISystems<?, ?> system, UUID... identityToken)
 	{
-		return SessionUtils.withActivityMaster(applicationEnterpriseName, system.getName(), tuple -> {
-			var createSession = tuple.getItem1();
-			var createEnterprise = tuple.getItem2();
-			var createSystem = tuple.getItem3();
-			var createIdentityToken = tuple.getItem4();
+		var createSession = session;
+		var createEnterprise = system.getEnterprise();
+		var createSystem = system;
+		var createIdentityToken = identityToken;
 
-			return classificationService.find(createSession, Country.toString(), createSystem, createIdentityToken)
+		return classificationService.find(createSession, Country.toString(), createSystem, createIdentityToken)
 				.chain(classification -> {
 					return new Geography().builder(createSession)
 						.withName(iso)
@@ -129,7 +132,6 @@ public class CountryService
 						.onItem().ifNull().failWith(() -> new GeographyException("Cannot find country - " + iso))
 						.map(geo -> (IGeography<?, ?>) geo);
 				});
-		});
 	}
 
 	public Uni<IGeography<?, ?>> updateCountry(Mutiny.Session session, IClassification<?, ?> currency, @NotNull String iso, @NotNull String description,
@@ -151,7 +153,10 @@ public class CountryService
 				if (dialCode != null) chain = chain.chain(() -> geo.addOrUpdateClassification(session, CountryPhone, dialCode, dialCode, system, identityToken));
 				if (postalCodeFormat != null) chain = chain.chain(() -> geo.addOrUpdateClassification(session, CountryPostalCodeFormat, postalCodeFormat, postalCodeFormat, system, identityToken));
 				if (postalCodeRegex != null) chain = chain.chain(() -> geo.addOrUpdateClassification(session, CountryPostalCodeRegex, postalCodeRegex, postalCodeRegex, system, identityToken));
-				if (currency != null) chain = chain.chain(() -> geo.addOrUpdateClassification(session, currency.toString(), STRING_EMPTY, STRING_EMPTY, system, identityToken));
+				// Currency classifications (e.g. "EUR") live under the Currency concept (ClassificationXClassification),
+				// not the default NoClassificationDataConceptName. Thread the concept so the lookup resolves the
+				// correct classification instead of failing/colliding on a duplicate name in another concept.
+				if (currency != null) chain = chain.chain(() -> geo.addOrUpdateClassification(session, currency.toString(), Currency.concept(), STRING_EMPTY, STRING_EMPTY, system, identityToken));
 				return chain.replaceWith(geo);
 			});
 	}

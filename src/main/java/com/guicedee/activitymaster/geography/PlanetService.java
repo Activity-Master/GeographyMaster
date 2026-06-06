@@ -37,15 +37,22 @@ public class PlanetService
 	@Inject
 	private IClassificationService<?> classificationService;
 
+	@Inject
+	private GeographySecurityCollector securityCollector;
+
+
 	public Uni<IGeography<?, ?>> createPlanet(Mutiny.Session session, String code, String description, String originalUniqueID, ISystems<?, ?> system, UUID... identityToken)
 	{
-		return SessionUtils.withActivityMaster(applicationEnterpriseName, system.getName(), tuple -> {
-			var createSession = tuple.getItem1();
-			var createEnterprise = tuple.getItem2();
-			var createSystem = tuple.getItem3();
-			var createIdentityToken = tuple.getItem4();
+		// Operate on the caller's session/transaction so writes made earlier in the same
+		// install transaction (e.g. the Planet classification) are visible. Opening a nested
+		// SessionUtils.withActivityMaster here would start a separate transaction that cannot
+		// see those still-uncommitted rows, causing NoResultException on the lookups below.
+		var createSession = session;
+		var createEnterprise = system.getEnterprise();
+		var createSystem = system;
+		var createIdentityToken = identityToken;
 
-			return classificationService.find(createSession, Planet.toString(), createSystem, createIdentityToken)
+		return classificationService.find(createSession, Planet.toString(), createSystem, createIdentityToken)
 				.chain(classification -> {
 					Geography geo = new Geography();
 					return geo.builder(createSession)
@@ -75,8 +82,8 @@ public class PlanetService
 									return createSession.persist(geo).replaceWith(Uni.createFrom().item(geo));
 								})
 								.chain(persisted -> {
-									Uni<?> setupChain = geo.createDefaultSecurity(createSession, createSystem, createIdentityToken)
-										.onFailure().recoverWithItem(() -> null);
+									securityCollector.record(createSession, geo);
+									Uni<?> setupChain = Uni.createFrom().voidItem();
 									if (originalUniqueID != null)
 									{
 										setupChain = setupChain.chain(() -> geo.addClassification(createSession, GeoNameID.toString(), originalUniqueID, createSystem, createIdentityToken));
@@ -85,18 +92,16 @@ public class PlanetService
 								});
 						});
 				});
-		});
 	}
 
 	public Uni<IGeography<?, ?>> findPlanet(Mutiny.Session session, String code, ISystems<?, ?> system, UUID... identityToken)
 	{
-		return SessionUtils.withActivityMaster(applicationEnterpriseName, system.getName(), tuple -> {
-			var createSession = tuple.getItem1();
-			var createEnterprise = tuple.getItem2();
-			var createSystem = tuple.getItem3();
-			var createIdentityToken = tuple.getItem4();
+		var createSession = session;
+		var createEnterprise = system.getEnterprise();
+		var createSystem = system;
+		var createIdentityToken = identityToken;
 
-			return classificationService.find(createSession, Planet.toString(), createSystem, createIdentityToken)
+		return classificationService.find(createSession, Planet.toString(), createSystem, createIdentityToken)
 				.chain(classification -> {
 					return new Geography().builder(createSession)
 						.withClassification((Classification) classification)
@@ -108,6 +113,5 @@ public class PlanetService
 						.onItem().ifNull().failWith(() -> new GeographyException("Unable to find planet"))
 						.map(geo -> (IGeography<?, ?>) geo);
 				});
-		});
 	}
 }
