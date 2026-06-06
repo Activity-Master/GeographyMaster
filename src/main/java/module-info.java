@@ -1,4 +1,4 @@
-import com.guicedee.activitymaster.fsdm.client.services.systems.IActivityMasterSystem;
+import com.guicedee.activitymaster.fsdm.client.services.systems.IMasterSystem;
 import com.guicedee.activitymaster.geography.implementations.*;
 
 module com.guicedee.activitymaster.geography {
@@ -43,7 +43,7 @@ module com.guicedee.activitymaster.geography {
 	requires static lombok;
 	requires org.apache.logging.log4j;
 
-	provides IActivityMasterSystem with GeographySystem;
+	provides IMasterSystem with GeographySystem;
 	provides com.guicedee.client.services.lifecycle.IGuiceModule with GeographyBinder;
 	provides com.guicedee.client.services.config.IGuiceScanModuleInclusions with GeographerMasterModuleInclusion;
 	provides com.guicedee.vertx.graphql.services.IGraphQLSchemaProvider

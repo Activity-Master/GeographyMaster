@@ -1,15 +1,5 @@
 package com.guicedee.activitymaster.geography;
 
-/**
- * Reactivity Migration Checklist:
- *
- * [✓] One action per Mutiny.Session at a time
- * [✓] Pass Mutiny.Session through the chain
- * [✓] No await() usage
- * [✓] No parallel operations on a session
- * [✓] No session/transaction creation in libraries
- */
-
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.guicedee.activitymaster.fsdm.client.services.IActiveFlagService;
@@ -29,6 +19,15 @@ import java.util.UUID;
 
 import static com.guicedee.activitymaster.fsdm.client.services.administration.ActivityMasterConfiguration.applicationEnterpriseName;
 import static com.guicedee.activitymaster.geography.services.enumerations.GeographyClassifications.*;
+
+/**
+ * Reactivity Migration Checklist:
+ * [✓] One action per Mutiny.Session at a time
+ * [✓] Pass Mutiny.Session through the chain
+ * [✓] No await() usage
+ * [✓] No parallel operations on a session
+ * [✓] No session/transaction creation in libraries
+ */
 
 @Log4j2
 @Singleton

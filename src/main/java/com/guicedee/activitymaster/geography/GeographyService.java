@@ -14,6 +14,7 @@ import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.guicedee.activitymaster.fsdm.client.services.IActiveFlagService;
+import com.guicedee.activitymaster.fsdm.client.services.IActivityMasterService;
 import com.guicedee.activitymaster.fsdm.client.services.IClassificationService;
 import com.guicedee.activitymaster.fsdm.client.services.SessionUtils;
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.classifications.IClassification;
@@ -94,6 +95,43 @@ public class GeographyService
 
 	@Inject
 	private GeographySecurityCollector securityCollector;
+
+	/**
+	 * Resolves the <em>Geography system</em> and its <em>own security identity token</em> on the supplied
+	 * (live) session, then runs the given load work under that identity.
+	 *
+	 * <p>Geography reference data must be owned and secured by the Geography system itself — never by
+	 * whichever system happened to trigger the load. A REST caller passes its own
+	 * {@code requestingSystemName}; if that foreign system were used as the security context, the bulk
+	 * reference data would be owned (and, with the security flag enabled, scope-restricted) by the caller
+	 * rather than by Geography. Re-resolving Geography's own context here keeps ownership consistent with
+	 * the taxonomy installed by {@code GeographySystemInstall} (also run as the Geography system) and bounds
+	 * the blast radius: the requesting system's token is never propagated into bulk reference-data writes.</p>
+	 *
+	 * <p>The system is re-resolved on the caller's session as a <em>fresh, attached</em> entity via
+	 * {@link IActivityMasterService#getISystem}, and its own identity token via
+	 * {@link IActivityMasterService#getISystemToken} (cached per system per enterprise). The call-scoped
+	 * {@code ActivityMasterConfiguration} is deliberately <em>not</em> used as the source: it carries the
+	 * caller's identity token, not the Geography system's own token.</p>
+	 *
+	 * @param session          the caller's live session/transaction (the resolved system is attached to it)
+	 * @param requestingSystem the system that triggered the load (used only to resolve the enterprise)
+	 * @param work             the load work, receiving the Geography system and its own identity token
+	 * @param <T>              the work result type
+	 * @return the work's {@link Uni}, run under the Geography system identity
+	 */
+	private <T> Uni<T> withGeographySystemContext(Mutiny.Session session, ISystems<?, ?> requestingSystem,
+	                                              java.util.function.BiFunction<ISystems<?, ?>, UUID[], Uni<T>> work)
+	{
+		var enterprise = requestingSystem.getEnterprise();
+		return IActivityMasterService.getISystem(session, GeographySystemName, enterprise)
+			.chain(geoSystem -> IActivityMasterService.getISystemToken(session, GeographySystemName, enterprise)
+				.chain(geoToken -> {
+					log.debug("Geography load running under its own '{}' token (requested by '{}')",
+						GeographySystemName, requestingSystem.getName());
+					return work.apply(geoSystem, new UUID[]{geoToken});
+				}));
+	}
 
 	@Override
 	public Uni<IGeography<?, ?>> createPlanet(Mutiny.Session session, @NotNull String value, String originalUniqueID, ISystems<?, ?> system, UUID... identityToken)
@@ -208,10 +246,10 @@ public class GeographyService
 	 */
 
 	@Override
-	public Uni<Void> loadProvincesASCII1(Mutiny.Session session, ISystems<?, ?> system, String countryCode, UUID... identityToken)
+	public Uni<Void> loadProvincesASCII1(Mutiny.Session session, ISystems<?, ?> requestingSystem, String countryCode, UUID... requestingToken)
 	{
+		return withGeographySystemContext(session, requestingSystem, (system, identityToken) -> {
 		setCurrentTask(0);
-		setTotalTasks(4470);
 		// Batch default security for every row (and classification link) created in this phase.
 		securityCollector.activate(session);
 
@@ -231,6 +269,8 @@ public class GeographyService
 						records.add(ascii);
 					}
 				}
+				// Total is the exact number of province codes we will actually create.
+				setTotalTasks(records.size());
 				return records;
 			}
 			catch (Exception e)
@@ -251,15 +291,16 @@ public class GeographyService
 			return chain;
 		})
 		.chain(() -> securityCollector.flush(session, system, identityToken))
-		.invoke(() -> logProgress("Geography Service", "Finished Province Codes", 0))
+		.invoke(() -> logProgress("Geography Service", "Finished Province Codes"))
 		.onFailure().invoke(error -> log.error("Error loading province codes: {}", error.getMessage(), error));
+		});
 	}
 
 	@Override
-	public Uni<Void> loadDistrictsASCII2(Mutiny.Session session, ISystems<?, ?> system, String countryCode, UUID... identityToken)
+	public Uni<Void> loadDistrictsASCII2(Mutiny.Session session, ISystems<?, ?> requestingSystem, String countryCode, UUID... requestingToken)
 	{
+		return withGeographySystemContext(session, requestingSystem, (system, identityToken) -> {
 		setCurrentTask(0);
-		setTotalTasks(47850);
 		// Batch default security for every row (and classification link) created in this phase.
 		securityCollector.activate(session);
 
@@ -281,6 +322,8 @@ public class GeographyService
 						records.add(ascii);
 					}
 				}
+				// Total is the exact number of district codes we will actually create.
+				setTotalTasks(records.size());
 				return records;
 			}
 			catch (Exception e)
@@ -303,15 +346,16 @@ public class GeographyService
 			return chain;
 		})
 		.chain(() -> securityCollector.flush(session, system, identityToken))
-		.invoke(() -> logProgress("Geography Service", "Finished Districts/Cities", 0))
+		.invoke(() -> logProgress("Geography Service", "Finished Districts/Cities"))
 		.onFailure().invoke(error -> log.error("Error loading district codes: {}", error.getMessage(), error));
+		});
 	}
 
 	@Override
-	public Uni<Void> loadLanguages(Mutiny.Session session, ISystems<?, ?> system, UUID... identityToken)
+	public Uni<Void> loadLanguages(Mutiny.Session session, ISystems<?, ?> requestingSystem, UUID... requestingToken)
 	{
+		return withGeographySystemContext(session, requestingSystem, (system, identityToken) -> {
 		setCurrentTask(0);
-		setTotalTasks(547);
 
 		return Uni.createFrom().item(() -> {
 			try (GeoDataFinder finder = new GeoDataFinder(ISO639Languages, CSVFormat.TDF, ISO639Languages.getHeaderNames()))
@@ -345,6 +389,8 @@ public class GeographyService
 					}
 					languages.add(language);
 				}
+				// Total is the exact number of languages we will actually load.
+				setTotalTasks(languages.size());
 				return languages;
 			}
 			catch (Exception e)
@@ -376,16 +422,17 @@ public class GeographyService
 			}
 			return chain;
 		})
-		.invoke(() -> logProgress("Geography Service", "Geography Associated Languages queued", 1))
+		.invoke(() -> logProgress("Geography Service", "Geography Associated Languages queued"))
 		.onFailure().invoke(error -> log.error("Error loading languages: {}", error.getMessage(), error));
+		});
 	}
 
 	@Override
-	public Uni<Void> loadCountryInfo(Mutiny.Session session, ISystems<?, ?> system, UUID... identityToken)
+	public Uni<Void> loadCountryInfo(Mutiny.Session session, ISystems<?, ?> requestingSystem, UUID... requestingToken)
 	{
 
+		return withGeographySystemContext(session, requestingSystem, (system, identityToken) -> {
 		setCurrentTask(0);
-		setTotalTasks(252);
 		// Batch default security for every row (and classification link) created in this phase.
 		securityCollector.activate(session);
 
@@ -394,6 +441,8 @@ public class GeographyService
 			{
 				List<CSVRecord> records = new ArrayList<>();
 				for (CSVRecord record : finder.getRecords()) records.add(record);
+				// Total is the exact number of countries we will actually load.
+				setTotalTasks(records.size());
 				return records;
 			}
 			catch (Exception e)
@@ -444,8 +493,9 @@ public class GeographyService
 			return chain;
 		})
 		.chain(() -> securityCollector.flush(session, system, identityToken))
-		.invoke(() -> logProgress("Geography Service", "Finished Loading Countries", 10))
+		.invoke(() -> logProgress("Geography Service", "Finished Loading Countries"))
 		.onFailure().invoke(error -> log.error("Error loading country info: {}", error.getMessage(), error));
+		});
 	}
 
 	@Override
@@ -460,16 +510,18 @@ public class GeographyService
 	}
 
 	@Override
-	public Uni<Void> loadTimeZones(Mutiny.Session session, ISystems<?, ?> system, UUID... identityToken)
+	public Uni<Void> loadTimeZones(Mutiny.Session session, ISystems<?, ?> requestingSystem, UUID... requestingToken)
 	{
+		return withGeographySystemContext(session, requestingSystem, (system, identityToken) -> {
 		setCurrentTask(0);
-		setTotalTasks(425);
 
 		return Uni.createFrom().item(() -> {
 			try (GeoDataFinder finder = new GeoDataFinder(TimeZones, CSVFormat.TDF, TimeZones.getHeaderNames()))
 			{
 				List<CSVRecord> records = new ArrayList<>();
 				for (CSVRecord record : finder.getRecords()) records.add(record);
+				// Total is the exact number of time zones we will actually load.
+				setTotalTasks(records.size());
 				return records;
 			}
 			catch (Exception e)
@@ -503,6 +555,7 @@ public class GeographyService
 			return chain;
 		})
 		.onFailure().invoke(error -> log.error("Error loading time zones: {}", error.getMessage(), error));
+		});
 	}
 
 	public Uni<GeographyTimezone> createTimezone(Mutiny.Session session, GeographyTimezone timezone, ISystems<?, ?> system, UUID... identityToken)
@@ -515,13 +568,13 @@ public class GeographyService
 	}
 
 	@Override
-	public Uni<Void> loadPostalCodes(Mutiny.Session session, ISystems<?, ?> system, UUID... identityToken)
+	public Uni<Void> loadPostalCodes(Mutiny.Session session, ISystems<?, ?> requestingSystem, UUID... requestingToken)
 	{
 
+		return withGeographySystemContext(session, requestingSystem, (system, identityToken) -> {
 		return Uni.createFrom().item(() -> {
 			Map<Long, List<GeographyPostalCode>> postalCodeMap = new HashMap<>();
 			setCurrentTask(0);
-			setTotalTasks(3921);
 			try (GeoDataFinder finder = new GeoDataFinder(ZAPostalCodes, CSVFormat.TDF, ZAPostalCodes.getHeaderNames()))
 			{
 				for (CSVRecord record : finder.getRecords())
@@ -610,6 +663,7 @@ public class GeographyService
 			return chain;
 		})
 		.onFailure().invoke(error -> log.error("Error loading postal codes: {}", error.getMessage(), error));
+		});
 	}
 
 	@Override
@@ -669,16 +723,18 @@ public class GeographyService
 	}
 
 	@Override
-	public Uni<Void> loadFeatureCodes(Mutiny.Session session, ISystems<?, ?> system, UUID... identityToken)
+	public Uni<Void> loadFeatureCodes(Mutiny.Session session, ISystems<?, ?> requestingSystem, UUID... requestingToken)
 	{
+		return withGeographySystemContext(session, requestingSystem, (system, identityToken) -> {
 		setCurrentTask(0);
-		setTotalTasks(681);
 
 		return Uni.createFrom().item(() -> {
 			try (GeoDataFinder finder = new GeoDataFinder(FeatureCodes_en, CSVFormat.TDF, FeatureCodes_en.getHeaderNames()))
 			{
 				List<CSVRecord> records = new ArrayList<>();
 				for (CSVRecord record : finder.getRecords()) records.add(record);
+				// Total is the exact number of feature codes we will actually load.
+				setTotalTasks(records.size());
 				return records;
 			}
 			catch (Exception e)
@@ -710,6 +766,7 @@ public class GeographyService
 			return chain;
 		})
 		.onFailure().invoke(error -> log.error("Error loading feature codes: {}", error.getMessage(), error));
+		});
 	}
 
 	@Override
@@ -726,14 +783,15 @@ public class GeographyService
 	}
 
 	@Override
-	public Uni<Void> loadTownsAndCities(Mutiny.Session session, ISystems<?, ?> system, UUID... identityToken)
+	public Uni<Void> loadTownsAndCities(Mutiny.Session session, ISystems<?, ?> requestingSystem, UUID... requestingToken)
 	{
 
+		return withGeographySystemContext(session, requestingSystem, (system, identityToken) -> {
 		return Uni.createFrom().item(() -> {
 			Map<Long, GeoNameDefaultData<?>> dataMap = new TreeMap<>();
 			Map<Long, List<Long>> hierarchyMap = new ConcurrentHashMap<>();
 
-			setTotalTasks(102850);
+			setCurrentTask(0);
 			try (GeoDataFinder finder = new GeoDataFinder(ZAGeoData, CSVFormat.TDF, ZAGeoData.getHeaderNames()))
 			{
 				for (CSVRecord a : finder.getRecords())
@@ -783,6 +841,8 @@ public class GeographyService
 				throw new RuntimeException("Error loading hierarchy data", e);
 			}
 
+			// Total is the number of geo-data places parsed from the source file.
+			setTotalTasks(dataMap.size());
 			return new Object[]{dataMap, hierarchyMap};
 		})
 		.chain(data -> {
@@ -824,7 +884,8 @@ public class GeographyService
 													return iGeography.addChild(session, newChild, NoClassification.toString(), STRING_EMPTY, system, identityToken)
 														.replaceWithVoid();
 												});
-										}));
+										})
+										.invoke(() -> logProgress("Geography Towns/Cities", "Loaded place - " + childData.getName(), 1)));
 								}
 								return childChain;
 							}));
@@ -832,7 +893,9 @@ public class GeographyService
 					return chain;
 				});
 		})
+		.invoke(() -> logProgress("Geography Towns/Cities", "Finished loading towns and cities"))
 		.onFailure().invoke(error -> log.error("Error loading towns and cities: {}", error.getMessage(), error));
+		});
 	}
 
 	private Uni<GeoNameDefaultData<?>> createGeoData(Mutiny.Session session, GeoNameDefaultData<?> geoData, IClassification<?, ?> classification,
@@ -963,10 +1026,12 @@ public class GeographyService
 	}
 
 	@Override
-	public Uni<Void> loadCountryGeoData(Mutiny.Session session, ISystems<?, ?> system, String countryCode, UUID... identityToken)
+	public Uni<Void> loadCountryGeoData(Mutiny.Session session, ISystems<?, ?> requestingSystem, String countryCode, UUID... requestingToken)
 	{
 		String cc = countryCode.toUpperCase();
 		Path geoDataFile = GeoDataLocation.countryGeoDataFile(cc);
+		return withGeographySystemContext(session, requestingSystem, (system, identityToken) -> {
+		setCurrentTask(0);
 		// Batch default security for every row (and classification link) created in this phase.
 		securityCollector.activate(session);
 
@@ -1069,8 +1134,9 @@ public class GeographyService
 				});
 		})
 		.chain(() -> securityCollector.flush(session, system, identityToken))
-		.invoke(() -> logProgress("Geography Geo-Data", "Finished loading geo-data for " + cc, 0))
+		.invoke(() -> logProgress("Geography Geo-Data", "Finished loading geo-data for " + cc))
 		.onFailure().invoke(error -> log.error("Error loading geo-data for {}: {}", cc, error.getMessage(), error));
+		});
 	}
 
 	/**
@@ -1115,10 +1181,11 @@ public class GeographyService
 	}
 
 	@Override
-	public Uni<Void> loadCountryPostalCodes(Mutiny.Session session, ISystems<?, ?> system, String countryCode, UUID... identityToken)
+	public Uni<Void> loadCountryPostalCodes(Mutiny.Session session, ISystems<?, ?> requestingSystem, String countryCode, UUID... requestingToken)
 	{
 		String cc = countryCode.toUpperCase();
 		Path postalCodeFile = GeoDataLocation.countryPostalCodeFile(cc);
+		return withGeographySystemContext(session, requestingSystem, (system, identityToken) -> {
 		// Batch default security for every row (and classification link) created in this phase.
 		securityCollector.activate(session);
 
@@ -1222,7 +1289,8 @@ public class GeographyService
 			return chain;
 		})
 		.chain(() -> securityCollector.flush(session, system, identityToken))
-		.invoke(() -> logProgress("Postal Codes", "Finished loading postal codes for " + cc, 0))
+		.invoke(() -> logProgress("Postal Codes", "Finished loading postal codes for " + cc))
 		.onFailure().invoke(error -> log.error("Error loading postal codes for {}: {}", cc, error.getMessage(), error));
+		});
 	}
 }
