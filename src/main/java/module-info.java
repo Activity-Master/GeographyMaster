@@ -23,7 +23,7 @@ module com.guicedee.activitymaster.geography {
 	// OpenAPI 3.1 (Swagger) annotation support
 	requires com.guicedee.openapi;
 
-	requires com.fasterxml.jackson.databind;
+	requires tools.jackson.databind;
 
 	requires jakarta.validation;
 
@@ -59,7 +59,7 @@ module com.guicedee.activitymaster.geography {
 	opens com.guicedee.activitymaster.geography.implementations.updates to com.google.guice;
 	opens com.guicedee.activitymaster.geography.implementations to com.google.guice;
 	opens com.guicedee.activitymaster.geography.implementations.graphql to com.google.guice;
-	opens com.guicedee.activitymaster.geography.rest to com.google.guice, com.guicedee.rest, com.fasterxml.jackson.databind, org.hibernate.reactive, net.bytebuddy;
+	opens com.guicedee.activitymaster.geography.rest to com.google.guice, com.guicedee.rest, tools.jackson.databind, org.hibernate.reactive, net.bytebuddy;
 
 	exports geodata;
 	opens geodata;
