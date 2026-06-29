@@ -141,6 +141,39 @@ public class GeographyScopeTokenService
 	{
 		return securityTokenService.getEverywhereGroup(session, system, identityToken);
 	}
+
+	// ---- Stateless twins ----
+
+	public Uni<ISecurityToken<?, ?>> ensureScope(Mutiny.StatelessSession session, IGeography<?, ?> geo, IGeography<?, ?> parentGeo,
+	                                              String label, ISystems<?, ?> system, UUID... identityToken)
+	{
+		return resolveParentScope(session, parentGeo, system, identityToken)
+				.chain(parentScope -> securityTokenService.create(session,
+						SecurityTokenClassifications.UserGroup.toString(),
+						scopeTokenName(geo),
+						label != null ? label : scopeTokenName(geo),
+						system,
+						parentScope,
+						identityToken));
+	}
+
+	private Uni<ISecurityToken<?, ?>> resolveParentScope(Mutiny.StatelessSession session, IGeography<?, ?> parentGeo,
+	                                                     ISystems<?, ?> system, UUID... identityToken)
+	{
+		if (parentGeo == null)
+		{
+			return securityTokenService.getEverywhereGroup(session, system, identityToken);
+		}
+		return findScope(session, parentGeo, system, identityToken)
+				.chain(found -> found != null ? Uni.createFrom().item(found)
+						: securityTokenService.getEverywhereGroup(session, system, identityToken));
+	}
+
+	public Uni<ISecurityToken<?, ?>> findScope(Mutiny.StatelessSession session, IGeography<?, ?> geo,
+	                                           ISystems<?, ?> system, UUID... identityToken)
+	{
+		return securityTokenService.getSecurityTokenByName(session, scopeTokenName(geo), system, identityToken);
+	}
 }
 
 

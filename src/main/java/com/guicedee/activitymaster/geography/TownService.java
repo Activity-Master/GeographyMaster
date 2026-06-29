@@ -173,4 +173,55 @@ public class TownService
 				return chain.replaceWith(toUpdate);
 			});
 	}
+
+	// ---- Stateless twins ----
+
+	public Uni<IGeography<?, ?>> createTown(Mutiny.StatelessSession session, IGeography<?, ?> district, String name, String description, String originalUniqueID, ISystems<?, ?> system, UUID... identityToken)
+	{
+		var enterprise = system.getEnterprise();
+		return classificationService.find(session, Town.toString(), system, identityToken)
+				.chain(classification -> new Geography().builder(session)
+						.withName(name).withClassification((Classification) classification).inActiveRange().inDateRange().withEnterprise(enterprise).getCount()
+						.chain(count -> {
+							if (count > 0) return findTown(session, district, name, system, identityToken);
+							Geography geo = new Geography();
+							geo.setId(UUID.randomUUID());
+							geo.setEnterpriseID(enterprise);
+							geo.setClassificationID((Classification) classification);
+							geo.setSystemID(system);
+							geo.setOriginalSourceSystemID(system.getId());
+							geo.setName(name);
+							geo.setDescription(description);
+							IActiveFlagService<?> acService = IGuiceContext.get(IActiveFlagService.class);
+							return acService.getActiveFlag(session, enterprise, identityToken)
+								.chain(activeFlag -> { geo.setActiveFlagID(activeFlag); return session.insert(geo).replaceWith(geo); })
+								.chain(persisted -> {
+									securityCollector.record(session, geo);
+									Uni<?> setupChain = Uni.createFrom().voidItem();
+									if (originalUniqueID != null)
+										setupChain = setupChain.chain(() -> geo.addClassification(session, GeoNameID.toString(), originalUniqueID, system, identityToken));
+									return setupChain.chain(() -> district.addChild(session, geo, NoClassification.toString(), null, system, identityToken).replaceWith((IGeography<?, ?>) geo));
+								});
+						}));
+	}
+
+	public Uni<IGeography<?, ?>> findTown(Mutiny.StatelessSession session, IGeography<?, ?> district, String name, ISystems<?, ?> system, UUID... identityToken)
+	{
+		var enterprise = system.getEnterprise();
+		return classificationService.find(session, Town.toString(), system, identityToken)
+				.chain(classification -> new Geography().builder(session)
+						.withName(name).withClassification((Classification) classification).inActiveRange().inDateRange().withEnterprise(enterprise)
+						.get().onItem().ifNull().failWith(() -> new GeographyException("Cannot find town - " + name + " - in district - " + district))
+						.map(geo -> (IGeography<?, ?>) geo));
+	}
+
+	public Uni<IGeography<?, ?>> findTown(Mutiny.StatelessSession session, String name, ISystems<?, ?> system, UUID... identityToken)
+	{
+		var enterprise = system.getEnterprise();
+		return classificationService.find(session, Town.toString(), system, identityToken)
+				.chain(classification -> new Geography().builder(session)
+						.withName(name).withClassification((Classification) classification).inActiveRange().inDateRange().withEnterprise(enterprise).setReturnFirst(true)
+						.get().onItem().ifNull().failWith(() -> new GeographyException("Cannot find town - " + name))
+						.map(geo -> (IGeography<?, ?>) geo));
+	}
 }

@@ -154,4 +154,44 @@ public class ProvinceService {
                     return chain.replaceWith(toUpdate);
                 });
     }
+
+    // ---- Stateless twins ----
+
+    public Uni<IGeography<?, ?>> createProvince(Mutiny.StatelessSession session, IGeography<?, ?> country, String code, String name, String originalUniqueID, ISystems<?, ?> system, UUID... identityToken) {
+        var enterprise = system.getEnterprise();
+        return classificationService.find(session, Province.toString(), system, identityToken)
+                .chain(classification -> new Geography().builder(session)
+                        .withName(code).withClassification((Classification) classification).inActiveRange().inDateRange().withEnterprise(enterprise).getCount()
+                        .chain(count -> {
+                            if (count > 0) return findProvince(session, code, system, identityToken);
+                            Geography geo = new Geography();
+                            geo.setId(UUID.randomUUID());
+                            geo.setEnterpriseID(enterprise);
+                            geo.setClassificationID((Classification) classification);
+                            geo.setSystemID(system);
+                            geo.setOriginalSourceSystemID(system.getId());
+                            geo.setName(code);
+                            geo.setDescription(name);
+                            IActiveFlagService<?> acService = IGuiceContext.get(IActiveFlagService.class);
+                            return acService.getActiveFlag(session, enterprise, identityToken)
+                                    .chain(activeFlag -> { geo.setActiveFlagID(activeFlag); return session.insert(geo).replaceWith(geo); })
+                                    .chain(persisted -> {
+                                        securityCollector.record(session, geo);
+                                        Uni<?> setupChain = Uni.createFrom().voidItem();
+                                        if (originalUniqueID != null)
+                                            setupChain = setupChain.chain(() -> geo.addClassification(session, GeoNameID.toString(), originalUniqueID, system, identityToken));
+                                        return setupChain.chain(() -> country.addChild(session, geo, NoClassification.toString(), null, system, identityToken).replaceWith((IGeography<?, ?>) geo));
+                                    });
+                        }));
+    }
+
+    public Uni<IGeography<?, ?>> findProvince(Mutiny.StatelessSession session, String code, ISystems<?, ?> system, UUID... identityToken) {
+        var enterprise = system.getEnterprise();
+        return classificationService.find(session, Province.toString(), system, identityToken)
+                .chain(classification -> new Geography().builder(session)
+                        .withClassification((Classification) classification).inActiveRange().inDateRange().withEnterprise(enterprise).withName(code).or(Geography_.description, Equals, code)
+                        .get()
+                        .onItem().ifNull().failWith(() -> new GeographyException("Cannot find province - " + code))
+                        .map(geo -> (IGeography<?, ?>) geo));
+    }
 }

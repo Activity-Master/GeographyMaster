@@ -111,4 +111,39 @@ public class TimeZoneService
 				return chain.replaceWith(toUpdate);
 			});
 	}
+
+	// ---- Stateless twins ----
+
+	public Uni<IClassification<?, ?>> createTimeZone(Mutiny.StatelessSession session, String code, String description, String originalUniqueID, ISystems<?, ?> system, UUID... identityToken)
+	{
+		var enterprise = system.getEnterprise();
+		return new Classification().builder(session)
+				.withName(code).withConcept(TimeZone.concept(), system, identityToken).inActiveRange().inDateRange().withEnterprise(enterprise).getCount()
+				.chain(count -> count > 0 ? findTimeZone(session, code, system, identityToken)
+						: classificationService.create(session, code, description, TimeZone.concept(), system, 0, identityToken));
+	}
+
+	public Uni<IClassification<?, ?>> findTimeZone(Mutiny.StatelessSession session, String code, ISystems<?, ?> system, UUID... identityToken)
+	{
+		var enterprise = system.getEnterprise();
+		return new Classification().builder(session)
+				.withName(code).withConcept(TimeZone.concept(), system, identityToken).inActiveRange().inDateRange().withEnterprise(enterprise)
+				.get().onItem().ifNull().failWith(() -> new GeographyException("Unable to find timezone with code - " + code))
+				.map(c -> (IClassification<?, ?>) c);
+	}
+
+	public Uni<IClassification<?, ?>> updateTimeZone(Mutiny.StatelessSession session, String code, String description,
+	                                                 String timeZoneRawOffset, String timeZoneOffsetJuly2016, String timeZoneOffsetJan2016,
+	                                                 ISystems<?, ?> system, UUID... identityToken)
+	{
+		return findTimeZone(session, code, system, identityToken)
+			.chain(toUpdate -> {
+				Uni<?> chain = Uni.createFrom().voidItem();
+				if (description != null) { ((Classification) toUpdate).setDescription(description); chain = chain.chain(() -> session.update(toUpdate)); }
+				if (timeZoneRawOffset != null) chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, TimeZoneRawOffset, timeZoneRawOffset, timeZoneRawOffset, system, identityToken));
+				if (timeZoneOffsetJuly2016 != null) chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, TimeZoneOffsetJuly2016, timeZoneOffsetJuly2016, timeZoneOffsetJuly2016, system, identityToken));
+				if (timeZoneOffsetJan2016 != null) chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, TimeZoneOffsetJan2016, timeZoneOffsetJan2016, timeZoneOffsetJan2016, system, identityToken));
+				return chain.replaceWith(toUpdate);
+			});
+	}
 }

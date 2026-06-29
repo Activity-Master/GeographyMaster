@@ -96,4 +96,36 @@ public class CurrencyService
 				return Uni.createFrom().item(toUpdate);
 			});
 	}
+
+	// ---- Stateless twins ----
+
+	public Uni<IClassification<?, ?>> createCurrency(Mutiny.StatelessSession session, String code, String description, ISystems<?, ?> system, UUID... identityToken)
+	{
+		var enterprise = system.getEnterprise();
+		return new Classification().builder(session)
+				.withName(code).withConcept(Currency.concept(), system, identityToken).inActiveRange().inDateRange().withEnterprise(enterprise).getCount()
+				.chain(count -> count > 0 ? findCurrency(session, code, system, identityToken)
+						: classificationService.create(session, code, description, ClassificationXClassification, system, Currency.toString(), identityToken));
+	}
+
+	public Uni<IClassification<?, ?>> findCurrency(Mutiny.StatelessSession session, String code, ISystems<?, ?> system, UUID... identityToken)
+	{
+		var enterprise = system.getEnterprise();
+		return new Classification().builder(session)
+				.withName(code).withConcept(Currency.concept(), system, identityToken).inActiveRange().inDateRange().withEnterprise(enterprise)
+				.get().onItem().ifNull().failWith(() -> new GeographyException("Cannot find currency with code : " + code))
+				.map(c -> (IClassification<?, ?>) c);
+	}
+
+	public Uni<IClassification<?, ?>> updateCurrency(Mutiny.StatelessSession session, String code, String description, ISystems<?, ?> system, UUID... identityToken)
+	{
+		return findCurrency(session, code, system, identityToken)
+			.chain(toUpdate -> {
+				if (description != null) {
+					((Classification) toUpdate).setDescription(description);
+					return session.update(toUpdate).replaceWith(toUpdate);
+				}
+				return Uni.createFrom().item(toUpdate);
+			});
+	}
 }

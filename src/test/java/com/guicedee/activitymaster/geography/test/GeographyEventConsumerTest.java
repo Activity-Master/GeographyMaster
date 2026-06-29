@@ -78,7 +78,7 @@ public class GeographyEventConsumerTest
 		assertNotNull(enterprise);
 
 		GeographySystemInstall install = IGuiceContext.get(GeographySystemInstall.class);
-		Boolean done = install.update(null, enterprise).await().atMost(Duration.ofMinutes(3));
+		Boolean done = install.update((Mutiny.Session) null, enterprise).await().atMost(Duration.ofMinutes(3));
 		assertEquals(Boolean.TRUE, done);
 	}
 

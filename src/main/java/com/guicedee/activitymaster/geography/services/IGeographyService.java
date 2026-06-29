@@ -121,4 +121,30 @@ public interface IGeographyService<J extends IGeographyService<J>>
 	 * @return a {@link Uni} that completes when the postal codes have been loaded
 	 */
 	Uni<Void> loadCountryPostalCodes(Mutiny.Session session, ISystems<?, ?> system, String countryCode, UUID... identityToken);
+
+	// ---- Stateless twins ----
+	Uni<IGeography<?, ?>> createPlanet(Mutiny.StatelessSession session, @NotNull String value, String originalUniqueID, ISystems<?, ?> system, UUID... identityToken);
+	Uni<IGeography<?, ?>> createContinent(Mutiny.StatelessSession session, String planetName, GeographyContinent continent, ISystems<?, ?> originatingSystem, String originalUniqueID, UUID... identityToken);
+	Uni<IGeography<?, ?>> findPlanet(Mutiny.StatelessSession session, String name, ISystems<?, ?> originatingSystem, UUID... identityToken);
+	Uni<GeographyContinent> findContinent(Mutiny.StatelessSession session, GeographyContinent continent, ISystems<?, ?> originatingSystem, UUID... identityToken);
+	Uni<Void> loadProvincesASCII1(Mutiny.StatelessSession session, ISystems<?, ?> system, String countryCode, UUID... identityToken);
+	Uni<Void> loadDistrictsASCII2(Mutiny.StatelessSession session, ISystems<?, ?> system, String countryCode, UUID... identityToken);
+	Uni<Void> loadLanguages(Mutiny.StatelessSession session, ISystems<?, ?> system, UUID... identityToken);
+	Uni<Void> loadCountryInfo(Mutiny.StatelessSession session, ISystems<?, ?> system, UUID... identityToken);
+	Uni<GeographyCountry> findCountry(Mutiny.StatelessSession session, GeographyCountry country, ISystems<?, ?> system, UUID... identityToken);
+	Uni<GeographyCountry> findCountryDetailed(Mutiny.StatelessSession session, String iso, ISystems<?, ?> system, UUID... identityToken);
+	Uni<GeographyTimezone> findTimezone(Mutiny.StatelessSession session, GeographyTimezone timezone, ISystems<?, ?> system, UUID... identityToken);
+	Uni<Void> loadTimeZones(Mutiny.StatelessSession session, ISystems<?, ?> system, UUID... identityToken);
+	Uni<Void> loadPostalCodes(Mutiny.StatelessSession session, ISystems<?, ?> system, UUID... identityToken);
+	Uni<GeographyPostalCode> findPostalCode(Mutiny.StatelessSession session, GeographyPostalCode postalCode, ISystems<?, ?> system, UUID... identityToken);
+	Uni<GeographyPostalCode> findPostalCodeSuburb(Mutiny.StatelessSession session, String code, String description, ISystems<?, ?> system, UUID... identityToken);
+	Uni<GeographyPostalCode> findOrCreatePostalCodeSuburb(Mutiny.StatelessSession session, String code, String description, ISystems<?, ?> system, UUID... identityToken);
+	Uni<IGeography<?, ?>> findGeographyById(Mutiny.StatelessSession session, UUID geographyID, ISystems<?, ?> system, UUID... identityToken);
+	Uni<Void> loadFeatureCodes(Mutiny.StatelessSession session, ISystems<?, ?> system, UUID... identityToken);
+	Uni<GeographyFeatureCode> findFeatureCode(Mutiny.StatelessSession session, String featureCode, ISystems<?, ?> system, UUID... identityToken);
+	Uni<IClassification<?, ?>> findFeatureCodeClassification(Mutiny.StatelessSession session, String featureCode, ISystems<?, ?> system, UUID... identityToken);
+	Uni<Void> loadTownsAndCities(Mutiny.StatelessSession session, ISystems<?, ?> system, UUID... identityToken);
+	Uni<Void> installCountry(Mutiny.StatelessSession session, ISystems<?, ?> system, String countryCode, UUID... identityToken);
+	Uni<Void> loadCountryGeoData(Mutiny.StatelessSession session, ISystems<?, ?> system, String countryCode, UUID... identityToken);
+	Uni<Void> loadCountryPostalCodes(Mutiny.StatelessSession session, ISystems<?, ?> system, String countryCode, UUID... identityToken);
 }

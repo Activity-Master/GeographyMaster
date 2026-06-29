@@ -39,6 +39,13 @@ public class GeographySystem
 		return Uni.createFrom().voidItem();
 	}
 
+	/** Stateless variant — the Geography system has no default data to provision. */
+	@Override
+	public Uni<Void> createDefaults(Mutiny.StatelessSession session, IEnterprise<?, ?> enterprise)
+	{
+		return Uni.createFrom().voidItem();
+	}
+
 	@Override
 	public int totalTasks()
 	{

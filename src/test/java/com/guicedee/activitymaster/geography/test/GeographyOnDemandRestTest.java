@@ -85,7 +85,7 @@ public class GeographyOnDemandRestTest
 		assertNotNull(enterprise, "Enterprise must exist before installing the geography taxonomy");
 
 		GeographySystemInstall install = IGuiceContext.get(GeographySystemInstall.class);
-		Boolean done = install.update(null, enterprise).await().atMost(Duration.ofMinutes(3));
+		Boolean done = install.update((Mutiny.Session) null, enterprise).await().atMost(Duration.ofMinutes(3));
 		assertEquals(Boolean.TRUE, done, "Geography taxonomy installation should succeed");
 	}
 

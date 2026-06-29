@@ -59,5 +59,22 @@ public class GeographySecurityCollector
 	{
 		return DefaultSecurityCollector.flush(session, system, identityToken);
 	}
+
+	// ---- Stateless twins ----
+
+	public void activate(Mutiny.StatelessSession session)
+	{
+		DefaultSecurityCollector.activate(session);
+	}
+
+	public void record(Mutiny.StatelessSession session, IWarehouseCoreTable<?, ?, ?, ?> row)
+	{
+		DefaultSecurityCollector.record(session, row);
+	}
+
+	public Uni<Void> flush(Mutiny.StatelessSession session, ISystems<?, ?> system, UUID... identityToken)
+	{
+		return DefaultSecurityCollector.flush(session, system, identityToken);
+	}
 }
 
