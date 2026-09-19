@@ -66,7 +66,7 @@ public class GeographyStatelessEnterpriseTest
 		// geography system). The stateless entry point is then exercised idempotently in the tests below —
 		// mirroring the core stateless safety-net pattern.
 		IEnterpriseService<?> es = IGuiceContext.get(IEnterpriseService.class);
-		sessionFactory.withSession(session -> session.withTransaction(tx ->
+		sessionFactory.withStatelessSession(session -> session.withTransaction(tx ->
 				es.getEnterprise(session, ENTERPRISE)
 						.onFailure().recoverWithUni(t -> {
 							var ent = es.get();
@@ -78,7 +78,7 @@ public class GeographyStatelessEnterpriseTest
 						.replaceWith(Uni.createFrom().voidItem())
 		)).await().atMost(Duration.ofMinutes(3));
 
-		IEnterprise<?, ?> baseline = sessionFactory.withSession(s -> es.getEnterprise(s, ENTERPRISE))
+		IEnterprise<?, ?> baseline = sessionFactory.withStatelessSession(s -> es.getEnterprise(s, ENTERPRISE))
 				.await().atMost(Duration.ofMinutes(1));
 		assertNotNull(baseline, "Baseline enterprise must be provisioned in setup");
 		enterpriseId = baseline.getId();
@@ -113,7 +113,7 @@ public class GeographyStatelessEnterpriseTest
 		assertEquals(enterpriseId, enterprise.getId(), "Resolved enterprise must match the stateless-created one");
 
 		GeographySystemInstall install = IGuiceContext.get(GeographySystemInstall.class);
-		Boolean done = install.update((Mutiny.Session) null, enterprise).await().atMost(Duration.ofMinutes(3));
+		Boolean done = install.update((Mutiny.StatelessSession) null, enterprise).await().atMost(Duration.ofMinutes(3));
 		assertEquals(Boolean.TRUE, done, "Geography taxonomy installation should succeed");
 	}
 

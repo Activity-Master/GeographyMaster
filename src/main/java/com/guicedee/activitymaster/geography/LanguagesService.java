@@ -3,8 +3,8 @@ package com.guicedee.activitymaster.geography;
 /**
  * Reactivity Migration Checklist:
  *
- * [✓] One action per Mutiny.Session at a time
- * [✓] Pass Mutiny.Session through the chain
+ * [✓] One action per Mutiny.StatelessSession at a time
+ * [✓] Pass Mutiny.StatelessSession through the chain
  * [✓] No await() usage
  * [✓] No parallel operations on a session
  * [✓] No session/transaction creation in libraries
@@ -42,74 +42,6 @@ public class LanguagesService
 
 	@Inject
 	private IClassificationService<?> classificationService;
-
-	public Uni<IClassification<?, ?>> createLanguage(Mutiny.Session session, @NotNull String code, String description, String originalUniqueID,
-	                                                 ISystems<?, ?> system, UUID... identityToken)
-	{
-		// Operate on the caller's session/transaction (no nested withActivityMaster).
-		var createSession = session;
-		var createEnterprise = system.getEnterprise();
-		var createSystem = system;
-		var createIdentityToken = identityToken;
-
-		return new Classification().builder(createSession)
-				.withName(code)
-				.withConcept(Languages.concept(), createSystem, createIdentityToken)
-				.inActiveRange()
-				.inDateRange()
-				.withEnterprise(createEnterprise)
-				.getCount()
-				.chain(count -> {
-					if (count > 0)
-					{
-						return findLanguage(createSession, code, createSystem, createIdentityToken);
-					}
-					return classificationService.find(createSession, Languages.toString(), createSystem, createIdentityToken)
-						.chain(classification -> classificationService.create(createSession, code, description, Languages.concept(), createSystem, 0, classification, createIdentityToken));
-				});
-	}
-
-	public Uni<IClassification<?, ?>> findLanguage(Mutiny.Session session, @NotNull String code, ISystems<?, ?> system, UUID... identityToken)
-	{
-		var createSession = session;
-		var createEnterprise = system.getEnterprise();
-		var createSystem = system;
-		var createIdentityToken = identityToken;
-
-		return new Classification().builder(createSession)
-				.withName(code)
-				.withConcept(Languages.concept(), createSystem, createIdentityToken)
-				.inActiveRange()
-				.inDateRange()
-				.withEnterprise(createEnterprise)
-				.get()
-				.onItem().ifNull().failWith(() -> new GeographyException("Cannot find language - " + code))
-				.map(c -> (IClassification<?, ?>) c);
-	}
-
-	public Uni<IClassification<?, ?>> updateLanguage(Mutiny.Session session, @NotNull String code, String description,
-	                                                 String iso_2, String englishName, String frenchName, String germanName,
-	                                                 ISystems<?, ?> system, UUID... identityToken)
-	{
-		return findLanguage(session, code, system, identityToken)
-			.chain(toUpdate -> {
-				Uni<?> chain = Uni.createFrom().voidItem();
-				if (description != null)
-				{
-					chain = chain.chain(() -> {
-						Classification update = new Classification();
-						update.setId(toUpdate.getId());
-						update.setDescription(description);
-						return session.merge(update).replaceWithVoid();
-					});
-				}
-				if (iso_2 != null) chain = chain.chain(() -> toUpdate.addOrReuseClassification(session, ISO639_2, iso_2, system, identityToken));
-				if (englishName != null) chain = chain.chain(() -> toUpdate.addOrReuseClassification(session, ISO6392EnglishName, englishName, system, identityToken));
-				if (frenchName != null) chain = chain.chain(() -> toUpdate.addOrReuseClassification(session, ISO6392FrenchName, frenchName, system, identityToken));
-				if (germanName != null) chain = chain.chain(() -> toUpdate.addOrReuseClassification(session, ISO6392GermanName, germanName, system, identityToken));
-				return chain.replaceWith(toUpdate);
-			});
-	}
 
 	// ---- Stateless twins ----
 

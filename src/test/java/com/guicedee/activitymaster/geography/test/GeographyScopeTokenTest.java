@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Integration test for the <em>geography scope-token</em> feature (Increment 1) and the
- * {@link ISecurityTokenService#moveToken(Mutiny.Session, ISecurityToken, ISecurityToken, ISecurityToken, IClassification, String...) moveToken}
+ * {@link ISecurityTokenService#moveToken(Mutiny.StatelessSession, ISecurityToken, ISecurityToken, ISecurityToken, IClassification, String...) moveToken}
  * capability (Q2).
  *
  * <p>It boots the reactive stack on Testcontainers PostgreSQL, installs the geography taxonomy
@@ -67,7 +67,7 @@ public class GeographyScopeTokenTest
 
 	private void bootstrapEnterprise()
 	{
-		sessionFactory.withSession(session -> session.withTransaction(tx -> {
+		sessionFactory.withStatelessSession(session -> session.withTransaction(tx -> {
 			IEnterpriseService<?> enterpriseService = IGuiceContext.get(IEnterpriseService.class);
 			return enterpriseService.getEnterprise(session, ENTERPRISE)
 					.onFailure().recoverWithUni(t -> {
@@ -84,12 +84,12 @@ public class GeographyScopeTokenTest
 	private void installGeographyTaxonomy()
 	{
 		IEnterpriseService<?> enterpriseService = IGuiceContext.get(IEnterpriseService.class);
-		IEnterprise<?, ?> enterprise = sessionFactory.withSession(s -> enterpriseService.getEnterprise(s, ENTERPRISE))
+		IEnterprise<?, ?> enterprise = sessionFactory.withStatelessSession(s -> enterpriseService.getEnterprise(s, ENTERPRISE))
 				.await().atMost(Duration.ofMinutes(1));
 		assertNotNull(enterprise, "Enterprise must exist before installing the geography taxonomy");
 
 		GeographySystemInstall install = IGuiceContext.get(GeographySystemInstall.class);
-		Boolean done = install.update((Mutiny.Session) null, enterprise).await().atMost(Duration.ofMinutes(3));
+		Boolean done = install.update((Mutiny.StatelessSession) null, enterprise).await().atMost(Duration.ofMinutes(3));
 		assertEquals(Boolean.TRUE, done, "Geography taxonomy installation should succeed");
 	}
 
@@ -103,7 +103,7 @@ public class GeographyScopeTokenTest
 	public void scopeTokensAreCreatedAndNested()
 	{
 		Object[] result = SessionUtils.<Object[]>withActivityMaster(ENTERPRISE, GEO_SYSTEM, tuple -> {
-			Mutiny.Session session = tuple.getItem1();
+			Mutiny.StatelessSession session = tuple.getItem1();
 			var system = tuple.getItem3();
 			UUID[] token = tuple.getItem4();
 
@@ -148,7 +148,7 @@ public class GeographyScopeTokenTest
 	public void moveTokenRelocatesGroupMembership()
 	{
 		Object[] result = SessionUtils.<Object[]>withActivityMaster(ENTERPRISE, GEO_SYSTEM, tuple -> {
-			Mutiny.Session session = tuple.getItem1();
+			Mutiny.StatelessSession session = tuple.getItem1();
 			var system = tuple.getItem3();
 
 			ISecurityTokenService<?> sec = IGuiceContext.get(ISecurityTokenService.class);
@@ -190,7 +190,7 @@ public class GeographyScopeTokenTest
 	public void scopeRestrictedClassificationIsBranchRestricted()
 	{
 		Boolean[] result = SessionUtils.<Boolean[]>withActivityMaster(ENTERPRISE, GEO_SYSTEM, tuple -> {
-			Mutiny.Session session = tuple.getItem1();
+			Mutiny.StatelessSession session = tuple.getItem1();
 			var system = tuple.getItem3();
 			UUID[] token = tuple.getItem4();
 
@@ -205,10 +205,9 @@ public class GeographyScopeTokenTest
 					.chain(outsider -> sec.link(session, scope, insider, (IClassification<?, ?>) userGroupClass)
 					.chain(linked -> cls.createScopeRestricted(session, "RestrictedClassification",
 							"A scope-restricted classification", null, system, 0, null, scope, token)
-					.chain(restricted -> session.flush()
-					.chain(flushed -> ((IWarehouseCoreTable<?, ?, ?, ?>) restricted).canRead(session, system, UUID.fromString(insider.getSecurityToken()))
+					.chain(restricted -> ((IWarehouseCoreTable<?, ?, ?, ?>) restricted).canRead(session, system, UUID.fromString(insider.getSecurityToken()))
 					.chain(insiderCanRead -> ((IWarehouseCoreTable<?, ?, ?, ?>) restricted).canRead(session, system, UUID.fromString(outsider.getSecurityToken()))
-					.map(outsiderCanRead -> new Boolean[]{insiderCanRead, outsiderCanRead})))))))));
+					.map(outsiderCanRead -> new Boolean[]{insiderCanRead, outsiderCanRead}))))))));
 		}).await().atMost(Duration.ofMinutes(2));
 
 		boolean insiderCanRead = result[0];

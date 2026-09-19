@@ -3,8 +3,8 @@ package com.guicedee.activitymaster.geography;
 /**
  * Reactivity Migration Checklist:
  *
- * [✓] One action per Mutiny.Session at a time
- * [✓] Pass Mutiny.Session through the chain
+ * [✓] One action per Mutiny.StatelessSession at a time
+ * [✓] Pass Mutiny.StatelessSession through the chain
  * [✓] No await() usage
  * [✓] No parallel operations on a session
  * [✓] No session/transaction creation in libraries
@@ -63,168 +63,7 @@ public class PostalCodeService
 	@Inject
 	private TownService townService;
 
-	public Uni<IGeography<?, ?>> createPostalCode(Mutiny.Session session, IGeography<?, ?> town, @NotNull String code,
-	                                              String description, String originalUniqueID,
-	                                              ISystems<?, ?> system, UUID... identityToken)
-	{
-		String formattedCode = postalCodeFormat.format(Integer.parseInt(code));
-		// Operate on the caller's session/transaction (no nested withActivityMaster).
-		var createSession = session;
-		var createEnterprise = system.getEnterprise();
-		var createSystem = system;
-		var createIdentityToken = identityToken;
-
-		return classificationService.find(createSession, PostalCode.toString(), createSystem, createIdentityToken)
-				.chain(classification -> {
-					Geography geo = new Geography();
-					return geo.builder(createSession)
-						.withName(formattedCode)
-						.withClassification((Classification) classification)
-						.inActiveRange()
-						.inDateRange()
-						.withEnterprise(createEnterprise)
-						.getCount()
-						.chain(count -> {
-							if (count > 0)
-							{
-								return findPostalCode(createSession, town, formattedCode, createSystem, createIdentityToken);
-							}
-
-							geo.setEnterpriseID(createEnterprise);
-							geo.setClassificationID((Classification) classification);
-							geo.setSystemID(createSystem);
-							geo.setOriginalSourceSystemID(createSystem.getId());
-							geo.setName(formattedCode);
-							geo.setDescription(description);
-
-							IActiveFlagService<?> acService = IGuiceContext.get(IActiveFlagService.class);
-							return acService.getActiveFlag(createSession, createEnterprise, createIdentityToken)
-								.chain(activeFlag -> {
-									geo.setActiveFlagID(activeFlag);
-									return createSession.persist(geo).replaceWith(Uni.createFrom().item(geo));
-								})
-								.chain(persisted -> {
-									securityCollector.record(createSession, geo);
-									Uni<?> setupChain = Uni.createFrom().voidItem();
-									if (originalUniqueID != null)
-									{
-										setupChain = setupChain.chain(() -> geo.addClassification(createSession, GeoNameID.toString(), originalUniqueID, createSystem, createIdentityToken));
-									}
-									return setupChain.chain(() -> town.addChild(createSession, geo, NoClassification.toString(), null, createSystem, createIdentityToken)
-										.replaceWith((IGeography<?, ?>) geo));
-								});
-						});
-				});
-	}
-
-	public Uni<IGeography<?, ?>> createPostalCodeSuburb(Mutiny.Session session, IGeography<?, ?> postalCode, @NotNull String code,
-	                                                    @NotNull String description, String originalUniqueID,
-	                                                    ISystems<?, ?> system, UUID... identityToken)
-	{
-		String formattedCode = postalCodeFormat.format(Integer.parseInt(code));
-		var createSession = session;
-		var createEnterprise = system.getEnterprise();
-		var createSystem = system;
-		var createIdentityToken = identityToken;
-
-		return classificationService.find(createSession, PostalCodeSuburb.toString(), createSystem, createIdentityToken)
-				.chain(classification -> {
-					Geography geo = new Geography();
-					return geo.builder(createSession)
-						.withName(formattedCode)
-						.withDescription(description)
-						.withClassification((Classification) classification)
-						.inActiveRange()
-						.inDateRange()
-						.withEnterprise(createEnterprise)
-						.getCount()
-						.chain(count -> {
-							if (count > 0)
-							{
-								return findPostalCodeSuburb(createSession, formattedCode, description, createSystem, createIdentityToken);
-							}
-
-							geo.setEnterpriseID(createEnterprise);
-							geo.setClassificationID((Classification) classification);
-							geo.setSystemID(createSystem);
-							geo.setOriginalSourceSystemID(createSystem.getId());
-							geo.setName(formattedCode);
-							geo.setDescription(description);
-
-							IActiveFlagService<?> acService = IGuiceContext.get(IActiveFlagService.class);
-							return acService.getActiveFlag(createSession, createEnterprise, createIdentityToken)
-								.chain(activeFlag -> {
-									geo.setActiveFlagID(activeFlag);
-									return createSession.persist(geo).replaceWith(Uni.createFrom().item(geo));
-								})
-								.chain(persisted -> {
-									securityCollector.record(createSession, geo);
-									Uni<?> setupChain = Uni.createFrom().voidItem();
-									if (originalUniqueID != null)
-									{
-										setupChain = setupChain.chain(() -> geo.addClassification(createSession, GeoNameID.toString(), originalUniqueID, createSystem, createIdentityToken));
-									}
-									return setupChain.chain(() -> postalCode.addChild(createSession, geo, NoClassification.toString(), null, createSystem, createIdentityToken)
-										.replaceWith((IGeography<?, ?>) geo));
-								});
-						});
-				});
-	}
-
-	public Uni<IGeography<?, ?>> findPostalCode(Mutiny.Session session, IGeography<?, ?> town, @NotNull String code, ISystems<?, ?> system, UUID... identityToken)
-	{
-		var createSession = session;
-		var createEnterprise = system.getEnterprise();
-		var createSystem = system;
-		var createIdentityToken = identityToken;
-
-		return classificationService.find(createSession, PostalCode.toString(), createSystem, createIdentityToken)
-				.chain(classification -> {
-					return new Geography().builder(createSession)
-						.withName(code)
-						.withClassification((Classification) classification)
-						.inActiveRange()
-						.inDateRange()
-						.withEnterprise(createEnterprise)
-						.get()
-						.onItem().ifNull().failWith(() -> new GeographyException("Cannot find postal code in town - " + town + " - " + code))
-						.map(geo -> (IGeography<?, ?>) geo);
-				});
-	}
-
-	public Uni<IGeography<?, ?>> findPostalCodeSuburb(Mutiny.Session session, @NotNull String code, String description, ISystems<?, ?> system, UUID... identityToken)
-	{
-		var createSession = session;
-		var createEnterprise = system.getEnterprise();
-		var createSystem = system;
-		var createIdentityToken = identityToken;
-
-		return classificationService.find(createSession, PostalCodeSuburb.toString(), createSystem, createIdentityToken)
-				.chain(classification -> {
-					return new Geography().builder(createSession)
-						.withName(code)
-						.withDescription(description)
-						.withClassification((Classification) classification)
-						.inActiveRange()
-						.inDateRange()
-						.withEnterprise(createEnterprise)
-						.get()
-						.onItem().ifNull().failWith(() -> new GeographyException("Cannot find postal code suburb - " + code))
-						.map(geo -> (IGeography<?, ?>) geo);
-				});
-	}
-
-	public Uni<IGeography<?, ?>> findOrCreatePostalCodeSuburb(Mutiny.Session session, @NotNull String code, String description, ISystems<?, ?> system, UUID... identityToken)
-	{
-		return findPostalCodeSuburb(session, code, description, system, identityToken)
-			.onFailure().recoverWithUni(error -> {
-				return findPostalCode(session, null, code, system, identityToken)
-					.onFailure().invoke(e -> log.warn("Unable to find postal code! - {}", code))
-					.chain(postalCode -> createPostalCodeSuburb(session, postalCode, code, description, null, system, identityToken));
-			});
-	}
-
-	public Uni<IGeography<?, ?>> updatePostalCode(Mutiny.Session session, String districtCode, String townCode, @NotNull String code,
+	public Uni<IGeography<?, ?>> updatePostalCode(Mutiny.StatelessSession session, String districtCode, String townCode, @NotNull String code,
 	                                              String description, String latitude, String longitude,
 	                                              ISystems<?, ?> system, UUID... identityToken)
 	{
@@ -248,7 +87,7 @@ public class PostalCodeService
 					Geography update = new Geography();
 					update.setId(toUpdate.getId());
 					update.setDescription(description);
-					return session.merge(update).replaceWithVoid();
+					return session.update(update).replaceWith(update).replaceWithVoid();
 				});
 			}
 			if (latitude != null) chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, Latitude, latitude, system, identityToken));
@@ -257,7 +96,7 @@ public class PostalCodeService
 		});
 	}
 
-	public Uni<IGeography<?, ?>> updatePostalCodeParent(Mutiny.Session session, @NotNull String code,
+	public Uni<IGeography<?, ?>> updatePostalCodeParent(Mutiny.StatelessSession session, @NotNull String code,
 	                                                    String description, String latitude, String longitude,
 	                                                    ISystems<?, ?> system, UUID... identityToken)
 	{
@@ -270,7 +109,7 @@ public class PostalCodeService
 						Geography update = new Geography();
 						update.setId(toUpdate.getId());
 						update.setDescription(description);
-						return session.merge(update).replaceWithVoid();
+						return session.update(update).replaceWith(update).replaceWithVoid();
 					});
 				}
 				if (latitude != null) chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, Latitude, latitude, system, identityToken));

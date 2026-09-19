@@ -30,32 +30,21 @@ import static com.guicedee.activitymaster.fsdm.client.services.classifications.I
 public class GeographySystemInstall
 		implements ISystemUpdate
 {
-	@Override
-	public Uni<Boolean> update(Mutiny.Session session, IEnterprise<?,?> enterprise)
-	{
-		return doInstall(enterprise);
-	}
-
-	/**
-	 * Stateless twin of {@link #update(Mutiny.Session, IEnterprise)}. This installer manages its own
-	 * ActivityMaster session internally via {@link SessionUtils#withActivityMaster}, so the passed session
-	 * (managed or stateless) is not used — both overloads delegate to the same install body.
-	 */
+	/** Taxonomy, grants and the caller's completion receipt share one stateless transaction. */
 	@Override
 	public Uni<Boolean> update(Mutiny.StatelessSession session, IEnterprise<?,?> enterprise)
 	{
-		return doInstall(enterprise);
+		return IActivityMasterService.getISystem(session, IGeographyService.GeographySystemName, enterprise)
+			.chain(system -> IActivityMasterService.getISystemToken(session, IGeographyService.GeographySystemName, enterprise)
+				.chain(token -> doInstall(session, system, token)));
 	}
 
-	private Uni<Boolean> doInstall(IEnterprise<?,?> enterprise)
+	private Uni<Boolean> doInstall(Mutiny.StatelessSession amSession, ISystems<?,?> amSystem, UUID... amToken)
 	{
 		log.info("Starting geography system installation");
 
-		return SessionUtils.<Boolean>withActivityMaster(enterprise.getName(), IGeographyService.GeographySystemName, tuple -> {
-			var amSession = tuple.getItem1();
-			var amSystem = tuple.getItem3();
-			var amToken = tuple.getItem4();
-
+		// Keep taxonomy rows and their security grants on the same stateless transaction.
+		return Uni.createFrom().deferred(() -> {
 			IClassificationService<?> classificationService = get(IClassificationService.class);
 
 			logProgress("Geography Master", "Creating Regional Areas");
@@ -182,7 +171,7 @@ public class GeographySystemInstall
 		  .onItem().invoke(() -> log.info("Geography system installation completed successfully"));
 	}
 
-	private Uni<Void> geonamesClassifications(Mutiny.Session session, ISystems<?,?> system, UUID... identityToken)
+	private Uni<Void> geonamesClassifications(Mutiny.StatelessSession session, ISystems<?,?> system, UUID... identityToken)
 	{
 		log.info("Creating geonames classifications");
 		IClassificationService<?> classificationService = get(IClassificationService.class);

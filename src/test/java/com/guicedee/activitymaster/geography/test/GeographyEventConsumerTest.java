@@ -56,7 +56,7 @@ public class GeographyEventConsumerTest
 
 	private void bootstrapEnterprise()
 	{
-		sessionFactory.withSession(session -> session.withTransaction(tx -> {
+		sessionFactory.withStatelessSession(session -> session.withTransaction(tx -> {
 			IEnterpriseService<?> enterpriseService = IGuiceContext.get(IEnterpriseService.class);
 			return enterpriseService.getEnterprise(session, ENTERPRISE)
 					.onFailure().recoverWithUni(t -> {
@@ -73,12 +73,12 @@ public class GeographyEventConsumerTest
 	private void installGeographyTaxonomy()
 	{
 		IEnterpriseService<?> enterpriseService = IGuiceContext.get(IEnterpriseService.class);
-		IEnterprise<?, ?> enterprise = sessionFactory.withSession(s -> enterpriseService.getEnterprise(s, ENTERPRISE))
+		IEnterprise<?, ?> enterprise = sessionFactory.withStatelessSession(s -> enterpriseService.getEnterprise(s, ENTERPRISE))
 				.await().atMost(Duration.ofMinutes(1));
 		assertNotNull(enterprise);
 
 		GeographySystemInstall install = IGuiceContext.get(GeographySystemInstall.class);
-		Boolean done = install.update((Mutiny.Session) null, enterprise).await().atMost(Duration.ofMinutes(3));
+		Boolean done = install.update((Mutiny.StatelessSession) null, enterprise).await().atMost(Duration.ofMinutes(3));
 		assertEquals(Boolean.TRUE, done);
 	}
 

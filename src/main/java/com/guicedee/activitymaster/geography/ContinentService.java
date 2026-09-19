@@ -3,8 +3,8 @@ package com.guicedee.activitymaster.geography;
 /**
  * Reactivity Migration Checklist:
  *
- * [✓] One action per Mutiny.Session at a time
- * [✓] Pass Mutiny.Session through the chain
+ * [✓] One action per Mutiny.StatelessSession at a time
+ * [✓] Pass Mutiny.StatelessSession through the chain
  * [✓] No await() usage
  * [✓] No parallel operations on a session
  * [✓] No session/transaction creation in libraries
@@ -35,10 +35,6 @@ import static com.guicedee.activitymaster.geography.services.enumerations.Geogra
 @Singleton
 public class ContinentService
 {
-	// Stateless cache of the stable "Continent" type classification (detached prepped), keyed by enterpriseId.
-	// Resolved via the stateless classificationService.find (detached scalar-prepped), safe to reuse; cached on hit.
-	private static final java.util.Map<UUID, Classification> CONTINENT_TYPE_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
-
 	@Inject
 	private IClassificationService<?> classificationService;
 
@@ -48,80 +44,6 @@ public class ContinentService
 	@Inject
 	private GeographyScopeTokenService scopeTokenService;
 
-
-	public Uni<IGeography<?, ?>> createContinent(Mutiny.Session session, IGeography<?, ?> planet, String code, String description, String originalUniqueID, ISystems<?, ?> system, UUID... identityToken)
-	{
-		// Use the caller's session/transaction so earlier writes in the same install
-		// transaction remain visible (a nested withActivityMaster would not see them).
-		var createSession = session;
-		var createEnterprise = system.getEnterprise();
-		var createSystem = system;
-		var createIdentityToken = identityToken;
-
-		return classificationService.find(createSession, Continent.toString(), createSystem, createIdentityToken)
-				.chain(classification -> {
-					Geography geo = new Geography();
-					return geo.builder(createSession)
-						.withClassification((Classification) classification)
-						.withName(code)
-						.inDateRange()
-						.inActiveRange()
-						.withEnterprise(createEnterprise)
-						.getCount()
-						.chain(count -> {
-							if (count > 0)
-							{
-								return findContinent(createSession, code, createSystem, createIdentityToken);
-							}
-
-							geo.setEnterpriseID(createEnterprise);
-							geo.setClassificationID((Classification) classification);
-							geo.setSystemID(createSystem);
-							geo.setOriginalSourceSystemID(createSystem.getId());
-							geo.setName(code);
-							geo.setDescription(description);
-
-							IActiveFlagService<?> acService = IGuiceContext.get(IActiveFlagService.class);
-							return acService.getActiveFlag(createSession, createEnterprise, createIdentityToken)
-								.chain(activeFlag -> {
-									geo.setActiveFlagID(activeFlag);
-									return createSession.persist(geo).replaceWith(Uni.createFrom().item(geo));
-								})
-								.chain(persisted -> {
-									securityCollector.record(createSession, geo);
-									// Shadow this node into the token graph under its planet's scope token.
-									Uni<?> setupChain = scopeTokenService.ensureScope(createSession, geo, planet, description, createSystem, createIdentityToken);
-									if (originalUniqueID != null)
-									{
-										setupChain = setupChain.chain(() -> geo.addClassification(createSession, GeoNameID.toString(), originalUniqueID, createSystem, createIdentityToken));
-									}
-									return setupChain.chain(() -> planet.addChild(createSession, geo, NoClassification.toString(), null, createSystem, createIdentityToken)
-										.replaceWith((IGeography<?, ?>) geo));
-								});
-						});
-				});
-	}
-
-	public Uni<IGeography<?, ?>> findContinent(Mutiny.Session session, String code, ISystems<?, ?> system, UUID... identityToken)
-	{
-		var createSession = session;
-		var createEnterprise = system.getEnterprise();
-		var createSystem = system;
-		var createIdentityToken = identityToken;
-
-		return classificationService.find(createSession, Continent.toString(), createSystem, createIdentityToken)
-				.chain(classification -> {
-					return new Geography().builder(createSession)
-						.withClassification((Classification) classification)
-						.withName(code)
-						.inDateRange()
-						.inActiveRange()
-						.withEnterprise(createEnterprise)
-						.get()
-						.onItem().ifNull().failWith(() -> new GeographyException("Cannot find continent"))
-						.map(geo -> (IGeography<?, ?>) geo);
-				});
-	}
 
 	// ---- Stateless twins ----
 
@@ -158,14 +80,9 @@ public class ContinentService
 	public Uni<IGeography<?, ?>> findContinent(Mutiny.StatelessSession session, String code, ISystems<?, ?> system, UUID... identityToken)
 	{
 		var enterprise = system.getEnterprise();
-		UUID enterpriseId = enterprise.getId();
-		Classification cachedType = CONTINENT_TYPE_CACHE.get(enterpriseId);
-		Uni<Classification> typeUni = cachedType != null
-				? Uni.createFrom().item(cachedType)
-				: classificationService.find(session, Continent.toString(), system, identityToken)
-						.map(c -> (Classification) (Object) c)
-						.onItem().invoke(c -> { if (c != null && c.getId() != null) CONTINENT_TYPE_CACHE.put(enterpriseId, c); });
-		return typeUni
+		// A type read during installation may still roll back. Resolve it in the caller's transaction.
+		return classificationService.find(session, Continent.toString(), system, identityToken)
+				.map(c -> (Classification) c)
 				.chain(classification -> new Geography().builder(session)
 						.withClassification(classification).withName(code).inDateRange().inActiveRange().withEnterprise(enterprise)
 						.get()

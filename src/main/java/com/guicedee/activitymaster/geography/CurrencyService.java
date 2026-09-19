@@ -3,8 +3,8 @@ package com.guicedee.activitymaster.geography;
 /**
  * Reactivity Migration Checklist:
  *
- * [✓] One action per Mutiny.Session at a time
- * [✓] Pass Mutiny.Session through the chain
+ * [✓] One action per Mutiny.StatelessSession at a time
+ * [✓] Pass Mutiny.StatelessSession through the chain
  * [✓] No await() usage
  * [✓] No parallel operations on a session
  * [✓] No session/transaction creation in libraries
@@ -35,67 +35,6 @@ public class CurrencyService
 {
 	@Inject
 	private IClassificationService<?> classificationService;
-
-	public Uni<IClassification<?, ?>> createCurrency(Mutiny.Session session, String code, String description, ISystems<?, ?> system, UUID... identityToken)
-	{
-		// Operate on the caller's session/transaction (no nested withActivityMaster).
-		var createSession = session;
-		var createEnterprise = system.getEnterprise();
-		var createSystem = system;
-		var createIdentityToken = identityToken;
-
-		return new Classification().builder(createSession)
-				.withName(code)
-				.withConcept(Currency.concept(), createSystem, createIdentityToken)
-				.inActiveRange()
-				.inDateRange()
-				.withEnterprise(createEnterprise)
-				.getCount()
-				.chain(count -> {
-					if (count > 0)
-					{
-						return findCurrency(createSession, code, createSystem, createIdentityToken);
-					}
-					return classificationService.create(createSession, code, description,
-						ClassificationXClassification,
-						createSystem, 0,
-						Currency.toString(),
-						createIdentityToken);
-				});
-	}
-
-	public Uni<IClassification<?, ?>> findCurrency(Mutiny.Session session, String code, ISystems<?, ?> system, UUID... identityToken)
-	{
-		var createSession = session;
-		var createEnterprise = system.getEnterprise();
-		var createSystem = system;
-		var createIdentityToken = identityToken;
-
-		return new Classification().builder(createSession)
-				.withName(code)
-				.withConcept(Currency.concept(), createSystem, createIdentityToken)
-				.inActiveRange()
-				.inDateRange()
-				.withEnterprise(createEnterprise)
-				.get()
-				.onItem().ifNull().failWith(() -> new GeographyException("Cannot find currency with code : " + code))
-				.map(c -> (IClassification<?, ?>) c);
-	}
-
-	public Uni<IClassification<?, ?>> updateCurrency(Mutiny.Session session, String code, String description, ISystems<?, ?> system, UUID... identityToken)
-	{
-		return findCurrency(session, code, system, identityToken)
-			.chain(toUpdate -> {
-				if (description != null)
-				{
-					Classification update = new Classification();
-					update.setId(toUpdate.getId());
-					update.setDescription(description);
-					return session.merge(update).replaceWith(toUpdate);
-				}
-				return Uni.createFrom().item(toUpdate);
-			});
-	}
 
 	// ---- Stateless twins ----
 

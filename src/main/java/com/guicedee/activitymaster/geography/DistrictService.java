@@ -3,8 +3,8 @@ package com.guicedee.activitymaster.geography;
 /**
  * Reactivity Migration Checklist:
  *
- * [✓] One action per Mutiny.Session at a time
- * [✓] Pass Mutiny.Session through the chain
+ * [✓] One action per Mutiny.StatelessSession at a time
+ * [✓] Pass Mutiny.StatelessSession through the chain
  * [✓] No await() usage
  * [✓] No parallel operations on a session
  * [✓] No session/transaction creation in libraries
@@ -51,112 +51,7 @@ public class DistrictService
 	@Inject
 	private ProvinceService provinceService;
 
-	public Uni<IGeography<?, ?>> createDistrict(Mutiny.Session session, IGeography<?, ?> province, String code, String name, String originalUniqueID, ISystems<?, ?> system, UUID... identityToken)
-	{
-		// Operate on the caller's session/transaction (no nested withActivityMaster).
-		var createSession = session;
-		var createEnterprise = system.getEnterprise();
-		var createSystem = system;
-		var createIdentityToken = identityToken;
-
-		return classificationService.find(createSession, City.toString(), createSystem, createIdentityToken)
-				.chain(classification -> {
-					Geography geo = new Geography();
-					return geo.builder(createSession)
-						.withName(code)
-						.withClassification((Classification) classification)
-						.inActiveRange()
-						.inDateRange()
-						.withEnterprise(createEnterprise)
-						.getCount()
-						.chain(count -> {
-							if (count > 0)
-							{
-								return findDistrict(createSession, code, createSystem, createIdentityToken);
-							}
-
-							geo.setEnterpriseID(createEnterprise);
-							geo.setClassificationID((Classification) classification);
-							geo.setSystemID(createSystem);
-							geo.setOriginalSourceSystemID(createSystem.getId());
-							geo.setName(code);
-							geo.setDescription(name);
-
-							IActiveFlagService<?> acService = IGuiceContext.get(IActiveFlagService.class);
-							return acService.getActiveFlag(createSession, createEnterprise, createIdentityToken)
-								.chain(activeFlag -> {
-									geo.setActiveFlagID(activeFlag);
-									return createSession.persist(geo).replaceWith(Uni.createFrom().item(geo));
-								})
-								.chain(persisted -> {
-									securityCollector.record(createSession, geo);
-									Uni<?> setupChain = Uni.createFrom().voidItem();
-									if (originalUniqueID != null)
-									{
-										setupChain = setupChain.chain(() -> geo.addClassification(createSession, GeoNameID.toString(), originalUniqueID, createSystem, createIdentityToken));
-									}
-									return setupChain.chain(() -> province.addChild(createSession, geo, NoClassification.toString(), null, createSystem, createIdentityToken)
-										.replaceWith((IGeography<?, ?>) geo));
-								});
-						});
-				});
-	}
-
-	public Uni<IGeography<?, ?>> findDistrict(Mutiny.Session session, String name, ISystems<?, ?> system, UUID... identityToken)
-	{
-		var createSession = session;
-		var createEnterprise = system.getEnterprise();
-		var createSystem = system;
-		var createIdentityToken = identityToken;
-
-		return classificationService.find(createSession, City.toString(), createSystem, createIdentityToken)
-				.chain(classification -> {
-					return new Geography().builder(createSession)
-						.withName(name)
-						.withClassification((Classification) classification)
-						.inActiveRange()
-						.inDateRange()
-						.withEnterprise(createEnterprise)
-						.get()
-						.onItem().ifNull().failWith(() -> new GeographyException("Cannot find district / city - " + name))
-						.map(geo -> (IGeography<?, ?>) geo);
-				});
-	}
-
-	public Uni<IGeography<?, ?>> findFirstDistrictInProvince(Mutiny.Session session, String provinceCode, ISystems<?, ?> system, UUID... identityToken)
-	{
-		return provinceService.findProvince(session, provinceCode, system, identityToken)
-			.chain(province -> {
-				return province.findChildren(session, (String) null, null, system, identityToken)
-					.map(children -> {
-						if (children == null || children.isEmpty())
-						{
-							return null;
-						}
-						return (IGeography<?, ?>) children.stream().findFirst().orElse(null).getSecondary();
-					});
-			});
-	}
-
-	public Uni<List<Geography>> findAllDistricts(Mutiny.Session session, ISystems<?, ?> system, UUID... identityToken)
-	{
-		var createSession = session;
-		var createEnterprise = system.getEnterprise();
-		var createSystem = system;
-		var createIdentityToken = identityToken;
-
-		return classificationService.find(createSession, City.toString(), createSystem, createIdentityToken)
-				.chain(classification -> {
-					return new Geography().builder(createSession)
-						.withClassification((Classification) classification)
-						.inActiveRange()
-						.inDateRange()
-						.withEnterprise(createEnterprise)
-						.getAll();
-				});
-	}
-
-	public Uni<IGeography<?, ?>> updateDistrict(Mutiny.Session session, @NotNull String name, String description,
+	public Uni<IGeography<?, ?>> updateDistrict(Mutiny.StatelessSession session, @NotNull String name, String description,
 	                                            String latitude, String longitude, String featureCodes, String featureClass,
 	                                            Integer population, Integer elevation, Integer dEM,
 	                                            ISystems<?, ?> system, UUID... identityToken)
@@ -170,7 +65,7 @@ public class DistrictService
 						Geography update = new Geography();
 						update.setId(toUpdate.getId());
 						update.setDescription(description);
-						return session.merge(update).replaceWithVoid();
+						return session.update(update).replaceWith(update).replaceWithVoid();
 					});
 				}
 				if (latitude != null) chain = chain.chain(() -> toUpdate.addOrUpdateClassification(session, Latitude, latitude, latitude, system, identityToken));

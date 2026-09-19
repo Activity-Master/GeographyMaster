@@ -50,7 +50,7 @@ public class GeographyRestService
                                              @Parameter(description = "ISO-3166 alpha-2 country code, e.g. ZA") @PathParam("iso") String iso)
     {
         return SessionUtils.<GeographyCountry>withActivityMaster(enterpriseName, systemName, tuple -> {
-            Mutiny.Session session = tuple.getItem1();
+            Mutiny.StatelessSession session = tuple.getItem1();
             ISystems<?, ?> system = tuple.getItem3();
             return geographyService.findCountryDetailed(session, iso, system, tuple.getItem4());
         }).onFailure().invoke(e ->
@@ -75,7 +75,7 @@ public class GeographyRestService
     {
         log.info("On-demand request: loading languages for enterprise={}, system={}", enterpriseName, systemName);
         return SessionUtils.<String>withActivityMaster(enterpriseName, systemName, tuple -> {
-            Mutiny.Session session = tuple.getItem1();
+            Mutiny.StatelessSession session = tuple.getItem1();
             ISystems<?, ?> system = tuple.getItem3();
             return geographyService.loadLanguages(session, system, tuple.getItem4())
                     .replaceWith("Languages loaded successfully");
@@ -96,7 +96,7 @@ public class GeographyRestService
     {
         log.info("On-demand request: loading country info for enterprise={}, system={}", enterpriseName, systemName);
         return SessionUtils.<String>withActivityMaster(enterpriseName, systemName, tuple -> {
-            Mutiny.Session session = tuple.getItem1();
+            Mutiny.StatelessSession session = tuple.getItem1();
             ISystems<?, ?> system = tuple.getItem3();
             return geographyService.loadCountryInfo(session, system, tuple.getItem4())
                     .replaceWith("Country info loaded successfully");
@@ -117,7 +117,7 @@ public class GeographyRestService
     {
         log.info("On-demand request: loading feature codes for enterprise={}, system={}", enterpriseName, systemName);
         return SessionUtils.<String>withActivityMaster(enterpriseName, systemName, tuple -> {
-            Mutiny.Session session = tuple.getItem1();
+            Mutiny.StatelessSession session = tuple.getItem1();
             ISystems<?, ?> system = tuple.getItem3();
             return geographyService.loadFeatureCodes(session, system, tuple.getItem4())
                     .replaceWith("Feature codes loaded successfully");
@@ -138,7 +138,7 @@ public class GeographyRestService
     {
         log.info("On-demand request: loading time zones for enterprise={}, system={}", enterpriseName, systemName);
         return SessionUtils.<String>withActivityMaster(enterpriseName, systemName, tuple -> {
-            Mutiny.Session session = tuple.getItem1();
+            Mutiny.StatelessSession session = tuple.getItem1();
             ISystems<?, ?> system = tuple.getItem3();
             return geographyService.loadTimeZones(session, system, tuple.getItem4())
                     .replaceWith("Time zones loaded successfully");
@@ -184,7 +184,7 @@ public class GeographyRestService
     {
         log.info("On-demand request: installing country {} for enterprise={}, system={}", countryCode, enterpriseName, systemName);
         return SessionUtils.<String>withActivityMaster(enterpriseName, systemName, tuple -> {
-            Mutiny.Session session = tuple.getItem1();
+            Mutiny.StatelessSession session = tuple.getItem1();
             ISystems<?, ?> system = tuple.getItem3();
             return geographyService.installCountry(session, system, countryCode, tuple.getItem4())
                     .replaceWith("Country " + countryCode.toUpperCase() + " installed successfully");
@@ -208,7 +208,7 @@ public class GeographyRestService
     {
         log.info("On-demand request: loading provinces for country={}", countryCode);
         return SessionUtils.<String>withActivityMaster(enterpriseName, systemName, tuple -> {
-            Mutiny.Session session = tuple.getItem1();
+            Mutiny.StatelessSession session = tuple.getItem1();
             ISystems<?, ?> system = tuple.getItem3();
             return geographyService.loadProvincesASCII1(session, system, countryCode.toUpperCase(), tuple.getItem4())
                     .replaceWith("Provinces loaded for " + countryCode.toUpperCase());
@@ -232,7 +232,7 @@ public class GeographyRestService
     {
         log.info("On-demand request: loading districts for country={}", countryCode);
         return SessionUtils.<String>withActivityMaster(enterpriseName, systemName, tuple -> {
-            Mutiny.Session session = tuple.getItem1();
+            Mutiny.StatelessSession session = tuple.getItem1();
             ISystems<?, ?> system = tuple.getItem3();
             return geographyService.loadDistrictsASCII2(session, system, countryCode.toUpperCase(), tuple.getItem4())
                     .replaceWith("Districts loaded for " + countryCode.toUpperCase());
@@ -256,7 +256,7 @@ public class GeographyRestService
     {
         log.info("On-demand request: loading geo-data for country={}", countryCode);
         return SessionUtils.<String>withActivityMaster(enterpriseName, systemName, tuple -> {
-            Mutiny.Session session = tuple.getItem1();
+            Mutiny.StatelessSession session = tuple.getItem1();
             ISystems<?, ?> system = tuple.getItem3();
             return geographyService.loadCountryGeoData(session, system, countryCode.toUpperCase(), tuple.getItem4())
                     .replaceWith("Geo-data loaded for " + countryCode.toUpperCase());
@@ -280,7 +280,7 @@ public class GeographyRestService
     {
         log.info("On-demand request: loading postal codes for country={}", countryCode);
         return SessionUtils.<String>withActivityMaster(enterpriseName, systemName, tuple -> {
-            Mutiny.Session session = tuple.getItem1();
+            Mutiny.StatelessSession session = tuple.getItem1();
             ISystems<?, ?> system = tuple.getItem3();
             return geographyService.loadCountryPostalCodes(session, system, countryCode.toUpperCase(), tuple.getItem4())
                     .replaceWith("Postal codes loaded for " + countryCode.toUpperCase());
