@@ -8,40 +8,22 @@ module com.guicedee.activitymaster.geography {
 	exports com.guicedee.activitymaster.geography.services.dto.classifications;
 
 	requires com.guicedee.activitymaster.fsdm;
-	requires com.guicedee.guicedinjection;
-	requires com.guicedee.jsonrepresentation;
-	requires com.google.guice;
 	requires com.guicedee.activitymaster.sessions;
 
-	requires com.guicedee.rest;
-	requires com.guicedee.vertx;
-	requires com.guicedee.vertx.graphql;
-	requires com.graphqljava;
-	requires io.vertx.core;
-	requires jakarta.ws.rs;
 
 	// OpenAPI 3.1 (Swagger) annotation support
-	requires com.guicedee.openapi;
 
-	requires tools.jackson.databind;
 
-	requires jakarta.validation;
 
 	requires cache.api;
 
 	requires org.apache.commons.csv;
-	requires org.apache.commons.lang3;
 
-	requires com.entityassist;
 
-	requires com.guicedee.activitymaster.fsdm.client;
 
 	requires java.net.http;
 
-	requires io.smallrye.mutiny;
-	requires org.hibernate.reactive;
 	requires static lombok;
-	requires org.apache.logging.log4j;
 
 	provides IMasterSystem with GeographySystem;
 	provides com.guicedee.client.services.lifecycle.IGuiceModule with GeographyBinder;
