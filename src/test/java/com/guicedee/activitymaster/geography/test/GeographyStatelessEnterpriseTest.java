@@ -11,6 +11,9 @@ import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.enter
 import com.guicedee.activitymaster.fsdm.client.services.builders.warehouse.geography.IGeography;
 import com.guicedee.activitymaster.geography.ContinentService;
 import com.guicedee.activitymaster.geography.PlanetService;
+import com.guicedee.activitymaster.geography.GeographySecurityCollector;
+import com.guicedee.activitymaster.geography.TownService;
+import com.guicedee.activitymaster.geography.services.dto.GeographyCountry;
 import com.guicedee.activitymaster.geography.implementations.updates.GeographySystemInstall;
 import com.guicedee.activitymaster.geography.services.IGeographyService;
 import com.guicedee.client.IGuiceContext;
@@ -22,6 +25,7 @@ import org.hibernate.reactive.mutiny.Mutiny;
 import org.junit.jupiter.api.*;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -113,7 +117,8 @@ public class GeographyStatelessEnterpriseTest
 		assertEquals(enterpriseId, enterprise.getId(), "Resolved enterprise must match the stateless-created one");
 
 		GeographySystemInstall install = IGuiceContext.get(GeographySystemInstall.class);
-		Boolean done = install.update((Mutiny.StatelessSession) null, enterprise).await().atMost(Duration.ofMinutes(3));
+		Boolean done = sessionFactory.withStatelessSession(s -> s.withTransaction(tx -> install.update(s, enterprise)))
+				.await().atMost(Duration.ofMinutes(3));
 		assertEquals(Boolean.TRUE, done, "Geography taxonomy installation should succeed");
 	}
 
@@ -181,9 +186,60 @@ public class GeographyStatelessEnterpriseTest
 		assertNotNull(ids[1], "Continent type classification must resolve after the install");
 		assertNotNull(ids[2], "Country type classification must resolve after the install");
 	}
+
+	@Test
+	@Order(6)
+	@DisplayName("listCountries returns the bundled country info by name once loaded")
+	public void listCountries_afterCountryInfoLoad()
+	{
+		IGeographyService<?> geography = IGuiceContext.get(IGeographyService.class);
+		List<GeographyCountry> before = SessionUtils.<List<GeographyCountry>>withSystemAndTokenStateless(ENTERPRISE, GEO_SYSTEM,
+				t -> geography.listCountries(t.getItem1(), t.getItem3(), t.getItem4())).await().atMost(Duration.ofMinutes(1));
+		assertEquals(List.of(), before, "No countries are listed before country info is loaded");
+
+		SessionUtils.<Void>withSystemAndTokenStateless(ENTERPRISE, GEO_SYSTEM,
+				t -> geography.loadCountryInfo(t.getItem1(), t.getItem3(), t.getItem4())).await().atMost(Duration.ofMinutes(10));
+		List<GeographyCountry> countries = SessionUtils.<List<GeographyCountry>>withSystemAndTokenStateless(ENTERPRISE, GEO_SYSTEM,
+				t -> geography.listCountries(t.getItem1(), t.getItem3(), t.getItem4())).await().atMost(Duration.ofMinutes(1));
+
+		assertTrue(countries.size() > 200, "The bundled country info should be listed: " + countries.size());
+		GeographyCountry za = countries.stream().filter(c -> "ZA".equals(c.getIso())).findFirst().orElseThrow();
+		assertEquals("South Africa", za.getCountryName());
+		var names = countries.stream().map(GeographyCountry::getCountryName).toList();
+		assertTrue(names.indexOf("Afghanistan") >= 0 && names.indexOf("Afghanistan") < names.indexOf("Zimbabwe"),
+				"Countries should be ordered by name");
+	}
+
+	@Test
+	@Order(7)
+	@DisplayName("searchPlaces finds towns within a country by literal, case-insensitive prefix")
+	public void searchPlaces_underCountry()
+	{
+		IGeographyService<?> geography = IGuiceContext.get(IGeographyService.class);
+		TownService towns = IGuiceContext.get(TownService.class);
+		GeographySecurityCollector collector = IGuiceContext.get(GeographySecurityCollector.class);
+		List<List<String>> results = SessionUtils.<List<List<String>>>withSystemAndTokenStateless(ENTERPRISE, GEO_SYSTEM, t -> {
+			var session = t.getItem1();
+			var system = t.getItem3();
+			var token = t.getItem4();
+			return geography.findCountryDetailed(session, "ZA", system, token)
+					.chain(country -> geography.findGeographyById(session, country.getGeographyId(), system, token))
+					.chain(country -> {
+						collector.activate(session);
+						return towns.createTown(session, country, "Zzyzx Test Town", "Zzyzx", null, system, token);
+					})
+					.chain(() -> collector.flush(session, system, token))
+					.chain(() -> geography.searchPlaces(session, "za", "zZy", 10, system, token))
+					.chain(found -> geography.searchPlaces(session, "ZA", "Zzy%", 10, system, token)
+							.chain(literal -> geography.searchPlaces(session, "US", "Zzy", 10, system, token)
+									.map(other -> List.of(found, literal, other))));
+		}).await().atMost(Duration.ofMinutes(2));
+
+		assertEquals(List.of("Zzyzx Test Town"), results.get(0), "Prefix search is case-insensitive");
+		assertEquals(List.of(), results.get(1), "LIKE wildcards are matched literally");
+		assertEquals(List.of(), results.get(2), "Places are scoped to the requested country");
+		assertThrows(Exception.class, () -> SessionUtils.<List<String>>withSystemAndTokenStateless(ENTERPRISE, GEO_SYSTEM,
+				t -> geography.searchPlaces(t.getItem1(), "ZAF", "Zzy", 10, t.getItem3(), t.getItem4()))
+				.await().atMost(Duration.ofMinutes(1)));
+	}
 }
-
-
-
-
-

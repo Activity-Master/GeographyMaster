@@ -53,4 +53,21 @@ public interface IGeographyService<J extends IGeographyService<J>>
 	Uni<Void> installCountry(Mutiny.StatelessSession session, ISystems<?, ?> system, String countryCode, UUID... identityToken);
 	Uni<Void> loadCountryGeoData(Mutiny.StatelessSession session, ISystems<?, ?> system, String countryCode, UUID... identityToken);
 	Uni<Void> loadCountryPostalCodes(Mutiny.StatelessSession session, ISystems<?, ?> system, String countryCode, UUID... identityToken);
+
+	/**
+	 * Lists the enterprise's active countries (ISO 3166 alpha-2 code and name), ordered by name.
+	 * Empty until country info has been loaded.
+	 */
+	Uni<java.util.List<GeographyCountry>> listCountries(Mutiny.StatelessSession session, ISystems<?, ?> system, UUID... identityToken);
+
+	/**
+	 * Distinct names of active towns and cities within the given country whose name starts with {@code prefix}
+	 * (case-insensitive), ordered by name. Empty unless that country's geodata has been installed.
+	 *
+	 * @param countryIso ISO 3166 alpha-2 code
+	 * @param prefix     at least one character; LIKE wildcards are matched literally
+	 * @param limit      1..100
+	 */
+	Uni<java.util.List<String>> searchPlaces(Mutiny.StatelessSession session, String countryIso, String prefix, int limit,
+	                                         ISystems<?, ?> system, UUID... identityToken);
 }

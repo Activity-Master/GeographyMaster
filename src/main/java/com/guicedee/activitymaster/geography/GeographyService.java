@@ -308,6 +308,83 @@ public class GeographyService implements IProgressable, IGeographyService<Geogra
                                        }));
     }
 
+    private static final String ACTIVE_GEOGRAPHY = " join dbo.activeflag f on f.activeflagid = g.activeflagid"
+            + " where g.enterpriseid = :enterprise and f.allowaccess = 1"
+            + " and g.effectivefromdate <= statement_timestamp() and g.effectivetodate > statement_timestamp()";
+
+    @Override
+    public Uni<List<GeographyCountry>> listCountries(Mutiny.StatelessSession session,
+                                                     ISystems<?, ?> system,
+                                                     UUID... identityToken) {
+        Objects.requireNonNull(system, "system");
+        return session.createNativeQuery("select g.geographyname, g.geographydesc from geography.geography g"
+                                                 + " join classification.classification c on c.classificationid = g.classificationid"
+                                                 + ACTIVE_GEOGRAPHY
+                                                 + " and c.classificationname = :country and c.enterpriseid = :enterprise"
+                                                 + " order by g.geographydesc, g.geographyname", Object[].class)
+                      .setParameter("enterprise", system.getEnterprise().getId())
+                      .setParameter("country", Country.toString())
+                      .getResultList()
+                      .map(rows -> {
+                          Map<String, GeographyCountry> countries = new LinkedHashMap<>();
+                          for (Object[] row : rows) {
+                              String iso = (String) row[0];
+                              if (iso == null || countries.containsKey(iso)) continue;
+                              GeographyCountry country = new GeographyCountry();
+                              country.setIso(iso);
+                              country.setCountryName(row[1] == null || ((String) row[1]).isBlank() ? iso : (String) row[1]);
+                              countries.put(iso, country);
+                          }
+                          return List.copyOf(countries.values());
+                      });
+    }
+
+    @Override
+    public Uni<List<String>> searchPlaces(Mutiny.StatelessSession session,
+                                          String countryIso,
+                                          String prefix,
+                                          int limit,
+                                          ISystems<?, ?> system,
+                                          UUID... identityToken) {
+        Objects.requireNonNull(system, "system");
+        if (countryIso == null || !countryIso.matches("[A-Za-z]{2}"))
+            return Uni.createFrom().failure(new IllegalArgumentException("A two-letter country code is required"));
+        if (prefix == null || prefix.isBlank() || prefix.length() > 128)
+            return Uni.createFrom().failure(new IllegalArgumentException("A search prefix of 1 to 128 characters is required"));
+        if (limit < 1 || limit > 100)
+            return Uni.createFrom().failure(new IllegalArgumentException("The limit must be between 1 and 100"));
+        String pattern = prefix.strip().toLowerCase(Locale.ROOT)
+                               .replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
+        // Country -> province -> district -> town, as built by the per-country geodata install.
+        String sql = "with recursive tree(id, depth) as ("
+                + " select g.geographyid, 0 from geography.geography g"
+                + " join classification.classification c on c.classificationid = g.classificationid"
+                + ACTIVE_GEOGRAPHY
+                + " and g.geographyname = :iso and c.classificationname = :country and c.enterpriseid = :enterprise"
+                + " union all"
+                + " select x.childgeographyid, t.depth + 1 from geography.geographyxgeography x"
+                + " join tree t on x.parentgeographyid = t.id"
+                + " where t.depth < 3 and x.enterpriseid = :enterprise"
+                + " and x.effectivefromdate <= statement_timestamp() and x.effectivetodate > statement_timestamp())"
+                + " select distinct g.geographyname from tree t"
+                + " join geography.geography g on g.geographyid = t.id"
+                + " join classification.classification c on c.classificationid = g.classificationid"
+                + ACTIVE_GEOGRAPHY
+                + " and t.depth > 0 and c.classificationname in (:town, :city) and c.enterpriseid = :enterprise"
+                + " and lower(g.geographyname) like :pattern escape '\\'"
+                + " order by g.geographyname limit :limit";
+        return session.createNativeQuery(sql, String.class)
+                      .setParameter("enterprise", system.getEnterprise().getId())
+                      .setParameter("iso", countryIso.toUpperCase(Locale.ROOT))
+                      .setParameter("country", Country.toString())
+                      .setParameter("town", Town.toString())
+                      .setParameter("city", City.toString())
+                      .setParameter("pattern", pattern)
+                      .setParameter("limit", limit)
+                      .getResultList()
+                      .map(List::copyOf);
+    }
+
     @Override
     public Uni<GeographyCountry> findCountryDetailed(Mutiny.StatelessSession session,
                                                      String iso,
@@ -583,7 +660,10 @@ public class GeographyService implements IProgressable, IGeographyService<Geogra
                                       return createCountry(session, country, system, identityToken);
                                   }).invoke(g -> logProgress("Geography Service",
                                                              "Loaded Country " + country.getCountryName(),
-                                                             1)).replaceWithVoid();
+                                                             1))
+                                    .onFailure().transform(e -> new GeographyException(
+                                            "Unable to load country " + record.get(0) + ": " + e.getMessage(), e))
+                                    .replaceWithVoid();
                               });
                           return chain;
                       }).chain(() -> securityCollector.flush(session, system, identityToken))

@@ -49,11 +49,9 @@ public class CurrencyService
 
 	public Uni<IClassification<?, ?>> findCurrency(Mutiny.StatelessSession session, String code, ISystems<?, ?> system, UUID... identityToken)
 	{
-		var enterprise = system.getEnterprise();
-		return new Classification().builder(session)
-				.withName(code).withConcept(Currency.concept(), system, identityToken).inActiveRange().inDateRange().withEnterprise(enterprise)
-				.get().onItem().ifNull().failWith(() -> new GeographyException("Cannot find currency with code : " + code))
-				.map(c -> (IClassification<?, ?>) c);
+		// Classification cannot be hydrated as an entity on a stateless session; use the scalar-projection finder.
+		return classificationService.find(session, code, Currency.concept(), system, identityToken)
+				.onItem().ifNull().failWith(() -> new GeographyException("Cannot find currency with code : " + code));
 	}
 
 	public Uni<IClassification<?, ?>> updateCurrency(Mutiny.StatelessSession session, String code, String description, ISystems<?, ?> system, UUID... identityToken)
@@ -62,7 +60,14 @@ public class CurrencyService
 			.chain(toUpdate -> {
 				if (description != null) {
 					((Classification) toUpdate).setDescription(description);
-					return session.update(toUpdate).replaceWith(toUpdate);
+					// The found classification is a detached projection; update only the description column.
+					return session.createNativeQuery("update classification.classification set classificationdesc = :description"
+									+ " where classificationid = :id and enterpriseid = :enterprise")
+							.setParameter("description", description)
+							.setParameter("id", toUpdate.getId())
+							.setParameter("enterprise", system.getEnterprise().getId())
+							.executeUpdate()
+							.replaceWith(toUpdate);
 				}
 				return Uni.createFrom().item(toUpdate);
 			});

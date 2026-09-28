@@ -144,49 +144,49 @@ public class CountryService {
         return findCountry(session, iso, system, identityToken)
                 .chain(geo -> {
                     Uni<?> chain = Uni.createFrom().voidItem();
-                    if (iso != null) chain = chain.chain(() -> geo.addOrUpdateClassification(session,
+                    if (iso != null && !iso.isBlank()) chain = chain.chain(() -> geo.addOrUpdateClassification(session,
                                                                                              CountryISO3166,
                                                                                              iso,
                                                                                              iso,
                                                                                              system,
                                                                                              identityToken
                     ));
-                    if (iso3 != null) chain = chain.chain(() -> geo.addOrUpdateClassification(session,
+                    if (iso3 != null && !iso3.isBlank()) chain = chain.chain(() -> geo.addOrUpdateClassification(session,
                                                                                               CountryISO3166_3,
                                                                                               iso3,
                                                                                               iso3,
                                                                                               system,
                                                                                               identityToken
                     ));
-                    if (isoNumeric != null) chain = chain.chain(() -> geo.addOrUpdateClassification(session,
+                    if (isoNumeric != null && !isoNumeric.isBlank()) chain = chain.chain(() -> geo.addOrUpdateClassification(session,
                                                                                                     CountryISO_Numeric,
                                                                                                     isoNumeric,
                                                                                                     isoNumeric,
                                                                                                     system,
                                                                                                     identityToken
                     ));
-                    if (fips != null) chain = chain.chain(() -> geo.addOrUpdateClassification(session,
+                    if (fips != null && !fips.isBlank()) chain = chain.chain(() -> geo.addOrUpdateClassification(session,
                                                                                               CountryFips,
                                                                                               fips,
                                                                                               fips,
                                                                                               system,
                                                                                               identityToken
                     ));
-                    if (capital != null) chain = chain.chain(() -> geo.addOrUpdateClassification(session,
+                    if (capital != null && !capital.isBlank()) chain = chain.chain(() -> geo.addOrUpdateClassification(session,
                                                                                                  CountryCapital,
                                                                                                  capital,
                                                                                                  capital,
                                                                                                  system,
                                                                                                  identityToken
                     ));
-                    if (areaSqlKM != null) chain = chain.chain(() -> geo.addOrUpdateClassification(session,
+                    if (areaSqlKM != null && !areaSqlKM.isBlank()) chain = chain.chain(() -> geo.addOrUpdateClassification(session,
                                                                                                    CountryAreaInSqKm,
                                                                                                    areaSqlKM,
                                                                                                    areaSqlKM,
                                                                                                    system,
                                                                                                    identityToken
                     ));
-                    if (webTld != null) chain = chain.chain(() -> geo.addOrUpdateClassification(session,
+                    if (webTld != null && !webTld.isBlank()) chain = chain.chain(() -> geo.addOrUpdateClassification(session,
                                                                                                 CountryTld,
                                                                                                 webTld,
                                                                                                 webTld,
@@ -200,34 +200,28 @@ public class CountryService {
                                                                                                     system,
                                                                                                     identityToken
                     ));
-                    if (dialCode != null) chain = chain.chain(() -> geo.addOrUpdateClassification(session,
+                    if (dialCode != null && !dialCode.isBlank()) chain = chain.chain(() -> geo.addOrUpdateClassification(session,
                                                                                                   CountryPhone,
                                                                                                   dialCode,
                                                                                                   dialCode,
                                                                                                   system,
                                                                                                   identityToken
                     ));
-                    if (postalCodeFormat != null) chain = chain.chain(() -> geo.addOrUpdateClassification(session,
+                    if (postalCodeFormat != null && !postalCodeFormat.isBlank()) chain = chain.chain(() -> geo.addOrUpdateClassification(session,
                                                                                                           CountryPostalCodeFormat,
                                                                                                           postalCodeFormat,
                                                                                                           postalCodeFormat,
                                                                                                           system,
                                                                                                           identityToken
                     ));
-                    if (postalCodeRegex != null) chain = chain.chain(() -> geo.addOrUpdateClassification(session,
+                    if (postalCodeRegex != null && !postalCodeRegex.isBlank()) chain = chain.chain(() -> geo.addOrUpdateClassification(session,
                                                                                                          CountryPostalCodeRegex,
                                                                                                          postalCodeRegex,
                                                                                                          postalCodeRegex,
                                                                                                          system,
                                                                                                          identityToken
                     ));
-                    if (currency != null) chain = chain.chain(() -> geo.addOrUpdateClassification(session,
-                                                                                                  currency.toString(),
-                                                                                                  STRING_EMPTY,
-                                                                                                  STRING_EMPTY,
-                                                                                                  system,
-                                                                                                  identityToken
-                    ));
+                    // The currency is linked through the Currency classification by GeographyService.createCountry.
                     return chain.replaceWith(geo);
                 });
     }
