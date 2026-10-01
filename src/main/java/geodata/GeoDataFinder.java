@@ -35,9 +35,11 @@ public class GeoDataFinder
 		{
 			is = Files.newInputStream(file);
 			in = new InputStreamReader(is, StandardCharsets.UTF_8);
-			parser = new CSVParser(in, format.withDelimiter('\t')
+			parser = new CSVParser(in, format.withDelimiter('\t').withQuote(null)
 			                                 .withHeader(headerNames));
-			records = parser.getRecords();
+			// Downloaded country dumps can contain millions of records. Consume once
+			// while this finder is open instead of materializing the complete CSV.
+			records = parser;
 		}
 		catch (IOException e)
 		{
@@ -52,7 +54,7 @@ public class GeoDataFinder
 		in = new InputStreamReader(is);
 		try
 		{
-			parser = new CSVParser(in, format.withDelimiter('\t')
+			parser = new CSVParser(in, format.withDelimiter('\t').withQuote(null)
 			                                 .withHeader(headerNames));
 			records = parser.getRecords();
 		}
@@ -69,7 +71,7 @@ public class GeoDataFinder
 		in = new InputStreamReader(is);
 		try
 		{
-			parser = new CSVParser(in, format.withDelimiter('\t')
+			parser = new CSVParser(in, format.withDelimiter('\t').withQuote(null)
 					.withFirstRecordAsHeader());
 			records = parser.getRecords();
 		}

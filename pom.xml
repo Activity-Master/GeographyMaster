@@ -103,6 +103,7 @@
                     <argLine>
                         --add-reads org.jboss.logging=org.hibernate.reactive
                         --add-reads org.hibernate.orm.core=com.guicedee.activitymaster.fsdm
+                        --add-opens com.guicedee.activitymaster.geography/com.guicedee.activitymaster.geography=activity.master.geography.tests
                     </argLine>
                 </configuration>
             </plugin>

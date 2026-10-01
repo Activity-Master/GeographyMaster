@@ -33,6 +33,7 @@ import com.guicedee.client.IGuiceContext;
 import geodata.GeoDataFinder;
 import geodata.GeoDataLocation;
 import geodata.GeoNamesDownloader;
+import geodata.PostalProvinceResolver;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import jakarta.persistence.NoResultException;
@@ -255,8 +256,10 @@ public class GeographyService implements IProgressable, IGeographyService<Geogra
             GeographyCountry gc = new GeographyCountry();
             gc.setGeographyId(geo.getId());
             gc.setIso(country.getIso());
-            return geo.findClassification(session, GeoNameID, system, identityToken).onItem().ifNotNull()
-                      .invoke(rel -> gc.setGeonameId(Long.parseLong(rel.getValue()))).replaceWith(gc);
+            return geo.findClassification(session, GeoNameID, system, identityToken)
+                      .onFailure(NoResultException.class).recoverWithNull().onItem().ifNotNull()
+                      .invoke(rel -> gc.setGeonameId(Long.parseLong(rel.getValue())))
+                      .chain(() -> describeCountryResources(session, geo, gc, system, identityToken)).replaceWith(gc);
         });
     }
 
@@ -317,7 +320,7 @@ public class GeographyService implements IProgressable, IGeographyService<Geogra
                                                      ISystems<?, ?> system,
                                                      UUID... identityToken) {
         Objects.requireNonNull(system, "system");
-        return session.createNativeQuery("select g.geographyname, g.geographydesc from geography.geography g"
+        return session.createNativeQuery("select g.geographyname, g.geographydesc, g.geographyid from geography.geography g"
                                                  + " join classification.classification c on c.classificationid = g.classificationid"
                                                  + ACTIVE_GEOGRAPHY
                                                  + " and c.classificationname = :country and c.enterpriseid = :enterprise"
@@ -325,18 +328,35 @@ public class GeographyService implements IProgressable, IGeographyService<Geogra
                       .setParameter("enterprise", system.getEnterprise().getId())
                       .setParameter("country", Country.toString())
                       .getResultList()
-                      .map(rows -> {
+                      .chain(rows -> {
                           Map<String, GeographyCountry> countries = new LinkedHashMap<>();
                           for (Object[] row : rows) {
                               String iso = (String) row[0];
                               if (iso == null || countries.containsKey(iso)) continue;
                               GeographyCountry country = new GeographyCountry();
                               country.setIso(iso);
+                              country.setGeographyId((UUID) row[2]);
                               country.setCountryName(row[1] == null || ((String) row[1]).isBlank() ? iso : (String) row[1]);
                               countries.put(iso, country);
                           }
-                          return List.copyOf(countries.values());
+                          Uni<Void> descriptions = Uni.createFrom().voidItem();
+                          for (var country : countries.values()) {
+                              Geography row = new Geography().setId(country.getGeographyId());
+                              row.setName(country.getIso());
+                              row.setEnterpriseID(system.getEnterprise());
+                              descriptions = descriptions.chain(() -> describeCountryResources(session, row, country, system, identityToken));
+                          }
+                          return descriptions.replaceWith(() -> List.copyOf(countries.values()));
                       });
+    }
+
+    private Uni<Void> describeCountryResources(Mutiny.StatelessSession session, IGeography<?, ?> country,
+                                               GeographyCountry result, ISystems<?, ?> system, UUID... identityToken) {
+        Uni<Void> chain = Uni.createFrom().voidItem();
+        for (var provider : ServiceLoader.load(com.guicedee.activitymaster.geography.services.IGeographyCountryResourceProvider.class)) {
+            chain = chain.chain(() -> provider.describeResources(session, country, result, system, identityToken));
+        }
+        return chain;
     }
 
     @Override
@@ -419,7 +439,7 @@ public class GeographyService implements IProgressable, IGeographyService<Geogra
                     } catch (NumberFormatException ignored) {
                     }
                 }
-            }).replaceWith(gc);
+            }).chain(() -> describeCountryResources(session, geo, gc, system, identityToken)).replaceWith(gc);
         });
     }
 
@@ -432,7 +452,10 @@ public class GeographyService implements IProgressable, IGeographyService<Geogra
             setCurrentTask(0);
             securityCollector.activate(session);
             return Uni.createFrom().item(() -> {
-                          try (GeoDataFinder finder = new GeoDataFinder(Admin1CodesASCII,
+                          Path reference = GeoDataLocation.dumpDirectory().resolve("admin1CodesASCII.txt");
+                          try (GeoDataFinder finder = Files.exists(reference)
+                                  ? new GeoDataFinder(reference, CSVFormat.TDF, Admin1CodesASCII.getHeaderNames())
+                                  : new GeoDataFinder(Admin1CodesASCII,
                                                                         CSVFormat.TDF,
                                                                         Admin1CodesASCII.getHeaderNames())) {
                               List<GeographyAsciiCode> records = new ArrayList<>();
@@ -440,7 +463,7 @@ public class GeographyService implements IProgressable, IGeographyService<Geogra
                                   GeographyAsciiCode ascii = new GeographyAsciiCode();
                                   ascii.setCode(record.get(0)).setName(record.get(1)).setNameAscii(record.get(2))
                                        .setGeonameId(Long.parseLong(record.get(3)));
-                                  if (ascii.getCode().startsWith(countryCode)) records.add(ascii);
+                                  if (ascii.getCode().startsWith(countryCode + ".")) records.add(ascii);
                               }
                               setTotalTasks(records.size());
                               return records;
@@ -477,7 +500,10 @@ public class GeographyService implements IProgressable, IGeographyService<Geogra
             setCurrentTask(0);
             securityCollector.activate(session);
             return Uni.createFrom().item(() -> {
-                          try (GeoDataFinder finder = new GeoDataFinder(Admin2Codes,
+                          Path reference = GeoDataLocation.dumpDirectory().resolve("admin2Codes.txt");
+                          try (GeoDataFinder finder = Files.exists(reference)
+                                  ? new GeoDataFinder(reference, CSVFormat.TDF, Admin2Codes.getHeaderNames())
+                                  : new GeoDataFinder(Admin2Codes,
                                                                         CSVFormat.TDF,
                                                                         Admin2Codes.getHeaderNames())) {
                               List<GeographyAsciiCode> records = new ArrayList<>();
@@ -808,12 +834,13 @@ public class GeographyService implements IProgressable, IGeographyService<Geogra
                     return Uni.createFrom().voidItem();
                 }
                 GeographyPostalCode gp = value.get(0);
-                if (value.size() > 1) gp.setProvinceName(value.get(1).getProvinceName());
                 return townService.findTown(session, gp.getParentPlaceName(), system, identityToken).onFailure()
                                   .recoverWithUni(error -> {
-                                      if (!Strings.isNullOrEmpty(gp.getProvinceName())) return districtService
+                                      String province = Strings.isNullOrEmpty(gp.getProvinceCode())
+                                              ? gp.getProvinceName() : gp.getProvinceCode();
+                                      if (!Strings.isNullOrEmpty(province)) return districtService
                                               .findFirstDistrictInProvince(session,
-                                                                           gp.getProvinceName(),
+                                                                           province,
                                                                            system,
                                                                            identityToken)
                                               .chain(fd -> fd == null ? Uni.createFrom()
@@ -1228,15 +1255,29 @@ public class GeographyService implements IProgressable, IGeographyService<Geogra
                           Map<Long, List<Long>> hierarchyMap = new ConcurrentHashMap<>();
                           if (!Files.exists(geoDataFile))
                               throw new GeographyException("GeoNames geo-data file not found for " + cc);
+                          loadHierarchyInto(hierarchyMap);
+                          Set<Long> needed = new HashSet<>();
+                          try (var districts = Files.lines(GeoDataLocation.dumpDirectory().resolve("admin2Codes.txt"))) {
+                              districts.filter(line -> line.startsWith(cc + ".")).forEach(line -> {
+                                  String[] fields = line.split("\t", -1);
+                                  long parent = Long.parseLong(fields[3]);
+                                  needed.add(parent);
+                                  needed.addAll(hierarchyMap.getOrDefault(parent, List.of()));
+                              });
+                          } catch (IOException e) {
+                              throw new RuntimeException("Error reading published districts for " + cc, e);
+                          }
                           try (GeoDataFinder finder = new GeoDataFinder(geoDataFile, CSVFormat.TDF, ZAGeoData.getHeaderNames())) {
                               for (CSVRecord a : finder.getRecords()) {
+                                  long source = Long.parseLong(a.get("geonameid"));
+                                  if (!needed.contains(source)) continue;
                                   String fc = a.get("feature code");
                                   if (Strings.isNullOrEmpty(fc)) fc = "Z.UKN";
                                   else fc = a.get("feature class") + "." + fc;
                                   GeoNameDefaultData<?> data = new GeoNameDefaultData<>();
                                   data.setAsciiname(a.get("asciiname"));
                                   data.setName(a.get("name"));
-                                  data.setGeonameId(Long.parseLong(a.get("geonameid")));
+                                  data.setGeonameId(source);
                                   data.setCoordinates(new GeographyCoordinates(a.get("latitude"), a.get("longitude")));
                                   if (!Strings.isNullOrEmpty(a.get("dem"))) data.setDem(Integer.parseInt(a.get("dem")));
                                   if (!Strings.isNullOrEmpty(a.get("elevation")))
@@ -1251,66 +1292,18 @@ public class GeographyService implements IProgressable, IGeographyService<Geogra
                           } catch (Exception e) {
                               throw new RuntimeException("Error loading geo-data for " + cc, e);
                           }
-                          loadHierarchyInto(hierarchyMap);
                           setTotalTasks(dataMap.size());
                           return new Object[]{dataMap, hierarchyMap};
                       }).chain(data -> {
                           @SuppressWarnings("unchecked") Map<Long, GeoNameDefaultData<?>> dataMap = (Map<Long, GeoNameDefaultData<?>>) data[0];
                           @SuppressWarnings("unchecked") Map<Long, List<Long>> hierarchyMap = (Map<Long, List<Long>>) data[1];
                           hierarchyMap.entrySet().removeIf(en -> !dataMap.containsKey(en.getKey()));
-                          return districtService.findAllDistricts(session, system, identityToken).chain(allDistricts -> {
-                              Uni<Void> chain = Uni.createFrom().voidItem();
-                              for (Geography ig : allDistricts)
-                                  chain = chain.chain(() -> ig.findClassification(session, GeoNameID, system, identityToken)
-                                                              .chain(rel -> {
-                                                                  String s = rel != null ? rel.getValue() : null;
-                                                                  if (Strings.isNullOrEmpty(s))
-                                                                      return Uni.createFrom().voidItem();
-                                                                  List<Long> children = hierarchyMap.get(Long.valueOf(s));
-                                                                  if (children == null) return Uni.createFrom().voidItem();
-                                                                  Uni<Void> ccc = Uni.createFrom().voidItem();
-                                                                  for (Long childId : children) {
-                                                                      GeoNameDefaultData<?> cd = dataMap.get(childId);
-                                                                      if (cd == null) continue;
-                                                                      ccc = ccc.chain(() -> classificationService.find(session,
-                                                                                                                       Town.toString(),
-                                                                                                                       system,
-                                                                                                                       identityToken)
-                                                                                                                 .chain(tc -> createGeoData(
-                                                                                                                         session,
-                                                                                                                         cd,
-                                                                                                                         tc,
-                                                                                                                         system,
-                                                                                                                         identityToken))
-                                                                                                                 .chain(created -> {
-                                                                                                                     if (created.getGeographyId() == null)
-                                                                                                                         return Uni
-                                                                                                                                 .createFrom()
-                                                                                                                                 .voidItem();
-                                                                                                                     return preppedGeographyByIdStateless(
-                                                                                                                             session,
-                                                                                                                             created.getGeographyId()).chain(
-                                                                                                                             nc -> nc == null ? Uni
-                                                                                                                                                .createFrom()
-                                                                                                                                                .voidItem() : ig
-                                                                                                                                                              .addChild(
-                                                                                                                                                                      session,
-                                                                                                                                                                      nc,
-                                                                                                                                                                      NoClassification.toString(),
-                                                                                                                                                                      STRING_EMPTY,
-                                                                                                                                                                      system,
-                                                                                                                                                                      identityToken)
-                                                                                                                                                              .replaceWithVoid());
-                                                                                                                 })
-                                                                                                                 .invoke(() -> logProgress(
-                                                                                                                         "Geography Geo-Data",
-                                                                                                                         "Loaded place - " + cd.getName(),
-                                                                                                                         1)));
-                                                                  }
-                                                                  return ccc;
-                                                              }));
-                              return chain;
-                          });
+                          return GeographyBulkWriter.resolve(session, system, classificationService,
+                                  IGuiceContext.get(IActiveFlagService.class),
+                                  IGuiceContext.get(com.guicedee.activitymaster.fsdm.client.services.ISecurityTokenService.class), identityToken)
+                                  .chain(writer -> writer.load(session, system, dataMap, hierarchyMap,
+                                          this::setTotalTasks,
+                                          count -> logProgress("Geography Geo-Data", "Loaded place batch for " + cc, count)));
                       }).chain(() -> securityCollector.flush(session, system, identityToken))
                       .invoke(() -> logProgress("Geography Geo-Data", "Finished loading geo-data for " + cc))
                       .onFailure().invoke(e -> log.error("Error loading geo-data for {}: {}", cc, e.getMessage(), e));
@@ -1331,6 +1324,7 @@ public class GeographyService implements IProgressable, IGeographyService<Geogra
                           setCurrentTask(0);
                           if (!Files.exists(postalCodeFile))
                               throw new GeographyException("GeoNames postal-code file not found for " + cc);
+                          PostalProvinceResolver provinces = new PostalProvinceResolver(cc);
                           try (GeoDataFinder finder = new GeoDataFinder(postalCodeFile,
                                                                         CSVFormat.TDF,
                                                                         ZAPostalCodes.getHeaderNames())) {
@@ -1350,6 +1344,8 @@ public class GeographyService implements IProgressable, IGeographyService<Geogra
                                   post.setCoordinates(new GeographyCoordinates(record.get(9), record.get(10)));
                                   if (record.size() > 3 && !Strings.isNullOrEmpty(record.get(3)))
                                       post.setProvinceName(record.get(3));
+                                  if (record.size() > 4)
+                                      post.setProvinceCode(provinces.resolve(record.get(4), post.getProvinceName(), post.getParentPlaceName()));
                                   postalCodeMap.computeIfAbsent(key, k -> new ArrayList<>()).add(post);
                               }
                           } catch (GeographyException ge) {
@@ -1358,7 +1354,10 @@ public class GeographyService implements IProgressable, IGeographyService<Geogra
                               throw new RuntimeException("Error loading postal codes for " + cc, e);
                           }
                           return postalCodeMap;
-                      }).chain(postalCodeMap -> loadPostalCodeMapStateless(session, postalCodeMap, system, identityToken))
+                      }).chain(postalCodeMap -> GeographyBulkWriter.resolve(session, system, classificationService,
+                              IGuiceContext.get(IActiveFlagService.class), IGuiceContext.get(com.guicedee.activitymaster.fsdm.client.services.ISecurityTokenService.class), identityToken)
+                              .chain(writer -> writer.loadPostal(session, system, postalCodeMap, this::setTotalTasks,
+                                      n -> logProgress("Postal Codes", "Loaded postal batch for " + cc, n))))
                       .chain(() -> securityCollector.flush(session, system, identityToken))
                       .invoke(() -> logProgress("Postal Codes", "Finished loading postal codes for " + cc)).onFailure()
                       .invoke(e -> log.error("Error loading postal codes for {}: {}", cc, e.getMessage(), e));

@@ -24,6 +24,7 @@ module com.guicedee.activitymaster.geography {
 	requires java.net.http;
 
 	requires static lombok;
+	uses com.guicedee.activitymaster.geography.services.IGeographyCountryResourceProvider;
 
 	provides IMasterSystem with GeographySystem;
 	provides com.guicedee.client.services.lifecycle.IGuiceModule with GeographyBinder;

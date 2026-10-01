@@ -122,7 +122,8 @@ public class GeoNamesDownloader
 	/**
 	 * Downloads the per-country geo-data archive ({@code dump/{CC}.zip}) and postal-code archive
 	 * ({@code zip/{CC}.zip}), extracting the inner {@code {CC}.txt} files into the dump and zip
-	 * directories respectively.
+	 * directories respectively. A postal-only HTTP 404 is cached as an empty postal file;
+	 * GeoNames does not publish postal exports for every country. Force rechecks availability.
 	 *
 	 * @param countryCode the ISO-3166 alpha-2 country code (case-insensitive)
 	 * @throws IOException if a download or extraction fails
@@ -139,7 +140,7 @@ public class GeoNamesDownloader
 		// Per-country geo-data (towns, cities, places)
 		downloadAndExtract(URI.create(dumpBaseUrl + cc + ".zip"), dumpDir, cc + ".txt", dumpDir.resolve(cc + ".txt"));
 		// Per-country postal codes
-		downloadAndExtract(URI.create(zipBaseUrl + cc + ".zip"), zipDir, cc + ".txt", zipDir.resolve(cc + ".txt"));
+		downloadAndExtract(URI.create(zipBaseUrl + cc + ".zip"), zipDir, cc + ".txt", zipDir.resolve(cc + ".txt"), true);
 		log.info("GeoNames data for country {} ready", cc);
 	}
 
@@ -226,7 +227,12 @@ public class GeoNamesDownloader
 	 */
 	public void downloadAndExtract(URI uri, Path workingDir, String entryName, Path target) throws IOException
 	{
-		if (!force && Files.exists(target) && fileSize(target) > 0)
+		downloadAndExtract(uri, workingDir, entryName, target, false);
+	}
+
+	private void downloadAndExtract(URI uri, Path workingDir, String entryName, Path target, boolean optionalPostal) throws IOException
+	{
+		if (!force && Files.exists(target) && (fileSize(target) > 0 || optionalPostal))
 		{
 			log.debug("Skipping existing extracted file {}", target.getFileName());
 			return;
@@ -235,8 +241,15 @@ public class GeoNamesDownloader
 		Path tempZip = Files.createTempFile(workingDir, "geonames-", ".zip");
 		try
 		{
-			downloadFileForced(uri, tempZip);
-			extractEntry(tempZip, entryName, target);
+			if (downloadFileForced(uri, tempZip, optionalPostal))
+			{
+				extractEntry(tempZip, entryName, target);
+			}
+			else
+			{
+				Files.write(target, new byte[0]);
+				log.info("GeoNames publishes no postal archive at {}; cached zero postal records", uri);
+			}
 		}
 		finally
 		{
@@ -244,7 +257,7 @@ public class GeoNamesDownloader
 		}
 	}
 
-	private void downloadFileForced(URI uri, Path target) throws IOException
+	private boolean downloadFileForced(URI uri, Path target, boolean optionalPostal) throws IOException
 	{
 		Files.createDirectories(target.getParent());
 		log.info("Downloading archive {} -> {}", uri, target.getFileName());
@@ -260,6 +273,7 @@ public class GeoNamesDownloader
 			{
 				try (InputStream ignored = response.body())
 				{
+					if (optionalPostal && response.statusCode() == 404) return false;
 					throw new IOException("Unexpected HTTP status " + response.statusCode() + " for " + uri);
 				}
 			}
@@ -267,6 +281,7 @@ public class GeoNamesDownloader
 			{
 				Files.copy(body, target, StandardCopyOption.REPLACE_EXISTING);
 			}
+			return true;
 		}
 		catch (InterruptedException e)
 		{

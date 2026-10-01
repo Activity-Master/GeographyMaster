@@ -124,7 +124,7 @@ public class DistrictService
 	public Uni<IGeography<?, ?>> findFirstDistrictInProvince(Mutiny.StatelessSession session, String provinceCode, ISystems<?, ?> system, UUID... identityToken)
 	{
 		return provinceService.findProvince(session, provinceCode, system, identityToken)
-			.chain(province -> province.findChildren(session, (String) null, null, system, identityToken)
+			.chain(province -> province.findChildren(session, NoClassification.toString(), null, system, identityToken)
 				.map(children -> (children == null || children.isEmpty()) ? null
 						: (IGeography<?, ?>) children.stream().findFirst().orElse(null).getSecondary()));
 	}

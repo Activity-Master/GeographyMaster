@@ -27,6 +27,8 @@ public class GeographyPostalCode
 
 	private String parentPlaceName;
 	private String provinceName;
+	/** Country-qualified GeoNames admin1 key, such as AL.40. */
+	private String provinceCode;
 
 	private GeographyCoordinates coordinates;
 }

@@ -50,6 +50,10 @@ public class PostalCodeService
 		postalCodeFormat.setMinimumIntegerDigits(4);
 	}
 
+	static synchronized String formatCode(String code) {
+		return postalCodeFormat.format(Integer.parseInt(code));
+	}
+
 	@Inject
 	private IClassificationService<?> classificationService;
 
@@ -122,7 +126,7 @@ public class PostalCodeService
 
 	public Uni<IGeography<?, ?>> createPostalCode(Mutiny.StatelessSession session, IGeography<?, ?> town, @NotNull String code, String description, String originalUniqueID, ISystems<?, ?> system, UUID... identityToken)
 	{
-		String formattedCode = postalCodeFormat.format(Integer.parseInt(code));
+		String formattedCode = formatCode(code);
 		var enterprise = system.getEnterprise();
 		return classificationService.find(session, PostalCode.toString(), system, identityToken)
 				.chain(classification -> new Geography().builder(session)
@@ -152,7 +156,7 @@ public class PostalCodeService
 
 	public Uni<IGeography<?, ?>> createPostalCodeSuburb(Mutiny.StatelessSession session, IGeography<?, ?> postalCode, @NotNull String code, @NotNull String description, String originalUniqueID, ISystems<?, ?> system, UUID... identityToken)
 	{
-		String formattedCode = postalCodeFormat.format(Integer.parseInt(code));
+		String formattedCode = formatCode(code);
 		var enterprise = system.getEnterprise();
 		return classificationService.find(session, PostalCodeSuburb.toString(), system, identityToken)
 				.chain(classification -> new Geography().builder(session)

@@ -47,6 +47,10 @@ public class GeographyGraphQLSchemaProvider implements IGraphQLSchemaProvider<Ge
             + "    fips: String\n"
             + "    \"Full country name.\"\n"
             + "    countryName: String\n"
+            + "    \"Image Master UUID of a readable country flag link, when installed.\"\n"
+            + "    flagResourceId: String\n"
+            + "    \"System scope to use with Image Master's UUID endpoint.\"\n"
+            + "    flagSystemName: String\n"
             + "    \"Capital city name.\"\n"
             + "    capital: String\n"
             + "    \"Area in square kilometres.\"\n"
@@ -80,6 +84,10 @@ public class GeographyGraphQLSchemaProvider implements IGraphQLSchemaProvider<Ge
         return builder
                 .type("Query", q -> q.dataFetcher("geographyCountry", countryFetcher()))
                 .type("GeographyCountry", t -> t
+                        .dataFetcher("flagResourceId", env -> {
+                            GeographyCountry c = env.getSource();
+                            return c == null || c.getFlagResourceId() == null ? null : c.getFlagResourceId().toString();
+                        })
                         .dataFetcher("geographyId", env -> {
                             GeographyCountry c = env.getSource();
                             return c == null || c.getGeographyId() == null ? null : c.getGeographyId().toString();

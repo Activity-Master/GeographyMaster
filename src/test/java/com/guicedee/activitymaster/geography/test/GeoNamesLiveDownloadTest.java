@@ -26,6 +26,23 @@ public class GeoNamesLiveDownloadTest
 	Path homeDir;
 
 	@Test
+	public void downloadsAfghanistanPlacesWithoutPublishedPostalArchive() throws IOException
+	{
+		Path original = GeoDataLocation.getBaseDirectory();
+		GeoDataLocation.setBaseDirectory(homeDir);
+		try
+		{
+			new GeoNamesDownloader(true).downloadCountry("AF");
+			assertTrue(Files.size(GeoDataLocation.countryGeoDataFile("AF")) > 0);
+			assertEquals(0, Files.size(GeoDataLocation.countryPostalCodeFile("AF")));
+		}
+		finally
+		{
+			GeoDataLocation.setBaseDirectory(original);
+		}
+	}
+
+	@Test
 	public void downloadsRealCountryDataIntoHomeDirectory() throws IOException
 	{
 		Path original = GeoDataLocation.getBaseDirectory();

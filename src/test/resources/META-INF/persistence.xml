@@ -14,6 +14,11 @@
         <class>com.guicedee.activitymaster.fsdm.db.entities.activeflag.ActiveFlagXClassificationSecurityToken</class>
 
         <class>com.guicedee.activitymaster.fsdm.db.entities.address.Address</class>
+        <class>com.guicedee.activitymaster.fsdm.db.entities.address.AddressType</class>
+        <class>com.guicedee.activitymaster.fsdm.db.entities.address.AddressTypeSecurityToken</class>
+        <class>com.guicedee.activitymaster.fsdm.db.entities.address.AddressXAddress</class>
+        <class>com.guicedee.activitymaster.fsdm.db.entities.address.AddressXAddressSecurityToken</class>
+
         <class>com.guicedee.activitymaster.fsdm.db.entities.address.AddressSecurityToken</class>
         <class>com.guicedee.activitymaster.fsdm.db.entities.address.AddressXClassification</class>
         <class>com.guicedee.activitymaster.fsdm.db.entities.address.AddressXClassificationSecurityToken</class>

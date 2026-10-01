@@ -106,6 +106,55 @@ public class GeoNamesDownloaderTest
 		assertEquals(sizeBefore, Files.size(geoData), "Existing file should be retained when not forced");
 	}
 
+	@Test
+	public void missingPostalArchivePreservesPlacesAndCachesZeroRecords() throws IOException
+	{
+		server.removeContext("/zip/ZZ.zip");
+		GeoNamesDownloader downloader = new GeoNamesDownloader(false, baseUrl + "/dump", baseUrl + "/zip");
+		downloader.downloadCountry("ZZ");
+		assertTrue(Files.readString(GeoDataLocation.countryGeoDataFile("ZZ")).contains("Testville"));
+		assertEquals(0, Files.size(GeoDataLocation.countryPostalCodeFile("ZZ")));
+		try (var files = Files.list(GeoDataLocation.zipDirectory()))
+		{
+			assertEquals(1, files.count(), "Temporary archive should be removed");
+		}
+
+		serveBytes("/zip/ZZ.zip", zip("ZZ.txt", "ZZ\t0001\tTestville\n"));
+		downloader.downloadCountry("ZZ");
+		assertEquals(0, Files.size(GeoDataLocation.countryPostalCodeFile("ZZ")), "Unforced downloads retain the absence cache");
+		new GeoNamesDownloader(true, baseUrl + "/dump", baseUrl + "/zip").downloadCountry("ZZ");
+		assertTrue(Files.readString(GeoDataLocation.countryPostalCodeFile("ZZ")).contains("0001"));
+	}
+
+	@Test
+	public void missingPlaceArchiveStillFails()
+	{
+		server.removeContext("/dump/ZZ.zip");
+		assertThrows(IOException.class, () -> new GeoNamesDownloader(false, baseUrl + "/dump", baseUrl + "/zip").downloadCountry("ZZ"));
+		assertFalse(Files.exists(GeoDataLocation.countryPostalCodeFile("ZZ")));
+	}
+
+	@Test
+	public void postalServerErrorStillFails()
+	{
+		server.removeContext("/zip/ZZ.zip");
+		server.createContext("/zip/ZZ.zip", exchange -> {
+			exchange.sendResponseHeaders(503, -1);
+			exchange.close();
+		});
+		assertThrows(IOException.class, () -> new GeoNamesDownloader(false, baseUrl + "/dump", baseUrl + "/zip").downloadCountry("ZZ"));
+		assertFalse(Files.exists(GeoDataLocation.countryPostalCodeFile("ZZ")));
+	}
+
+	@Test
+	public void postalArchiveWithWrongEntryStillFails() throws IOException
+	{
+		server.removeContext("/zip/ZZ.zip");
+		serveBytes("/zip/ZZ.zip", zip("wrong.txt", "unexpected"));
+		assertThrows(IOException.class, () -> new GeoNamesDownloader(false, baseUrl + "/dump", baseUrl + "/zip").downloadCountry("ZZ"));
+		assertFalse(Files.exists(GeoDataLocation.countryPostalCodeFile("ZZ")));
+	}
+
 	private void serveBytes(String path, byte[] body)
 	{
 		server.createContext(path, exchange -> {

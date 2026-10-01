@@ -12,6 +12,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @Accessors(chain = true)
@@ -33,6 +34,9 @@ public class GeographyCountry
 	private String fips;
 	private String equivalentFips;
 	private String countryName;
+	/** Readable stored flag link; Image Master still authorizes retrieval. */
+	private UUID flagResourceId;
+	private String flagSystemName;
 	private String postalCode;
 	@Size(max = 3)
 	private String webTld;

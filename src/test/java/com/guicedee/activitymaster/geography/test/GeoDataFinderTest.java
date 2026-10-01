@@ -5,6 +5,10 @@ import geodata.GeoDataFinder;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import static org.junit.jupiter.api.Assertions.*;
 
 import static geodata.GeoDataFiles.CountryInfo;
 
@@ -15,6 +19,24 @@ import static geodata.GeoDataFiles.CountryInfo;
  */
 class GeoDataFinderTest
 {
+	@Test
+	void quotedPlaceNamesRemainLiteral(@TempDir Path directory) throws Exception
+	{
+		Path feed = directory.resolve("GR.txt");
+		Files.writeString(feed, "13526837\t\"Kostas Tsianos\" Theatre\t\"Kostas Tsianos\" Theatre\t\tGR\n"
+				+ "13526840\tAlkazar Garden Theatre\tAlkazar Garden Theatre\t\tGR\n");
+		try (GeoDataFinder finder = new GeoDataFinder(feed, CSVFormat.TDF, "id", "name", "ascii", "aliases", "country"))
+		{
+			var rows = finder.getRecords().iterator();
+			var first = rows.next();
+			assertEquals(5, first.size());
+			assertEquals("\"Kostas Tsianos\" Theatre", first.get("name"));
+			assertEquals("", first.get("aliases"));
+			assertEquals("GR", first.get("country"));
+			assertEquals("13526840", rows.next().get("id"));
+			assertFalse(rows.hasNext());
+		}
+	}
 	@Test
 	public void testGeoDataFileFinder()
 	{

@@ -113,7 +113,15 @@ public class CountryService {
                                                                                          identityToken
                                         ).replaceWith((IGeography<?, ?>) geo));
                                     });
-                        }));
+                        }))
+                .chain(country -> {
+                    Uni<Void> resources = Uni.createFrom().voidItem();
+                    for (var provider : java.util.ServiceLoader.load(
+                            com.guicedee.activitymaster.geography.services.IGeographyCountryResourceProvider.class)) {
+                        resources = resources.chain(() -> provider.ensureResources(session, country, system, identityToken));
+                    }
+                    return resources.replaceWith(country);
+                });
     }
 
     public Uni<IGeography<?, ?>> findCountry(Mutiny.StatelessSession session, @NotNull String iso, ISystems<?, ?> system, UUID... identityToken) {
